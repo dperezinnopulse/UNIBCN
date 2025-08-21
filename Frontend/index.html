@@ -1,0 +1,499 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Propuesta de Actividad - UB</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+
+<link href="css/styles.css" rel="stylesheet"/><script defer="" src="js/scripts.js"></script><link href="css/styles.css" rel="stylesheet"/><script defer="" src="js/scripts.js"></script><style>
+/* Unified sidebar + header */
+.sidebar { background-color:#f2f2f2; min-height:100vh; transition: width .3s ease; overflow-x:hidden; }
+.sidebar.collapsed { width: 72px !important; }
+.sidebar:hover { width: 260px !important; }
+.sidebar .nav-link { color:#333; display:flex; align-items:center; gap:10px; transition: background-color .2s; border-radius:.6rem; padding:.6rem .75rem; white-space:nowrap; }
+.sidebar .nav-link:hover { background-color:#e6e6e6; }
+.sidebar.collapsed .nav-link { justify-content:center; }
+.sidebar.collapsed .nav-link i { margin-right:0 !important; }
+.sidebar.collapsed .link-text { display:none !important; }
+header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
+/* UG user menu */
+.usermenu.d-none,.usersubmenu.d-none{display:none}
+.usermenu,.usersubmenu{
+  position:fixed; top:70px; right:20px; z-index:1200;
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08); padding:8px; width:260px;
+}
+.userItem,.ugOption{ display:block; width:100%; text-align:left; border:0; background:transparent;
+  padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14px; }
+.userItem:hover,.ugOption:hover{ background:#f2f4f7 }
+.userItem.with-sub{ display:flex; justify-content:space-between; align-items:center }
+.ugOption[disabled]{ opacity:.5; cursor:not-allowed }
+</style><style>
+/* UG Visual cues */
+[data-ug~="IDP"]{ border:1px solid #fcd34d; border-left:6px solid #f59e0b; border-radius:10px; padding:12px; background:#fffbeb; }
+[data-ug~="CRAI"]{ border:1px solid #93c5fd; border-left:6px solid #3b82f6; border-radius:10px; padding:12px; background:#eff6ff; }
+[data-ug~="SAE"]{ border:1px solid #86efac; border-left:6px solid #10b981; border-radius:10px; padding:12px; background:#ecfdf5; }
+.usersubmenu .ugOption{ display:flex; align-items:center; gap:8px; }
+.usersubmenu .ugOption .chip{ width:12px; height:12px; border-radius:999px; display:inline-block; }
+.usersubmenu .ugOption[data-ug="IDP"] .chip{ background:#f59e0b; }
+.usersubmenu .ugOption[data-ug="CRAI"] .chip{ background:#3b82f6; }
+.usersubmenu .ugOption[data-ug="SAE"] .chip{ background:#10b981; }
+.usersubmenu .ugOption[data-ug="Todas"] .chip{ background:#6b7280; }
+</style><style>
+.sidebar { background-color:#f2f2f2; min-height:100vh; transition: width .3s ease; overflow-x:hidden; }
+.sidebar.collapsed { width: 72px !important; }
+.sidebar:hover { width: 260px !important; }
+.sidebar .nav-link { color:#333; display:flex; align-items:center; gap:10px; transition: background-color .2s; border-radius:.6rem; padding:.6rem .75rem; white-space:nowrap; }
+.sidebar .nav-link:hover { background-color:#e6e6e6; }
+.sidebar.collapsed .nav-link { justify-content:center; }
+.sidebar.collapsed .link-text { display:none !important; }
+header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
+[data-ug="IDP"]{ border-left:4px solid #f6d55c; padding-left:8px; background:#fffdf5; }
+[data-ug="CRAI"]{ border-left:4px solid #3ca0f3; padding-left:8px; background:#f5faff; }
+[data-ug="SAE"]{ border-left:4px solid #63c76a; padding-left:8px; background:#f6fff7; }
+.usermenu.d-none,.usersubmenu.d-none{display:none}
+.usermenu,.usersubmenu{ position:fixed; top:70px; right:20px; z-index:1200; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:8px; width:260px; }
+.userItem,.ugOption{ display:block; width:100%; text-align:left; border:0; background:transparent; padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14px; }
+.userItem:hover,.ugOption:hover{ background:#f2f4f7 }
+.userItem.with-sub{ display:flex; justify-content:space-between; align-items:center }
+.ugOption[disabled]{ opacity:.5; cursor:not-allowed }
+.ugOption[data-ug="IDP"]::before { content:""; display:inline-block; width:12px; height:12px; background:#f6d55c; border-radius:50%; margin-right:8px; }
+.ugOption[data-ug="CRAI"]::before { content:""; display:inline-block; width:12px; height:12px; background:#3ca0f3; border-radius:50%; margin-right:8px; }
+.ugOption[data-ug="SAE"]::before { content:""; display:inline-block; width:12px; height:12px; background:#63c76a; border-radius:50%; margin-right:8px; }
+.ugOption[data-ug="Todas"]::before { content:""; display:inline-block; width:12px; height:12px; background:#ccc; border-radius:50%; margin-right:8px; }
+</style>
+    <!-- Estilos adicionales para el menú lateral unificado -->
+    <style>
+      .sidebar {
+        background-color: #f7f7f7;
+        width: 260px;
+        min-height: 100vh;
+        transition: width 0.25s ease;
+        overflow-x: hidden;
+      }
+      .sidebar.collapsed {
+        width: 72px !important;
+      }
+      .sidebar .nav-link {
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.6rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .sidebar .nav-link.active {
+        background-color: #e7effb;
+        color: #0366d6;
+        font-weight: 600;
+      }
+      .sidebar .nav-link:hover {
+        background-color: #e6e6e6;
+        color: #0366d6;
+      }
+      .sidebar.collapsed .nav-link {
+        justify-content: center;
+      }
+      .sidebar.collapsed .link-text {
+        display: none !important;
+      }
+      #sidebarToggle {
+        background-color: transparent;
+        border: none;
+        color: #333;
+        font-size: 1.5rem;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+      }
+      #sidebarToggle:hover {
+        background-color: #e6e6e6;
+      }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+<!-- Contenedor para el menú lateral cargado dinámicamente -->
+<div id="sidebarContainer"></div>
+<!-- Contenido principal -->
+<div class="flex-grow-1">
+<!-- Contenedor de la cabecera (se insertará dinámicamente) -->
+<div id="headerContainer"></div>
+<!-- Formulario -->
+<main class="p-4"><div class="bg-white rounded shadow p-3 mb-3" id="cabeceraPropuesta">
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+<div class="d-flex align-items-center gap-3 flex-wrap">
+<span class="badge px-3 py-2" id="estadoBadge" style="background:#2ecc71; font-weight:600;">Aprobado</span>
+<div class="text-muted small"><i class="bi bi-calendar3 me-1"></i><span id="fechaCreacion">25 oct 2024</span></div>
+<div class="text-muted small"><i class="bi bi-clock-history me-1"></i>Actualizado <span id="fechaUpdate">hoy</span></div>
+<div class="text-muted small"><i class="bi bi-hash me-1"></i><span id="codigoPropuesta">IDP-2024-00123</span></div>
+<div class="text-muted small"><i class="bi bi-person me-1"></i><span id="responsablePropuesta">IDP</span></div>
+</div>
+<div class="d-flex align-items-center gap-2">
+<span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis px-3 py-2">
+<i class="bi bi-chat-dots me-1"></i><span id="numMensajes">2</span> mensajes
+        </span>
+<a class="btn btn-outline-secondary btn-sm" href="historico.html"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+</div>
+</div>
+<div class="bg-white rounded shadow p-4 mb-5">
+<h2 class="h5 mb-4 text-primary">Información general</h2>
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" type="text"/></div>
+<div class="col-md-4 position-relative">
+<label class="form-label">Título de la actividad</label>
+<div class="input-group">
+<input class="form-control" type="text"/>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion bg-light p-3 rounded border mt-2 d-none">
+<label class="form-label mt-1">Catalán</label><input class="form-control mb-1" type="text"/>
+<label class="form-label">Castellano</label><input class="form-control mb-1" type="text"/>
+<label class="form-label">Inglés</label><input class="form-control" type="text"/>
+</div>
+</div>
+<div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select"><option>Jornada</option></select></div>
+<div class="col-md-4"><label class="form-label">Unidad gestora</label><select class="form-select"><option>IDP</option><option>CRAI</option><option>SAE</option></select></div>
+<div class="col-md-4"><label class="form-label">Condiciones económicas</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Año académico</label><input class="form-control" placeholder="2025-2026" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Línea estratégica</label><select class="form-select"><option>Línea 1</option></select></div>
+<div class="col-md-4"><label class="form-label">Objetivo estratégico</label><select class="form-select"><option>Línea 1</option></select></div>
+<div class="col-md-4"><label class="form-label">Código relacionado</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Actividad reservada</label><select class="form-select"><option>PDI</option></select></div>
+<div class="col-md-4"><label class="form-label">Fecha de actividad</label><input class="form-control" type="date"/></div>
+<div class="col-md-4"><label class="form-label">Motivo de cierre</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Persona solicitante</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Coordinador/a</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Jefe/a unidad gestora</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Gestor/a de la actividad</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Facultad destinataria</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Departamento destinatario</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Centro/unidad UB destinataria</label><select class="form-select"><option>Seleccionar</option></select></div>
+<div class="col-md-4"><label class="form-label">Otros centros/instituciones</label><input class="form-control" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Plazas totales</label><input class="form-control" type="number"/></div>
+<div class="col-md-4"><label class="form-label">Horas totales</label><input class="form-control" type="number"/></div>
+<div class="col-md-4"><label class="form-label">Centro de trabajo requerido en la matrícula</label><select class="form-select"><option>Sí</option><option>No</option></select></div>
+<div class="col-md-4"><label class="form-label">Modalidad de gestión</label><select class="form-select"><option>Acreditada UB</option></select></div>
+<div class="col-md-4"><label class="form-label">F. inicio de la imp.</label><input class="form-control" type="date"/></div>
+<div class="col-md-4"><label class="form-label">F. final de la imp.</label><input class="form-control" type="date"/></div>
+<div class="col-md-3">
+<label class="form-label d-block">Actividad de pago</label>
+<div class="form-check form-switch">
+<input class="form-check-input" data-save="1" id="actividadPago" onchange="toggleImporte()" type="checkbox"/>
+<label class="form-check-label" for="actividadPago">Sí</label>
+</div>
+</div></div>
+<div class="row g-3 mt-1">
+<div class="col-md-6" data-ug="IDP">
+<label class="form-label">Coordinador/a de centre/unitat (IDP)</label>
+<input class="form-control" placeholder="Nombre y apellidos"/>
+</div>
+<div class="col-md-6" data-ug="IDP">
+<label class="form-label">Centre de treball de l'alumne (IDP)</label>
+<input class="form-control" placeholder="Centro de trabajo"/>
+</div>
+</div>
+<div class="row g-3 mt-1">
+<div class="col-md-4" data-ug="CRAI">
+<label class="form-label">Crèdits totals (CRAI)</label>
+<input class="form-control" min="0" placeholder="0" step="0.5" type="number"/>
+</div>
+</div>
+<div class="row g-3 mt-1">
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Crèdits totals (SAE)</label>
+<input class="form-control" min="0" placeholder="0" step="0.5" type="number"/>
+</div>
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Crèdits mínims (SAE)</label>
+<input class="form-control" min="0" placeholder="0" step="0.5" type="number"/>
+</div>
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Crèdits màxims (SAE)</label>
+<input class="form-control" min="0" placeholder="0" step="0.5" type="number"/>
+</div>
+</div>
+</div>
+<!-- INFORMACIÓN GENERAL COMPLETA -->
+<!-- PROGRAMA -->
+<section class="mb-5" id="seccion-entidades">
+<h2 class="h5 mb-3 border-bottom pb-2">Entidades organizadoras</h2>
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label">Organizadora principal</label><input class="form-control" data-save="1" id="org_principal" placeholder="Nombre de la entidad" type="text"/></div>
+<div class="col-md-3"><label class="form-label">NIF/CIF</label><input class="form-control" data-save="1" id="org_nif" type="text"/></div>
+<div class="col-md-3"><label class="form-label">Web</label><input class="form-control" data-save="1" id="org_web" placeholder="https://..." type="url"/></div>
+<div class="col-md-4"><label class="form-label">Persona de contacto</label><input class="form-control" data-save="1" id="org_contacto" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Email</label><input class="form-control" data-save="1" id="org_email" type="email"/></div>
+<div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" data-save="1" id="org_tel" type="tel"/></div>
+</div>
+<div class="mt-4">
+<h3 class="h6">Entidades colaboradoras</h3>
+<div class="mb-3" id="colaboradorasContainer"></div>
+<button class="btn btn-outline-primary" onclick="addColaboradora()" type="button">Añadir colaboradora</button>
+</div>
+</section>
+<section class="mb-5 d-none" id="importeCampos">
+<h2 class="h5 mb-3 border-bottom pb-2">Importe y descuentos</h2>
+<div class="row g-3">
+<div class="col-md-3">
+<label class="form-label">Importe base (€)</label>
+<input class="form-control" data-save="1" id="imp_base" min="0" step="0.01" type="number"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Impuesto</label>
+<select class="form-select" data-save="1" id="imp_tipo">
+<option value="">Selecciona</option>
+<option>IVA 21%</option>
+<option>IVA 10%</option>
+<option>IVA 4%</option>
+<option>Exento</option>
+</select>
+</div>
+<div class="col-md-3">
+<label class="form-label">Descuento (%)</label>
+<input class="form-control" data-save="1" id="imp_descuento_pct" max="100" min="0" step="1" type="number"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Código promocional</label>
+<input class="form-control" data-save="1" id="imp_codigo" type="text"/>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Condiciones</label>
+<div class="input-group">
+<textarea class="form-control" data-save="1" id="imp_condiciones_es" placeholder="Condiciones (ES)" rows="2"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+<div class="mb-2"><small class="text-muted">Català</small><textarea class="form-control" data-save="1" id="imp_condiciones_ca" placeholder="Condicions (CA)" rows="2"></textarea></div>
+<div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="imp_condiciones_en" placeholder="Terms (EN)" rows="2"></textarea></div>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-5" id="seccion-inscripcion">
+<h2 class="h5 mb-3 border-bottom pb-2">Inscripción</h2>
+<div class="row g-3">
+<div class="col-md-3">
+<label class="form-label">Inicio inscripción</label>
+<input class="form-control" data-save="1" id="insc_inicio" type="date"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Fin inscripción</label>
+<input class="form-control" data-save="1" id="insc_fin" type="date"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Nº de plazas</label>
+<input class="form-control" data-save="1" id="insc_plazas" min="0" type="number"/>
+</div>
+<div class="col-md-3">
+<label class="form-label d-block">Lista de espera</label>
+<div class="form-check form-switch">
+<input class="form-check-input" data-save="1" id="insc_lista_espera" type="checkbox"/>
+<label class="form-check-label" for="insc_lista_espera">Activar</label>
+</div>
+</div>
+<div class="col-md-4">
+<label class="form-label">Modalidad</label>
+<select class="form-select" data-save="1" id="insc_modalidad">
+<option value="">Selecciona</option>
+<option>Presencial</option>
+<option>Online</option>
+<option>Mixta</option>
+</select>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Requisitos</label>
+<div class="input-group">
+<textarea class="form-control" data-save="1" id="insc_requisitos_es" placeholder="Requisitos (ES)" rows="2"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+<div class="mb-2"><small class="text-muted">Català</small><textarea class="form-control" data-save="1" id="insc_requisitos_ca" placeholder="Requisits (CA)" rows="2"></textarea></div>
+<div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="insc_requisitos_en" placeholder="Requirements (EN)" rows="2"></textarea></div>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-5" id="seccion-programa">
+<h2 class="h5 mb-3 border-bottom pb-2">Programa</h2>
+<div class="row g-3">
+<div class="col-12 position-relative">
+<label class="form-label">Descripción</label>
+<div class="input-group">
+<textarea class="form-control" data-save="1" id="programa_descripcion_es" placeholder="Descripción (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+<div class="mb-2"><small class="text-muted">Català</small><textarea class="form-control" data-save="1" id="programa_descripcion_ca" placeholder="Descripció (CA)" rows="2"></textarea></div>
+<div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="programa_descripcion_en" placeholder="Description (EN)" rows="2"></textarea></div>
+</div>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Contenidos</label>
+<div class="input-group">
+<textarea class="form-control" data-save="1" id="programa_contenidos_es" placeholder="Contenidos (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+<div class="mb-2"><small class="text-muted">Català</small><textarea class="form-control" data-save="1" id="programa_contenidos_ca" placeholder="Continguts (CA)" rows="2"></textarea></div>
+<div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="programa_contenidos_en" placeholder="Contents (EN)" rows="2"></textarea></div>
+</div>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Objetivos</label>
+<div class="input-group">
+<textarea class="form-control" data-save="1" id="programa_objetivos_es" placeholder="Objetivos (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+<div class="mb-2"><small class="text-muted">Català</small><textarea class="form-control" data-save="1" id="programa_objetivos_ca" placeholder="Objectius (CA)" rows="2"></textarea></div>
+<div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="programa_objetivos_en" placeholder="Objectives (EN)" rows="2"></textarea></div>
+</div>
+</div>
+<div class="col-md-4">
+<label class="form-label">Duración (horas)</label>
+<input class="form-control" data-save="1" id="programa_duracion" min="0" step="0.5" type="number"/>
+</div>
+<div class="col-md-4">
+<label class="form-label">Fecha de inicio</label>
+<input class="form-control" data-save="1" id="programa_inicio" type="date"/>
+</div>
+<div class="col-md-4">
+<label class="form-label">Fecha de fin</label>
+<input class="form-control" data-save="1" id="programa_fin" type="date"/>
+</div>
+</div>
+<div class="row g-3 mt-1">
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Tipus d'estudi (SAE)</label>
+<select class="form-select">
+<option value="">Selecciona...</option>
+<option>Grau</option><option>Màster</option><option>Doctorat</option>
+</select>
+</div>
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Categoria (SAE)</label>
+<select class="form-select">
+<option value="">Selecciona...</option>
+<option>Bàsic</option><option>Avançat</option><option>Especialització</option>
+</select>
+</div>
+<div class="col-md-4" data-ug="SAE">
+<label class="form-label">Competències (SAE)</label>
+<input class="form-control" placeholder="Especifica competències"/>
+</div>
+</div>
+</section>
+<div class="bg-white rounded shadow p-4">
+<section class="mb-5">
+<h2 class="h5 mb-3 border-bottom pb-2">Subactividades</h2>
+<div class="mb-3" id="subactividadesContainer"></div>
+<button class="btn btn-outline-primary" onclick="addSubactividad()" type="button">Añadir Subactividad</button>
+</section>
+<section class="mb-5">
+<h2 class="h5 mb-3 border-bottom pb-2">Participantes</h2>
+<div class="mb-3" id="participantesContainer"></div>
+<button class="btn btn-outline-primary" onclick="addParticipante()" type="button">Añadir Participante</button>
+</section>
+</div>
+<div class="d-flex gap-2 mt-4">
+<button class="btn btn-secondary" id="btnGuardarBorrador" type="button">Guardar borrador</button>
+<button class="btn btn-outline-secondary" id="btnRestaurarBorrador" type="button">Restaurar borrador</button>
+<button class="btn btn-link text-danger" id="btnVaciarBorrador" type="button">Vaciar borrador</button>
+</div></main>
+</div>
+</div>
+<!-- Cargamos el menú lateral desde un único recurso JS para reutilizar en todas las páginas -->
+<script src="menu.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    loadSidebarMenu('sidebarContainer');
+  });
+</script>
+<!-- Cabecera unificada -->
+<script src="header.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    loadHeader('headerContainer');
+  });
+</script>
+<script>
+function mostrarTraduccion(elemento) {
+  const div = elemento.closest('.position-relative').querySelector('.traduccion');
+  div.classList.toggle('d-none');
+}
+
+function toggleImporte() {
+  const pago = document.getElementById("actividadPago").checked;
+  document.getElementById("importeCampos").classList.toggle("d-none", !pago);
+}
+</script>
+<!-- El menú de usuario y el selector de UG serán proporcionados por header.js -->
+
+<script>
+(function(){
+  const subCont = document.getElementById('subactividadesContainer');
+  function subCard(){
+    const div = document.createElement('div');
+    div.className = 'card mb-2 shadow-sm';
+    div.innerHTML = `
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="mb-0">Subactividad</h6>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" data-dup>Duplicar</button>
+            <button type="button" class="btn btn-outline-danger" data-del>Eliminar</button>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Título</label><input class="form-control" /></div>
+          <div class="col-md-4"><label class="form-label">Modalidad</label><select class="form-select"><option>Presencial</option><option>Online</option><option>Mixta</option></select></div>
+          <div class="col-md-4"><label class="form-label">Docente/s</label><input class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Fecha inicio</label><input type="date" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Fecha fin</label><input type="date" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Hora inicio</label><input type="time" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Hora fin</label><input type="time" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Duración (h)</label><input type="number" step="0.5" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Ubicación / Aula</label><input class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Aforo</label><input type="number" min="0" class="form-control" /></div>
+          <div class="col-md-3"><label class="form-label">Idioma</label><input class="form-control" /></div>
+          <div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" rows="2"></textarea></div>
+        </div>
+      </div>`;
+    div.querySelector('[data-del]').addEventListener('click', ()=> div.remove());
+    div.querySelector('[data-dup]').addEventListener('click', ()=> subCont && subCont.appendChild(subCard()));
+    return div;
+  }
+  window.addSubactividad = function(){ subCont && subCont.appendChild(subCard()); };
+
+  const partCont = document.getElementById('participantesContainer');
+  function partRow(){
+    const wrap = document.createElement('div');
+    wrap.className = 'row g-2 align-items-end mb-2';
+    wrap.innerHTML = `
+      <div class="col-md-4"><label class="form-label">Nombre</label><input class="form-control" /></div>
+      <div class="col-md-3"><label class="form-label">Rol</label><select class="form-select"><option>Ponente</option><option>Coordinación</option><option>Invitado</option></select></div>
+      <div class="col-md-3"><label class="form-label">Email</label><input type="email" class="form-control" /></div>
+      <div class="col-md-2 d-flex gap-2"><button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" data-dup>Duplicar</button><button type="button" class="btn btn-outline-danger btn-sm flex-grow-1" data-del>Eliminar</button></div>`;
+    wrap.querySelector('[data-del]').addEventListener('click', ()=> wrap.remove());
+    wrap.querySelector('[data-dup]').addEventListener('click', ()=> partCont && partCont.appendChild(partRow()));
+    return wrap;
+  }
+  window.addParticipante = function(){ partCont && partCont.appendChild(partRow()); };
+  if (subCont && !subCont.children.length) window.addSubactividad();
+  if (partCont && !partCont.children.length) window.addParticipante();
+})();
+</script>
+</body>
+</html>

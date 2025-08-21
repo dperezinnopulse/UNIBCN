@@ -1,0 +1,515 @@
+openapi: 3.1.0
+info:
+  title: UB - Actividad 1 API
+  version: "1.1.0"
+servers:
+  - url: https://localhost:5001
+paths:
+  /api/actividades:
+    get:
+      summary: Listado paginado de actividades
+      parameters:
+        - in: query
+          name: ug
+          schema: { type: string }
+        - in: query
+          name: estado
+          schema: { type: string, enum: [borrador, publicada, cerrada] }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              examples:
+                ejemplo:
+                  value:
+                    page: 1
+                    pageSize: 2
+                    total: 12
+                    items:
+                      - actividadId: 1
+                        codigo: "ACT-2025-001"
+                        anioAcademico: "2025-2026"
+                        ugFiltro: "IDP"
+                        unidadGestora: "Institut de Formació Permanent"
+                        estado: "borrador"
+                        fechaInicio: "2025-10-15T09:00:00Z"
+                        fechaFin: "2025-10-15T15:00:00Z"
+                      - actividadId: 2
+                        codigo: "ACT-2025-002"
+                        anioAcademico: "2025-2026"
+                        ugFiltro: "CRAI"
+                        unidadGestora: "CRAI"
+                        estado: "publicada"
+                        fechaInicio: "2025-11-10T10:00:00Z"
+                        fechaFin: "2025-11-10T19:00:00Z"
+              schema:
+                $ref: "#/components/schemas/PagedResultActividadResumen"
+    post:
+      summary: Crear actividad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActividadCreate" }
+            examples:
+              minimo:
+                value:
+                  codigo: "ACT-2025-003"
+                  anioAcademico: "2025-2026"
+                  ugFiltro: "SAE"
+                  unidadGestora: "SAE"
+                  i18n:
+                    - idioma: "CAS"
+                      titulo: "Nueva actividad"
+                  organizadoras:
+                    - nombre: "Universitat de Barcelona"
+                      principal: true
+              completo:
+                value:
+                  codigo: "ACT-2025-004"
+                  anioAcademico: "2025-2026"
+                  tipoActividadId: 1
+                  ugFiltro: "IDP"
+                  unidadGestora: "Institut de Formació Permanent"
+                  lineaEstrategicaId: 1
+                  objetivoEstrategicoId: 1
+                  reservada: false
+                  fechaActividad: "2025-10-15"
+                  duracionHoras: 6
+                  fechaInicio: "2025-10-15T09:00:00Z"
+                  fechaFin: "2025-10-15T15:00:00Z"
+                  categoriaSAEId: 1
+                  tipoEstudioSAEId: 1
+                  creditosMinSAE: 1
+                  creditosMaxSAE: 3
+                  economico:
+                    importeBase: 100
+                    impuestoPct: 21
+                    descuentoPct: 10
+                    codigoPromocional: "PROMO10"
+                  inscripcion:
+                    plazas: 30
+                    requisitos: "Interés en docencia activa"
+                    fechaInicioInscripcion: "2025-09-01T00:00:00Z"
+                    fechaFinInscripcion: "2025-10-10T23:59:59Z"
+                    urlInscripcion: "https://ub.edu/inscripcion/act-2025-004"
+                  i18n:
+                    - idioma: "CAS"
+                      titulo: "Introducción a la Docencia Activa"
+                      descripcion: "Curso práctico..."
+                    - idioma: "CAT"
+                      titulo: "Introducció a la Docència Activa"
+                    - idioma: "ENG"
+                      titulo: "Introduction to Active Teaching"
+                  organizadoras:
+                    - nombre: "Universitat de Barcelona"
+                      principal: true
+                  colaboradoras:
+                    - nombre: "Fundació Bosch i Gimpera"
+                      aportacion: "Patrocinio"
+                  subactividades:
+                    - nombre: "Sesión 1"
+                      orden: 1
+                      fechaInicio: "2025-10-15T09:00:00Z"
+                      fechaFin: "2025-10-15T11:00:00Z"
+                      duracionHoras: 2
+                      modalidad: "Presencial"
+                      ubicacion: "Aula 1"
+                  participantes:
+                    - rol: "Docente"
+                      nombre: "Laura Martínez"
+                      email: "laura.martinez@ub.edu"
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActividadDetalle" }
+              examples:
+                creada:
+                  value:
+                    actividadId: 3
+                    estado: "borrador"
+                    codigo: "ACT-2025-003"
+                    anioAcademico: "2025-2026"
+                    ugFiltro: "SAE"
+                    unidadGestora: "SAE"
+                    i18n:
+                      - idioma: "CAS"
+                        titulo: "Nueva actividad"
+  /api/actividades/{id}:
+    get:
+      summary: Obtener actividad
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActividadDetalle" }
+              examples:
+                ejemplo:
+                  value:
+                    actividadId: 1
+                    codigo: "ACT-2025-001"
+                    anioAcademico: "2025-2026"
+                    ugFiltro: "IDP"
+                    unidadGestora: "Institut de Formació Permanent"
+                    estado: "borrador"
+                    fechaInicio: "2025-10-15T09:00:00Z"
+                    fechaFin: "2025-10-15T15:00:00Z"
+                    i18n:
+                      - idioma: "CAS"
+                        titulo: "Introducción a la Docencia Activa"
+                        descripcion: "Curso práctico..."
+        "404": { description: No encontrada }
+    put:
+      summary: Actualizar actividad
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActividadUpdate" }
+            examples:
+              ejemplo:
+                value:
+                  codigo: "ACT-2025-001"
+                  anioAcademico: "2025-2026"
+                  ugFiltro: "IDP"
+                  unidadGestora: "Institut de Formació Permanent"
+                  i18n:
+                    - idioma: "CAS"
+                      titulo: "Título actualizado"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActividadDetalle" }
+  /api/actividades/{id}/estado:
+    patch:
+      summary: Cambiar estado de la actividad
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado: { type: string, enum: [borrador, publicada, cerrada] }
+                motivoCierre: { type: string }
+              required: [estado]
+            examples:
+              publicar:
+                value: { estado: "publicada" }
+              cerrar:
+                value: { estado: "cerrada", motivoCierre: "Fin de edición" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActividadDetalle" }
+        "422": { description: Reglas de publicación no satisfechas }
+  /api/actividades/{id}/i18n/{lang}:
+    put:
+      summary: Upsert de textos por idioma
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: lang
+          required: true
+          schema: { type: string, enum: [CAS, CAT, ENG] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActividadI18NUpsert" }
+            examples:
+              cas:
+                value:
+                  idioma: "CAS"
+                  titulo: "Título"
+                  descripcion: "Descripción"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActividadI18N" }
+  /api/actividades/{id}/subactividades:
+    post:
+      summary: Añadir subactividad
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubactividadCreate" }
+            examples:
+              ejemplo:
+                value:
+                  nombre: "Sesión 1"
+                  orden: 1
+                  fechaInicio: "2025-10-15T09:00:00Z"
+                  fechaFin: "2025-10-15T11:00:00Z"
+                  duracionHoras: 2
+                  modalidad: "Presencial"
+                  ubicacion: "Aula 1"
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Subactividad" }
+  /api/actividades/{id}/participantes:
+    post:
+      summary: Añadir participante
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ParticipanteCreate" }
+            examples:
+              ejemplo:
+                value:
+                  rol: "Docente"
+                  nombre: "Laura Martínez"
+                  email: "laura.martinez@ub.edu"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Participante" }
+components:
+  schemas:
+    ActividadResumen:
+      type: object
+      properties:
+        actividadId: { type: integer }
+        codigo: { type: string }
+        anioAcademico: { type: string }
+        ugFiltro: { type: string }
+        unidadGestora: { type: string }
+        estado: { type: string }
+        fechaInicio: { type: string, format: date-time }
+        fechaFin: { type: string, format: date-time }
+    PagedResultActividadResumen:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ActividadResumen" }
+    ActividadCreate:
+      type: object
+      required: [codigo, anioAcademico, ugFiltro, unidadGestora]
+      properties:
+        codigo: { type: string }
+        anioAcademico: { type: string }
+        tipoActividadId: { type: integer, nullable: true }
+        ugFiltro: { type: string }
+        unidadGestora: { type: string }
+        lineaEstrategicaId: { type: integer, nullable: true }
+        objetivoEstrategicoId: { type: integer, nullable: true }
+        codigoRelacionado: { type: string, nullable: true }
+        reservada: { type: boolean, default: false }
+        fechaActividad: { type: string, format: date, nullable: true }
+        motivoCierre: { type: string, nullable: true }
+        condicionesEconomicas: { type: string, nullable: true }
+        requisitos: { type: string, nullable: true }
+        duracionHoras: { type: number, format: double, nullable: true }
+        fechaInicio: { type: string, format: date-time, nullable: true }
+        fechaFin: { type: string, format: date-time, nullable: true }
+        categoriaSAEId: { type: integer, nullable: true }
+        tipoEstudioSAEId: { type: integer, nullable: true }
+        creditosMinSAE: { type: number, format: double, nullable: true }
+        creditosMaxSAE: { type: number, format: double, nullable: true }
+        economico: { $ref: "#/components/schemas/ActividadEconomico" }
+        inscripcion: { $ref: "#/components/schemas/ActividadInscripcion" }
+        i18n:
+          type: array
+          items: { $ref: "#/components/schemas/ActividadI18NUpsert" }
+        organizadoras:
+          type: array
+          items: { $ref: "#/components/schemas/EntidadOrganizadoraCreate" }
+        colaboradoras:
+          type: array
+          items: { $ref: "#/components/schemas/EntidadColaboradoraCreate" }
+        subactividades:
+          type: array
+          items: { $ref: "#/components/schemas/SubactividadCreate" }
+        participantes:
+          type: array
+          items: { $ref: "#/components/schemas/ParticipanteCreate" }
+    ActividadUpdate:
+      allOf:
+        - $ref: "#/components/schemas/ActividadCreate"
+    ActividadDetalle:
+      allOf:
+        - $ref: "#/components/schemas/ActividadCreate"
+      properties:
+        actividadId: { type: integer }
+        estado: { type: string }
+    ActividadEconomico:
+      type: object
+      properties:
+        importeBase: { type: number, format: double, default: 0 }
+        impuestoPct: { type: number, format: double, default: 0 }
+        descuentoPct: { type: number, format: double, default: 0 }
+        codigoPromocional: { type: string, nullable: true }
+        condiciones: { type: string, nullable: true }
+    ActividadInscripcion:
+      type: object
+      properties:
+        plazas: { type: integer, nullable: true }
+        requisitos: { type: string, nullable: true }
+        fechaInicioInscripcion: { type: string, format: date-time, nullable: true }
+        fechaFinInscripcion: { type: string, format: date-time, nullable: true }
+        urlInscripcion: { type: string, nullable: true }
+    ActividadI18NUpsert:
+      type: object
+      required: [idioma, titulo]
+      properties:
+        idioma: { type: string, enum: [CAS, CAT, ENG] }
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        contenidos: { type: string, nullable: true }
+        objetivos: { type: string, nullable: true }
+        competencias: { type: string, nullable: true }
+        condiciones: { type: string, nullable: true }
+    ActividadI18N:
+      allOf:
+        - $ref: "#/components/schemas/ActividadI18NUpsert"
+      properties:
+        actividadI18NId: { type: integer }
+        actividadId: { type: integer }
+    SubactividadCreate:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string }
+        orden: { type: integer, nullable: true }
+        fechaInicio: { type: string, format: date-time, nullable: true }
+        fechaFin: { type: string, format: date-time, nullable: true }
+        duracionHoras: { type: number, format: double, nullable: true }
+        modalidad: { type: string, nullable: true }
+        ubicacion: { type: string, nullable: true }
+    SubactividadUpdate:
+      allOf:
+        - $ref: "#/components/schemas/SubactividadCreate"
+    Subactividad:
+      allOf:
+        - $ref: "#/components/schemas/SubactividadCreate"
+      properties:
+        subactividadId: { type: integer }
+        actividadId: { type: integer }
+    ParticipanteCreate:
+      type: object
+      required: [rol, nombre]
+      properties:
+        rol: { type: string }
+        nombre: { type: string }
+        email: { type: string, nullable: true }
+        telefono: { type: string, nullable: true }
+        centroUnidad: { type: string, nullable: true }
+    ParticipanteUpdate:
+      allOf:
+        - $ref: "#/components/schemas/ParticipanteCreate"
+    Participante:
+      allOf:
+        - $ref: "#/components/schemas/ParticipanteCreate"
+      properties:
+        participanteId: { type: integer }
+        actividadId: { type: integer }
+    EntidadOrganizadoraCreate:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string }
+        nifCif: { type: string, nullable: true }
+        web: { type: string, nullable: true }
+        personaContacto: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        telefono: { type: string, nullable: true }
+        principal: { type: boolean, default: false }
+    EntidadOrganizadoraUpdate:
+      allOf:
+        - $ref: "#/components/schemas/EntidadOrganizadoraCreate"
+    EntidadOrganizadora:
+      allOf:
+        - $ref: "#/components/schemas/EntidadOrganizadoraCreate"
+      properties:
+        entidadOrgId: { type: integer }
+        actividadId: { type: integer }
+    EntidadColaboradoraCreate:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string }
+        aportacion: { type: string, nullable: true }
+    EntidadColaboradoraUpdate:
+      allOf:
+        - $ref: "#/components/schemas/EntidadColaboradoraCreate"
+    EntidadColaboradora:
+      allOf:
+        - $ref: "#/components/schemas/EntidadColaboradoraCreate"
+      properties:
+        entidadColId: { type: integer }
+        actividadId: { type: integer }
+    MensajeCreate:
+      type: object
+      required: [titulo, cuerpo]
+      properties:
+        actividadId: { type: integer, nullable: true }
+        ugFiltro: { type: string, nullable: true }
+        titulo: { type: string }
+        cuerpo: { type: string }
+        vigente: { type: boolean, default: true }
+    MensajeUpdate:
+      allOf:
+        - $ref: "#/components/schemas/MensajeCreate"
+    Mensaje:
+      allOf:
+        - $ref: "#/components/schemas/MensajeCreate"
+      properties:
+        mensajeId: { type: integer }

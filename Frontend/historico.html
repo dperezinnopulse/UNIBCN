@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Histórico de Propuestas - UB</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    body { background-color: #f5f7fa; }
+    /* Contenedor para diferenciar secciones */
+    .section-title {
+      margin-bottom: 1rem;
+    }
+    /* Estilos para la lista de propuestas */
+    #proposalList[data-view="list"] .proposal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      /* Borde azulado similar al ejemplo */
+      border: 1px solid #d4dffc;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      background-color: #ffffff;
+      text-decoration: none;
+      color: inherit;
+    }
+    #proposalList[data-view="list"] .proposal-item.unread {
+      background-color: #eef5ff;
+    }
+    #proposalList[data-view="list"] .proposal-item .proposal-content {
+      flex-grow: 1;
+    }
+    #proposalList[data-view="list"] .proposal-item .proposal-meta {
+      /* Eliminar alineación a la derecha y ancho fijo para permitir distribución natural */
+      flex-shrink: 0;
+    }
+    /* Vista en tarjetas */
+    #proposalList[data-view="cards"] {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    #proposalList[data-view="cards"] .proposal-item {
+      width: calc(50% - 0.5rem);
+      border: 1px solid #d4dffc;
+      border-radius: 0.5rem;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+    }
+    #proposalList[data-view="cards"] .proposal-item.unread {
+      background-color: #eef5ff;
+    }
+    /* Ajustamos elementos internos en vista de tarjetas */
+    #proposalList[data-view="cards"] .proposal-item .proposal-content {
+      padding: 1rem;
+      flex-grow: 1;
+    }
+    #proposalList[data-view="cards"] .proposal-item .proposal-meta {
+      border-top: 1px solid #dee2e6;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    /* Botones de conmutación de vista */
+    .view-toggle .btn {
+      margin-left: 0.5rem;
+    }
+    .view-toggle .btn.active {
+      background-color: #e7effb;
+      color: #0366d6;
+    }
+  </style>
+  <!-- Estilos para menú lateral y cabecera unificados -->
+  <style>
+    /* Sidebar basic styling: same as otras páginas */
+    .sidebar {
+      background-color: #f7f7f7;
+      width: 260px;
+      min-height: 100vh;
+      transition: width 0.25s ease;
+      overflow-x: hidden;
+    }
+    .sidebar.collapsed {
+      width: 72px !important;
+    }
+    .sidebar .nav-link {
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e7effb;
+      color: #0366d6;
+      font-weight: 600;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #e6e6e6;
+      color: #0366d6;
+    }
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+    }
+    .sidebar.collapsed .link-text {
+      display: none !important;
+    }
+    #sidebarToggle {
+      background-color: transparent;
+      border: none;
+      color: #333;
+      font-size: 1.5rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+      transition: background-color 0.2s;
+    }
+    #sidebarToggle:hover {
+      background-color: #e6e6e6;
+    }
+
+    /* User menu and UG submenu styling for header */
+    .usermenu.d-none, .usersubmenu.d-none { display: none; }
+    .usermenu, .usersubmenu {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      z-index: 1200;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 8px;
+      width: 260px;
+    }
+    .userItem, .ugOption {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .userItem:hover, .ugOption:hover {
+      background: #f2f4f7;
+    }
+    .userItem.with-sub {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ugOption[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .usersubmenu .ugOption {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .usersubmenu .ugOption .chip {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    .usersubmenu .ugOption[data-ug="IDP"] .chip { background: #f59e0b; }
+    .usersubmenu .ugOption[data-ug="CRAI"] .chip { background: #3b82f6; }
+    .usersubmenu .ugOption[data-ug="SAE"] .chip { background: #10b981; }
+    .usersubmenu .ugOption[data-ug="Todas"] .chip { background: #6b7280; }
+    .ugOption.active { background-color: #eef5ff; }
+  </style>
+</head>
+<body>
+  <div class="d-flex">
+    <!-- Menú lateral reutilizable -->
+    <div id="sidebarContainer"></div>
+    <!-- Contenedor principal -->
+    <div class="flex-grow-1">
+      <!-- Cabecera reutilizable -->
+      <div id="headerContainer"></div>
+      <!-- Contenido -->
+      <main class="p-4">
+        <div class="d-flex align-items-center mb-3 flex-wrap gap-3">
+          <h1 class="h4 mb-0 flex-grow-1">Histórico de Propuestas</h1>
+          <!-- Zona de búsqueda, filtros y cambio de vista -->
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" placeholder="Buscar" />
+            </div>
+            <div class="dropdown">
+              <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Filtrar</button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#">Todos</a></li>
+                <li><a class="dropdown-item" href="#">Aprobados</a></li>
+                <li><a class="dropdown-item" href="#">Pendientes</a></li>
+                <li><a class="dropdown-item" href="#">Rechazados</a></li>
+                <li><a class="dropdown-item" href="#">Borrador</a></li>
+              </ul>
+            </div>
+            <div class="view-toggle btn-group" role="group">
+              <button id="listViewBtn" type="button" class="btn btn-outline-secondary" title="Vista de lista">
+                <i class="bi bi-list"></i>
+              </button>
+              <button id="cardViewBtn" type="button" class="btn btn-outline-secondary" title="Vista de tarjetas">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Lista de propuestas -->
+        <div id="proposalList" data-view="list">
+          <!-- Ejemplo de propuesta aprobada -->
+          <div class="proposal-item d-flex justify-content-between align-items-center">
+            <div class="proposal-content">
+              <div class="fw-semibold">Taller de Introducción a Python</div>
+              <div class="small text-muted">25 de octubre de 2024</div>
+            </div>
+            <div class="proposal-meta d-flex align-items-center gap-2">
+              <span class="badge bg-success">Aprobado</span>
+              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
+            </div>
+          </div>
+          <!-- Ejemplo de propuesta pendiente -->
+          <div class="proposal-item d-flex justify-content-between align-items-center">
+            <div class="proposal-content">
+              <div class="fw-semibold">Curso de Diseño UX/UI</div>
+              <div class="small text-muted">25 de octubre de 2024</div>
+            </div>
+            <div class="proposal-meta d-flex align-items-center gap-2">
+              <span class="badge bg-warning text-dark">Pendiente</span>
+              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
+            </div>
+          </div>
+          <!-- Ejemplo de propuesta rechazada -->
+          <div class="proposal-item d-flex justify-content-between align-items-center">
+            <div class="proposal-content">
+              <div class="fw-semibold">Seminario de Ciberseguridad</div>
+              <div class="small text-muted">25 de octubre de 2024</div>
+            </div>
+            <div class="proposal-meta d-flex align-items-center gap-2">
+              <span class="badge bg-danger">Rechazada</span>
+              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
+            </div>
+          </div>
+          <!-- Ejemplo de propuesta borrador -->
+          <div class="proposal-item d-flex justify-content-between align-items-center">
+            <div class="proposal-content">
+              <div class="fw-semibold">Taller de fotografía Digital</div>
+              <div class="small text-muted">25 de octubre de 2024</div>
+            </div>
+            <div class="proposal-meta d-flex align-items-center gap-2">
+              <span class="badge bg-secondary">Borrador</span>
+              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <!-- Bootstrap JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Cargamos el menú lateral reutilizable -->
+  <script src="menu.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadSidebarMenu('sidebarContainer');
+    });
+  </script>
+  <!-- Cargamos la cabecera reutilizable -->
+  <script src="header.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadHeader('headerContainer');
+    });
+  </script>
+  <!-- Script para cambiar la vista de lista a tarjetas -->
+  <script>
+    const listBtn = document.getElementById('listViewBtn');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const proposalList = document.getElementById('proposalList');
+    function setView(view) {
+      proposalList.setAttribute('data-view', view);
+      if (view === 'list') {
+        listBtn.classList.add('active');
+        cardBtn.classList.remove('active');
+      } else {
+        cardBtn.classList.add('active');
+        listBtn.classList.remove('active');
+      }
+    }
+    listBtn.addEventListener('click', () => setView('list'));
+    cardBtn.addEventListener('click', () => setView('cards'));
+    // Inicializamos la vista por defecto
+    setView('list');
+  </script>
+</body>
+</html>

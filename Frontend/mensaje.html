@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mensaje - UB</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    body { background-color: #f5f7fa; }
+    .sidebar { background-color: #f7f7f7; min-height: 100vh; }
+    .sidebar .nav-link {
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e7effb;
+      color: #0366d6;
+      font-weight: 600;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #e6e6e6;
+      color: #0366d6;
+    }
+    /* User menu styles copied from index */
+    .usermenu.d-none, .usersubmenu.d-none { display: none; }
+    .usermenu, .usersubmenu {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      z-index: 1200;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 8px;
+      width: 260px;
+    }
+    .userItem, .ugOption {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .userItem:hover, .ugOption:hover { background: #f2f4f7; }
+    .userItem.with-sub { display: flex; justify-content: space-between; align-items: center; }
+    .ugOption[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .usersubmenu .ugOption { display: flex; align-items: center; gap: 8px; }
+    .usersubmenu .ugOption .chip {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    .usersubmenu .ugOption[data-ug="IDP"] .chip { background: #f59e0b; }
+    .usersubmenu .ugOption[data-ug="CRAI"] .chip { background: #3b82f6; }
+    .usersubmenu .ugOption[data-ug="SAE"] .chip { background: #10b981; }
+    .usersubmenu .ugOption[data-ug="Todas"] .chip { background: #6b7280; }
+    .ugOption.active { background-color: #eef5ff; }
+  </style>
+  <!-- Estilos del menú lateral unificado -->
+  <style>
+    .sidebar {
+      background-color: #f7f7f7;
+      width: 260px;
+      min-height: 100vh;
+      transition: width 0.25s ease;
+      overflow-x: hidden;
+    }
+    .sidebar.collapsed {
+      width: 72px !important;
+    }
+    .sidebar .nav-link {
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e7effb;
+      color: #0366d6;
+      font-weight: 600;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #e6e6e6;
+      color: #0366d6;
+    }
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+    }
+    .sidebar.collapsed .link-text {
+      display: none !important;
+    }
+    #sidebarToggle {
+      background-color: transparent;
+      border: none;
+      color: #333;
+      font-size: 1.5rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+      transition: background-color 0.2s;
+    }
+    #sidebarToggle:hover {
+      background-color: #e6e6e6;
+    }
+  </style>
+</head>
+<body>
+  <div class="d-flex">
+    <!-- Contenedor para el menú lateral cargado dinámicamente -->
+    <div id="sidebarContainer"></div>
+    <!-- Main content -->
+    <div class="flex-grow-1">
+      <!-- Contenedor de la cabecera (se insertará dinámicamente) -->
+      <div id="headerContainer"></div>
+      <!-- Page content -->
+      <main class="p-4">
+        <h2 class="h4 mb-3">Mensaje</h2>
+        <a href="mensajes.html" class="text-decoration-none d-inline-flex align-items-center mb-3">
+          <i class="bi bi-arrow-left me-1"></i> Volver a la bandeja de entrada
+        </a>
+        <!-- Message detail card -->
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h6 class="mb-0">Técnico de Formación</h6>
+              <span class="badge bg-warning text-dark">No leído</span>
+            </div>
+            <div class="row g-3 mt-3">
+              <div class="col-md-4">
+                <label class="small text-muted d-block">Fecha de propuesta</label>
+                <div class="border rounded px-2 py-1 small d-flex align-items-center gap-2">
+                  12/03/2025 <i class="bi bi-calendar"></i>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <label class="small text-muted d-block">Aprobación</label>
+                <div class="border rounded px-2 py-1 small">Taller de fotografía Digital</div>
+              </div>
+              <div class="col-md-3 d-flex align-items-end justify-content-end">
+                <a href="#" class="btn btn-sm btn-primary">Ver detalles</a>
+              </div>
+              <div class="col-12">
+                <label class="small text-muted d-block">Mensaje</label>
+                <textarea class="form-control" rows="3" disabled>Su propuesta 'Taller de Introducción a Python' ha sido aprobada. Puede ver los detalles en su histórico.</textarea>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-transparent d-flex gap-2">
+            <button class="btn btn-secondary" type="button">Responder</button>
+            <button class="btn btn-success" type="button">Marcar como leído</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Cargamos el menú lateral reutilizable -->
+  <script src="menu.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadSidebarMenu('sidebarContainer');
+    });
+  </script>
+  <!-- Cargamos la cabecera reutilizable (incluye menú de usuario y UG) -->
+  <script src="header.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadHeader('headerContainer');
+    });
+  </script>
+</body>
+</html>

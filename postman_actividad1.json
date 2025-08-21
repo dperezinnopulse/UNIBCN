@@ -1,0 +1,43 @@
+{
+  "info": {
+    "name": "UB - Actividad 1 API",
+    "_postman_id": "b0b5e0a0-0000-4000-8000-000000000001",
+    "description": "Colección para probar la API de Actividad 1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Listar actividades",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/actividades?ug=IDP&page=1&pageSize=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","actividades"],
+          "query": [
+            { "key":"ug","value":"IDP" },
+            { "key":"page","value":"1" },
+            { "key":"pageSize","value":"10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Crear actividad mínima",
+      "request": {
+        "method": "POST",
+        "header": [{ "key":"Content-Type", "value":"application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"codigo\":\"ACT-2025-003\",\n  \"anioAcademico\":\"2025-2026\",\n  \"ugFiltro\":\"SAE\",\n  \"unidadGestora\":\"SAE\",\n  \"i18n\":[{\"idioma\":\"CAS\",\"titulo\":\"Nueva actividad\"}],\n  \"organizadoras\":[{\"nombre\":\"Universitat de Barcelona\",\"principal\":true}]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/actividades",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","actividades"]
+        }
+      }
+    }
+  ],
+  "variable": [{ "key": "baseUrl", "value": "https://localhost:5001" }]
+}

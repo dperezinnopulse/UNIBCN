@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Menú Lateral Test</title>
+  <!-- Bootstrap CSS for basic styles and icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    body { margin: 0; background-color: #f5f7fa; }
+    .layout { display: flex; min-height: 100vh; }
+    /* Sidebar base styles */
+    .sidebar {
+      background-color: #f7f7f7;
+      width: 260px;
+      transition: width 0.25s ease;
+      overflow-x: hidden;
+    }
+    .sidebar.collapsed {
+      width: 72px !important;
+    }
+    /* Navigation items */
+    .sidebar .nav-link {
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e7effb;
+      color: #0366d6;
+      font-weight: 600;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #e6e6e6;
+      color: #0366d6;
+    }
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+    }
+    .sidebar.collapsed .link-text {
+      display: none !important;
+    }
+    /* Toggle button styling */
+    #sidebarToggle {
+      background-color: transparent;
+      border: none;
+      color: #333;
+      font-size: 1.5rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: .375rem;
+      transition: background-color 0.2s;
+    }
+    #sidebarToggle:hover {
+      background-color: #e6e6e6;
+    }
+    /* Main content area */
+    .main-content {
+      flex-grow: 1;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside id="appSidebar" class="sidebar collapsed p-2 d-flex flex-column">
+      <div class="text-center mb-4">
+        <img src="img/logo_ub.png" alt="Logo UB" style="max-height:50px;" class="img-fluid"/>
+      </div>
+      <!-- Toggle button -->
+      <button id="sidebarToggle" class="mb-3" type="button">
+        <i class="bi bi-list"></i>
+      </button>
+      <!-- Navigation links -->
+      <nav class="nav flex-column px-2">
+        <a class="nav-link" href="#"><i class="bi bi-clock-history"></i> <span class="link-text">Histórico</span></a>
+        <a class="nav-link" href="#"><i class="bi bi-plus-square"></i> <span class="link-text">Crear nuevo</span></a>
+        <a class="nav-link" href="#"><i class="bi bi-envelope"></i> <span class="link-text">Ver mensajes</span></a>
+      </nav>
+      <!-- Spacer to push logout to the bottom -->
+      <div class="flex-grow-1"></div>
+      <!-- Logout / desconectar link -->
+      <a class="nav-link mt-auto" href="#"><i class="bi bi-box-arrow-right"></i> <span class="link-text">Desconectar</span></a>
+    </aside>
+    <div class="main-content">
+      <h1>Contenido</h1>
+      <p>Prueba de menú lateral colapsable. Utilice el botón para expandir o colapsar el menú.</p>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const sidebar = document.getElementById('appSidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+          sidebar.classList.toggle('collapsed');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
