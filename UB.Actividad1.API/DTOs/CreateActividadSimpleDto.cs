@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UB.Actividad1.API.DTOs;
 
-public class CreateActividadDto
+public class CreateActividadSimpleDto
 {
     // Campos básicos
     public string? Codigo { get; set; }
@@ -21,7 +21,7 @@ public class CreateActividadDto
     public string? LineaEstrategica { get; set; }
     public string? ObjetivoEstrategico { get; set; }
     public string? CodigoRelacionado { get; set; }
-    public string? ActividadReservada { get; set; }
+    public bool? ActividadReservada { get; set; }
     public DateTime? FechaActividad { get; set; }
     public string? MotivoCierre { get; set; }
     public string? PersonaSolicitante { get; set; }
@@ -75,11 +75,22 @@ public class CreateActividadDto
     public string? CategoriaSAE { get; set; }
     public string? CompetenciesSAE { get; set; }
     
-    // Entidades organizadoras
-    public List<EntidadOrganizadoraDto>? EntidadesOrganizadoras { get; set; }
+    // Campos de entidades organizadoras (campos individuales)
+    public string? Org_principal { get; set; }
+    public string? Org_nif { get; set; }
+    public string? Org_web { get; set; }
+    public string? Org_contacto { get; set; }
+    public string? Org_email { get; set; }
+    public string? Org_tel { get; set; }
     
-    // Importes y descuentos
-    public List<ImporteDescuentoDto>? ImportesDescuentos { get; set; }
+    // Campos de importes (campos individuales)
+    public decimal? Imp_base { get; set; }
+    public string? Imp_tipo { get; set; }
+    public decimal? Imp_descuento_pct { get; set; }
+    public string? Imp_codigo { get; set; }
+    public string? Imp_condiciones_es { get; set; }
+    public string? Imp_condiciones_ca { get; set; }
+    public string? Imp_condiciones_en { get; set; }
     
     // Participantes
     public List<ParticipanteDto>? Participantes { get; set; }
@@ -87,48 +98,3 @@ public class CreateActividadDto
     // Subactividades
     public List<SubactividadDto>? Subactividades { get; set; }
 }
-
-public class EntidadOrganizadoraDto
-{
-    public string Nombre { get; set; } = string.Empty;
-    public string? NifCif { get; set; }
-    public string? Web { get; set; }
-    public string? PersonaContacto { get; set; }
-    public string? Email { get; set; }
-    public string? Telefono { get; set; }
-    public bool EsPrincipal { get; set; } = false;
-}
-
-public class ImporteDescuentoDto
-{
-    public decimal? ImporteBase { get; set; }
-    public string? TipoImpuesto { get; set; }
-    public decimal? PorcentajeDescuento { get; set; }
-    public string? CodigoPromocional { get; set; }
-    public string? CondicionesES { get; set; }
-    public string? CondicionesCA { get; set; }
-    public string? CondicionesEN { get; set; }
-}
-
-public class ParticipanteDto
-{
-    public string Nombre { get; set; } = string.Empty;
-    public string? Email { get; set; }
-    public string? Rol { get; set; }
-}
-
-public class SubactividadDto
-{
-    public string Titulo { get; set; } = string.Empty;
-    public string? Descripcion { get; set; }
-    public string? Modalidad { get; set; }
-    public string? Docente { get; set; }
-    public DateTime? FechaInicio { get; set; }
-    public DateTime? FechaFin { get; set; }
-    public string? HoraInicio { get; set; }
-    public string? HoraFin { get; set; }
-    public decimal? Duracion { get; set; }
-    public string? Ubicacion { get; set; }
-    public int? Aforo { get; set; }
-    public string? Idioma { get; set; }
-} 

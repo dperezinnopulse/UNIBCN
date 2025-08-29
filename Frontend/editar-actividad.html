@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<title>Propuesta de Actividad - UB</title>
+<title>Editar Actividad - UB</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
 
@@ -151,10 +151,11 @@ header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
 </div>
 </div>
 <div class="bg-white rounded shadow p-4 mb-5">
-<h2 class="h5 mb-4 text-primary">Información general</h2>
+<h2 class="h5 mb-4 text-primary">Editar Información General</h2>
 <div class="alert alert-info">
-    <strong>Versión del script:</strong> scripts.js?v=1.0.29
+    <strong>Versión del script:</strong> scripts.js?v=1.0.53
 </div>
+<input type="hidden" id="actividadId" />
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" id="actividadCodigo" type="text"/></div>
 <div class="col-md-4 position-relative">
@@ -511,25 +512,37 @@ function toggleImporte() {
   if (partCont && !partCont.children.length) window.addParticipante();
 })();
 
-// Inicializar dominios cuando se carga la página
+// Agregar botón de actualizar al final del formulario
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DEBUG: DOMContentLoaded - Inicializando dominios...');
-    // Esperar a que todos los scripts se carguen
-    setTimeout(() => {
-        if (typeof cargarDominios === 'function') {
-            cargarDominios();
-        } else {
-            console.log('⚠️ Función cargarDominios no disponible, esperando...');
-            setTimeout(() => {
-                if (typeof cargarDominios === 'function') {
-                    cargarDominios();
-                } else {
-                    console.error('❌ Función cargarDominios no encontrada');
-                }
-            }, 2000);
-        }
-    }, 1500);
+    // Buscar el contenedor principal del formulario
+    const mainContainer = document.querySelector('main');
+    if (mainContainer) {
+        // Crear contenedor para botones
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'bg-white rounded shadow p-4 mt-4';
+        buttonContainer.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-secondary" onclick="window.history.back()" type="button">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="rellenarConDatosPrueba()" type="button">
+                        <i class="bi bi-database me-2"></i>Rellenar con datos de prueba
+                    </button>
+                    <button class="btn btn-primary" onclick="guardarActividad()" type="button">
+                        <i class="bi bi-save me-2"></i>Actualizar Actividad
+                    </button>
+                </div>
+            </div>
+        `;
+        mainContainer.appendChild(buttonContainer);
+    }
 });
+
+// Los dominios ahora se cargan automáticamente desde scripts.js
+// No es necesario llamar cargarDominios() aquí
 </script>
     <script src="scripts.js?v=1.0.53&t=1756368000"></script>
 </body>
