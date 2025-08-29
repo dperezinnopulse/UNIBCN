@@ -16,17 +16,33 @@ public class Subactividad
     [MaxLength(500)]
     public string? Descripcion { get; set; }
     
+    [MaxLength(100)]
+    public string? Modalidad { get; set; }
+    
+    [MaxLength(200)]
+    public string? Docente { get; set; }
+    
     public DateTime? FechaInicio { get; set; }
     public DateTime? FechaFin { get; set; }
     
-    [MaxLength(200)]
-    public string? Lugar { get; set; }
+    [MaxLength(10)]
+    public string? HoraInicio { get; set; }
+    
+    [MaxLength(10)]
+    public string? HoraFin { get; set; }
+    
+    public decimal? Duracion { get; set; }
     
     [MaxLength(200)]
-    public string? Responsable { get; set; }
+    public string? Ubicacion { get; set; }
     
-    public int Orden { get; set; } = 0;
+    public int? Aforo { get; set; }
+    
+    [MaxLength(50)]
+    public string? Idioma { get; set; }
+    
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
     public virtual Actividad Actividad { get; set; } = null!;

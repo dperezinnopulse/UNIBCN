@@ -2,26 +2,23 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UB.Actividad1.API.Models;
 
-public class Participante
+public class Dominio
 {
-    [Key]
     public int Id { get; set; }
-    
-    public int ActividadId { get; set; }
     
     [Required]
     [MaxLength(100)]
     public string Nombre { get; set; } = string.Empty;
     
-    [MaxLength(100)]
-    public string? Email { get; set; }
+    [MaxLength(500)]
+    public string? Descripcion { get; set; }
     
-    [MaxLength(50)]
-    public string? Rol { get; set; }
+    public bool Activo { get; set; } = true;
     
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    
     public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
     
-    // Navigation properties
-    public virtual Actividad Actividad { get; set; } = null!;
-} 
+    // Navigation property
+    public virtual ICollection<ValorDominio> Valores { get; set; } = new List<ValorDominio>();
+}
