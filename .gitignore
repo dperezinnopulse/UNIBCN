@@ -1,0 +1,35 @@
+# Ignore build outputs, logs, large generated artifacts
+
+# .NET / build
+[Bb]in/
+[Oo]bj/
+*.pdb
+*.dll
+*.exe
+*.log
+
+# Static web assets and caches
+**/staticwebassets/**
+*.assets.cache
+*.json.cache
+*.dswa.cache.json
+*.cache
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests artifacts
+/tests/screenshots/
+/debug_*.json
+
+# Project-specific large files
+Frontend/scripts.js
+UB.Actividad1.API/backend*.log
+WebServer/bin/
+WebServer/obj/
+Test-Mini-API/bin/
+Test-Mini-API/obj/
