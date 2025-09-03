@@ -1,0 +1,852 @@
+[
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.8665278
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Iniciando aplicación...",
+    "timestamp": 1756713628.8698368
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: getEstados - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.8706884
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.8715477
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - URL completa: http://localhost:5001/api/estados",
+    "timestamp": 1756713628.8721902
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Puerto: 5001",
+    "timestamp": 1756713628.8727727
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Método: GET",
+    "timestamp": 1756713628.8736057
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: initializePage - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.874175
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: initializePage - Iniciando inicialización de la página...",
+    "timestamp": 1756713628.875108
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: initializePage - Cargando unidades de gestión...",
+    "timestamp": 1756713628.8755095
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: getUnidadesGestion - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.8757482
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Versión del script: scripts.js?v=1.0.6",
+    "timestamp": 1756713628.87642
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - URL completa: http://localhost:5001/api/unidades-gestion",
+    "timestamp": 1756713628.8773737
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Puerto: 5001",
+    "timestamp": 1756713628.8778522
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: makeRequest - Método: GET",
+    "timestamp": 1756713628.8784063
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: DOMContentLoaded - Evento click configurado para btnGuardarActividad",
+    "timestamp": 1756713628.8788464
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: DOMContentLoaded - Evento click configurado para btnTestGuardar",
+    "timestamp": 1756713628.879156
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: DOMContentLoaded - Evento click configurado para btnGuardarBorrador",
+    "timestamp": 1756713628.8795083
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: DOMContentLoaded - Evento click configurado para btnRestaurarBorrador",
+    "timestamp": 1756713628.8802795
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: DOMContentLoaded - Evento click configurado para btnVaciarBorrador",
+    "timestamp": 1756713628.8807402
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Inicializando dominios...",
+    "timestamp": 1756713628.8813138
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - URL actual: http://localhost:8080/editar-actividad.html?id=60",
+    "timestamp": 1756713628.8819091
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Pathname: /editar-actividad.html",
+    "timestamp": 1756713628.8861725
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Parámetros de URL: {id: 60}",
+    "timestamp": 1756713628.8869336
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - ID de actividad: 60",
+    "timestamp": 1756713628.8872879
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Modo edición detectado, ID: 60",
+    "timestamp": 1756713628.8878782
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - ID establecido en campo oculto: 60",
+    "timestamp": 1756713628.8881943
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: DOMContentLoaded - Llamando a cargarActividadParaEdicion...",
+    "timestamp": 1756713628.888432
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Cargando actividad con ID: 60",
+    "timestamp": 1756713628.8886957
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - URL: http://localhost:5001/api/actividades/60",
+    "timestamp": 1756713628.8889706
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Response status: 200",
+    "timestamp": 1756713628.895192
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Response ok: true",
+    "timestamp": 1756713628.8974867
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: initializePage - Saltando carga de dominios (modo edición)...",
+    "timestamp": 1756713628.8978634
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: initializePage - Modo edición detectado, ID: 60",
+    "timestamp": 1756713628.8981228
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: cargarActividadParaEdicionSinDominios - Actividad cargada: {id: 60, codigo: Prueba1, anioAcademico: 2024-25, titulo: Jornada de Innovacion Tecnologica 2025, descripcion: Esta actividad fue creada automaticamente para probar el frontend}",
+    "timestamp": 1756713628.8983555
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Esperando a que el DOM esté listo...",
+    "timestamp": 1756713628.8985894
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Cargando dominios después de DOM listo...",
+    "timestamp": 1756713628.9091556
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarDominios - Iniciando carga de dominios...",
+    "timestamp": 1756713628.9098253
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando TIPOS_ACTIVIDAD en tipoActividad",
+    "timestamp": 1756713628.9101665
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.913499
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando LINEAS_ESTRATEGICAS en lineaEstrategica",
+    "timestamp": 1756713628.918607
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9232407
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando OBJETIVOS_ESTRATEGICOS en objetivoEstrategico",
+    "timestamp": 1756713628.9251485
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9277303
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando ACTIVIDADES_RESERVADAS en actividadReservada",
+    "timestamp": 1756713628.9291184
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.930854
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando MODALIDADES_GESTION en modalidadGestion",
+    "timestamp": 1756713628.9313152
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9327784
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando FACULTADES en facultadDestinataria",
+    "timestamp": 1756713628.9332073
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.933662
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando DEPARTAMENTOS en departamentoDestinatario",
+    "timestamp": 1756713628.9339225
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9342377
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando CENTROS_UB en centroUnidadUBDestinataria",
+    "timestamp": 1756713628.9346871
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9351797
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando TIPOS_IMPUESTO en imp_tipo",
+    "timestamp": 1756713628.9354336
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.935829
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando UNIDADES_GESTION en actividadUnidadGestion",
+    "timestamp": 1756713628.9369307
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.938577
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando OPCIONES_SI_NO en centroTrabajoRequerido",
+    "timestamp": 1756713628.941366
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.943406
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando TIPUS_ESTUDI_SAE en tipusEstudiSAE",
+    "timestamp": 1756713628.9439578
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.945087
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: cargarDominios - Cargando CATEGORIAS_SAE en categoriaSAE",
+    "timestamp": 1756713628.9470954
+  },
+  {
+    "type": "log",
+    "text": "⚠️ Elemento no encontrado: JSHandle@node",
+    "timestamp": 1756713628.9481187
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: cargarDominios - Completado. 13 dominios cargados, 0 elementos no encontrados",
+    "timestamp": 1756713628.9486682
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: llenarFormularioConActividad - Llenando formulario...",
+    "timestamp": 1756713628.9491403
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Título recibido: undefined",
+    "timestamp": 1756713628.949559
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Código recibido: undefined",
+    "timestamp": 1756713628.9499726
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Año académico recibido: undefined",
+    "timestamp": 1756713628.9502637
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Descripción recibida: undefined",
+    "timestamp": 1756713628.9509082
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Lugar recibido: undefined",
+    "timestamp": 1756713628.9512594
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Condiciones económicas recibidas: undefined",
+    "timestamp": 1756713628.951672
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Línea estratégica recibida: undefined",
+    "timestamp": 1756713628.9520612
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Objetivo estratégico recibido: undefined",
+    "timestamp": 1756713628.9527457
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Código relacionado recibido: undefined",
+    "timestamp": 1756713628.95301
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Fecha actividad recibida: undefined",
+    "timestamp": 1756713628.9533002
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Persona solicitante recibida: undefined",
+    "timestamp": 1756713628.953636
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Coordinador recibido: undefined",
+    "timestamp": 1756713628.9540062
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Jefe unidad gestora recibido: undefined",
+    "timestamp": 1756713628.9546683
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Gestor actividad recibido: undefined",
+    "timestamp": 1756713628.9549706
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Facultad destinataria recibida: undefined",
+    "timestamp": 1756713628.9554102
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Departamento destinatario recibido: undefined",
+    "timestamp": 1756713628.9557166
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Centro unidad UB destinataria recibido: undefined",
+    "timestamp": 1756713628.9560778
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Otros centros recibidos: undefined",
+    "timestamp": 1756713628.9563782
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Plazas totales recibidas: undefined",
+    "timestamp": 1756713628.9566808
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Horas totales recibidas: undefined",
+    "timestamp": 1756713628.9570796
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Centro trabajo requerido recibido: undefined",
+    "timestamp": 1756713628.9577463
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Modalidad gestión recibida: undefined",
+    "timestamp": 1756713628.9581091
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: llenarFormularioConActividad - Actividad pago recibida: undefined",
+    "timestamp": 1756713628.958364
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: llenarFormularioConActividad - Título establecido en: ",
+    "timestamp": 1756713628.9586666
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: llenarFormularioConActividad - Formulario llenado correctamente",
+    "timestamp": 1756713628.95892
+  },
+  {
+    "type": "log",
+    "text": "🔍 DEBUG: verificarCamposLlenados - Verificando campos...",
+    "timestamp": 1756713628.9593425
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo actividadTitulo: VACÍO",
+    "timestamp": 1756713628.9598806
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo actividadCodigo: VACÍO",
+    "timestamp": 1756713628.9600759
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo actividadAnioAcademico: VACÍO",
+    "timestamp": 1756713628.9602978
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo actividadUnidadGestion: VACÍO",
+    "timestamp": 1756713628.9605176
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo condicionesEconomicas: VACÍO",
+    "timestamp": 1756713628.9607065
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo lineaEstrategica: VACÍO",
+    "timestamp": 1756713628.9609096
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo objetivoEstrategico: VACÍO",
+    "timestamp": 1756713628.9610987
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo codigoRelacionado: VACÍO",
+    "timestamp": 1756713628.9612653
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo fechaActividad: VACÍO",
+    "timestamp": 1756713628.9614205
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo motivoCierre: VACÍO",
+    "timestamp": 1756713628.9616032
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo personaSolicitante: VACÍO",
+    "timestamp": 1756713628.9617903
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo coordinador: VACÍO",
+    "timestamp": 1756713628.961944
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo jefeUnidadGestora: VACÍO",
+    "timestamp": 1756713628.9621024
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo gestorActividad: VACÍO",
+    "timestamp": 1756713628.9622579
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo facultadDestinataria: VACÍO",
+    "timestamp": 1756713628.962663
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo departamentoDestinatario: VACÍO",
+    "timestamp": 1756713628.962824
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo centroUnidadUBDestinataria: VACÍO",
+    "timestamp": 1756713628.9629807
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo otrosCentrosInstituciones: VACÍO",
+    "timestamp": 1756713628.9631324
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo plazasTotales: VACÍO",
+    "timestamp": 1756713628.9633632
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo horasTotales: VACÍO",
+    "timestamp": 1756713628.9635634
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo centroTrabajoRequerido: VACÍO",
+    "timestamp": 1756713628.9637187
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo modalidadGestion: VACÍO",
+    "timestamp": 1756713628.963915
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo fechaInicioImparticion: VACÍO",
+    "timestamp": 1756713628.9640822
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo fechaFinImparticion: VACÍO",
+    "timestamp": 1756713628.964267
+  },
+  {
+    "type": "log",
+    "text": "✅ Campo actividadPago: \"on\"",
+    "timestamp": 1756713628.9644318
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo coordinadorCentreUnitat: VACÍO",
+    "timestamp": 1756713628.9646082
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo centreTreballeAlumne: VACÍO",
+    "timestamp": 1756713628.9647644
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo creditosTotalesCRAI: VACÍO",
+    "timestamp": 1756713628.9649365
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo creditosTotalesSAE: VACÍO",
+    "timestamp": 1756713628.9651213
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo creditosMinimosSAE: VACÍO",
+    "timestamp": 1756713628.9652886
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo creditosMaximosSAE: VACÍO",
+    "timestamp": 1756713628.9654682
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_inicio: VACÍO",
+    "timestamp": 1756713628.965662
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_fin: VACÍO",
+    "timestamp": 1756713628.9658222
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_plazas: VACÍO",
+    "timestamp": 1756713628.9660122
+  },
+  {
+    "type": "log",
+    "text": "✅ Campo insc_lista_espera: \"on\"",
+    "timestamp": 1756713628.9661913
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_modalidad: VACÍO",
+    "timestamp": 1756713628.966361
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_requisitos_es: VACÍO",
+    "timestamp": 1756713628.966521
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_requisitos_ca: VACÍO",
+    "timestamp": 1756713628.9666731
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo insc_requisitos_en: VACÍO",
+    "timestamp": 1756713628.9668393
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_descripcion_es: VACÍO",
+    "timestamp": 1756713628.9669914
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_descripcion_ca: VACÍO",
+    "timestamp": 1756713628.9671402
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_descripcion_en: VACÍO",
+    "timestamp": 1756713628.9672878
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_contenidos_es: VACÍO",
+    "timestamp": 1756713628.9674625
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_contenidos_ca: VACÍO",
+    "timestamp": 1756713628.9676256
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_contenidos_en: VACÍO",
+    "timestamp": 1756713628.9677942
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_objetivos_es: VACÍO",
+    "timestamp": 1756713628.9679563
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_objetivos_ca: VACÍO",
+    "timestamp": 1756713628.9681377
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_objetivos_en: VACÍO",
+    "timestamp": 1756713628.9683044
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_duracion: VACÍO",
+    "timestamp": 1756713628.968505
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_inicio: VACÍO",
+    "timestamp": 1756713628.968699
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo programa_fin: VACÍO",
+    "timestamp": 1756713628.9688647
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo tipusEstudiSAE: VACÍO",
+    "timestamp": 1756713628.969023
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo categoriaSAE: VACÍO",
+    "timestamp": 1756713628.9691749
+  },
+  {
+    "type": "log",
+    "text": "❌ Campo competenciesSAE: VACÍO",
+    "timestamp": 1756713628.9693604
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Estableciendo valores en dropdowns...",
+    "timestamp": 1756713628.9695597
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - Estableciendo valores en dropdowns...",
+    "timestamp": 1756713628.96976
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - actividadUnidadGestion, valor: 1",
+    "timestamp": 1756713628.9700646
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: establecerValoresDropdowns - actividadUnidadGestion establecido: IDP - Institut de Desenvolupament Professional",
+    "timestamp": 1756713628.9703348
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - lineaEstrategica, valor: undefined",
+    "timestamp": 1756713628.970577
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - objetivoEstrategico, valor: undefined",
+    "timestamp": 1756713628.9707787
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - centroUnidadUBDestinataria, valor: Facultad de Informatica",
+    "timestamp": 1756713628.970987
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - centroTrabajoRequerido, valor: Si",
+    "timestamp": 1756713628.9712327
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - tipoActividad, valor: Jornada",
+    "timestamp": 1756713628.9714363
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: establecerValoresDropdowns - tipoActividad establecido: Jornada",
+    "timestamp": 1756713628.971641
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - modalidadGestion, valor: Acreditada UB",
+    "timestamp": 1756713628.9718366
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: establecerValoresDropdowns - modalidadGestion establecido: Acreditada UB",
+    "timestamp": 1756713628.9721088
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - tipusEstudiSAE, valor: undefined",
+    "timestamp": 1756713628.9725087
+  },
+  {
+    "type": "log",
+    "text": "🔧 DEBUG: establecerValoresDropdowns - categoriaSAE, valor: undefined",
+    "timestamp": 1756713628.9727237
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: establecerValoresDropdowns - Valores de dropdowns establecidos",
+    "timestamp": 1756713628.9728804
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Cargando datos adicionales sin dominios...",
+    "timestamp": 1756713628.9730334
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarDatosAdicionalesSinDominios - ID utilizado: 60",
+    "timestamp": 1756713628.9732091
+  },
+  {
+    "type": "log",
+    "text": "🚀 DEBUG: cargarDatosAdicionalesSinDominios - Iniciando carga de datos adicionales sin dominios...",
+    "timestamp": 1756713628.9733706
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "timestamp": 1756713628.9735548
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "timestamp": 1756713628.9737825
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "timestamp": 1756713628.9738998
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "timestamp": 1756713628.9743319
+  },
+  {
+    "type": "log",
+    "text": "✅ DEBUG: cargarDatosAdicionalesSinDominios - Datos adicionales cargados correctamente",
+    "timestamp": 1756713628.974522
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+    "timestamp": 1756713628.9746878
+  }
+]

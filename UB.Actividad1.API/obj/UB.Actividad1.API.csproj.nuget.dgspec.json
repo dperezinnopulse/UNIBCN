@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Dev\\UP\\UNIBCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj": {}
+    "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj": {}
   },
   "projects": {
-    "C:\\Dev\\UP\\UNIBCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj": {
+    "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Dev\\UP\\UNIBCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj",
+        "projectUniqueName": "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj",
         "projectName": "UB.Actividad1.API",
-        "projectPath": "C:\\Dev\\UP\\UNIBCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj",
-        "packagesPath": "C:\\Users\\Administrador\\.nuget\\packages\\",
-        "outputPath": "C:\\Dev\\UP\\UNIBCN\\UB.Actividad1.API\\obj\\",
+        "projectPath": "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj",
+        "packagesPath": "C:\\Users\\USER\\.nuget\\packages\\",
+        "outputPath": "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Administrador\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\USER\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -37,8 +37,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "9.0.300"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -84,7 +83,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.303/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.413/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

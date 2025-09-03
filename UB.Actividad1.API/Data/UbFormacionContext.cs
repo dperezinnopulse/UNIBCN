@@ -103,7 +103,7 @@ public class UbFormacionContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.Telefono).HasMaxLength(50);
             entity.HasOne(e => e.Actividad)
-                  .WithMany(a => a.EntidadesOrganizadoras)
+                  .WithMany()
                   .HasForeignKey(e => e.ActividadId)
                   .OnDelete(DeleteBehavior.Cascade);
         });

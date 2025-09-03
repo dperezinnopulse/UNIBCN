@@ -1,0 +1,275 @@
+{
+  "timestamp": "2025-09-01T10:34:43.871799",
+  "test_run": "Ciclo de Screenshots",
+  "pages": {
+    "index": {
+      "url": "http://localhost:8080/index.html",
+      "error": "'options_count'",
+      "status": "❌ ERROR"
+    },
+    "editar-actividad": {
+      "url": "http://localhost:8080/editar-actividad.html?id=60",
+      "description": "Edición de actividad",
+      "dropdown_states": {
+        "tipoActividad": {
+          "exists": true,
+          "options_count": 9,
+          "options_preview": [
+            "Seleccionar...",
+            "Jornada",
+            "Curso"
+          ],
+          "status": "✅ OK"
+        },
+        "lineaEstrategica": {
+          "exists": true,
+          "options_count": 6,
+          "options_preview": [
+            "Seleccionar...",
+            "Linea 1",
+            "Linea 2"
+          ],
+          "status": "✅ OK"
+        },
+        "objetivoEstrategico": {
+          "exists": true,
+          "options_count": 6,
+          "options_preview": [
+            "Seleccionar...",
+            "Linea 1",
+            "Linea 2"
+          ],
+          "status": "✅ OK"
+        },
+        "actividadReservada": {
+          "exists": true,
+          "options_count": 5,
+          "options_preview": [
+            "Seleccionar...",
+            "PDI",
+            "PAS"
+          ],
+          "status": "✅ OK"
+        },
+        "modalidadGestion": {
+          "exists": true,
+          "options_count": 4,
+          "options_preview": [
+            "Seleccionar...",
+            "Acreditada UB",
+            "Externa"
+          ],
+          "status": "✅ OK"
+        },
+        "centroUnidadUBDestinataria": {
+          "exists": true,
+          "options_count": 11,
+          "options_preview": [
+            "Seleccionar...",
+            "Facultad de Informatica",
+            "Facultad de Matematicas"
+          ],
+          "status": "✅ OK"
+        },
+        "actividadUnidadGestion": {
+          "exists": true,
+          "options_count": 4,
+          "options_preview": [
+            "Seleccionar unidad...",
+            "CRAI - Centre de Recursos per a l'Aprenentatge i la Investigaci??",
+            "IDP - Institut de Desenvolupament Professional"
+          ],
+          "status": "✅ OK"
+        }
+      },
+      "console_logs": [
+        {
+          "type": "log",
+          "text": "🔧 DEBUG: establecerValoresDropdowns - categoriaSAE, valor: undefined",
+          "timestamp": "2025-09-01T10:34:52.248166"
+        },
+        {
+          "type": "log",
+          "text": "✅ DEBUG: establecerValoresDropdowns - Valores de dropdowns establecidos",
+          "timestamp": "2025-09-01T10:34:52.248258"
+        },
+        {
+          "type": "log",
+          "text": "🚀 DEBUG: cargarActividadParaEdicionSinDominios - Cargando datos adicionales sin dominios...",
+          "timestamp": "2025-09-01T10:34:52.248357"
+        },
+        {
+          "type": "log",
+          "text": "🚀 DEBUG: cargarDatosAdicionalesSinDominios - ID utilizado: 60",
+          "timestamp": "2025-09-01T10:34:52.248503"
+        },
+        {
+          "type": "log",
+          "text": "🚀 DEBUG: cargarDatosAdicionalesSinDominios - Iniciando carga de datos adicionales sin dominios...",
+          "timestamp": "2025-09-01T10:34:52.248595"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "timestamp": "2025-09-01T10:34:52.248833"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "timestamp": "2025-09-01T10:34:52.249086"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "timestamp": "2025-09-01T10:34:52.249334"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "timestamp": "2025-09-01T10:34:52.249581"
+        },
+        {
+          "type": "log",
+          "text": "✅ DEBUG: cargarDatosAdicionalesSinDominios - Datos adicionales cargados correctamente",
+          "timestamp": "2025-09-01T10:34:52.249805"
+        }
+      ],
+      "network_errors": [
+        {
+          "url": "http://localhost:5001/api/actividades/60/entidades",
+          "status": 404,
+          "timestamp": "2025-09-01T10:34:52.248774"
+        },
+        {
+          "url": "http://localhost:5001/api/actividades/60/importes",
+          "status": 404,
+          "timestamp": "2025-09-01T10:34:52.249025"
+        },
+        {
+          "url": "http://localhost:5001/api/actividades/60/participantes",
+          "status": 404,
+          "timestamp": "2025-09-01T10:34:52.249277"
+        },
+        {
+          "url": "http://localhost:5001/api/actividades/60/subactividades",
+          "status": 404,
+          "timestamp": "2025-09-01T10:34:52.249523"
+        }
+      ],
+      "screenshots": [
+        "editar-actividad_01_carga_inicial.png",
+        "editar-actividad_02_despues_async.png",
+        "editar-actividad_03_dropdowns_analysis.png",
+        "editar-actividad_05_estado_final.png"
+      ],
+      "status": "❌ ISSUES"
+    },
+    "test-simple": {
+      "url": "http://localhost:8080/test-simple.html",
+      "description": "Página de prueba simple",
+      "dropdown_states": {
+        "tipoActividad": {
+          "exists": true,
+          "options_count": 1,
+          "options_preview": [
+            "Jornada"
+          ],
+          "status": "❌ VACÍO"
+        },
+        "lineaEstrategica": {
+          "exists": true,
+          "options_count": 1,
+          "options_preview": [
+            "Línea 1"
+          ],
+          "status": "❌ VACÍO"
+        },
+        "objetivoEstrategico": {
+          "exists": false,
+          "status": "❌ NO EXISTE"
+        },
+        "actividadReservada": {
+          "exists": false,
+          "status": "❌ NO EXISTE"
+        },
+        "modalidadGestion": {
+          "exists": false,
+          "status": "❌ NO EXISTE"
+        },
+        "centroUnidadUBDestinataria": {
+          "exists": false,
+          "status": "❌ NO EXISTE"
+        },
+        "actividadUnidadGestion": {
+          "exists": false,
+          "status": "❌ NO EXISTE"
+        }
+      },
+      "console_logs": [
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: modalidadGestion",
+          "timestamp": "2025-09-01T10:34:58.604541"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: facultadDestinataria",
+          "timestamp": "2025-09-01T10:34:58.604699"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: departamentoDestinatario",
+          "timestamp": "2025-09-01T10:34:58.604838"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: centroUnidadUBDestinataria",
+          "timestamp": "2025-09-01T10:34:58.604997"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: imp_tipo",
+          "timestamp": "2025-09-01T10:34:58.605145"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: actividadUnidadGestion",
+          "timestamp": "2025-09-01T10:34:58.605260"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: centroTrabajoRequerido",
+          "timestamp": "2025-09-01T10:34:58.605368"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: tipusEstudiSAE",
+          "timestamp": "2025-09-01T10:34:58.605470"
+        },
+        {
+          "type": "warning",
+          "text": "⚠️ DEBUG: cargarDominios - Elemento no encontrado: categoriaSAE",
+          "timestamp": "2025-09-01T10:34:58.605607"
+        },
+        {
+          "type": "log",
+          "text": "✅ DEBUG: cargarDominios - Completado. 2 dominios cargados, 11 elementos no encontrados",
+          "timestamp": "2025-09-01T10:34:58.605753"
+        }
+      ],
+      "network_errors": [],
+      "screenshots": [
+        "test-simple_01_carga_inicial.png",
+        "test-simple_02_despues_async.png",
+        "test-simple_03_dropdowns_analysis.png",
+        "test-simple_05_estado_final.png"
+      ],
+      "status": "❌ ISSUES"
+    },
+    "test-formulario": {
+      "url": "http://localhost:8080/test-formulario.html",
+      "error": "'options_count'",
+      "status": "❌ ERROR"
+    }
+  }
+}

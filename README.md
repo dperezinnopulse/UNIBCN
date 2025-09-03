@@ -1,8 +1,8 @@
 # UB Actividad 1 - Sistema de Gestión de Actividades Formativas
 
-**Versión**: 0.1  
-**Estado**: Backend funcional, Frontend con prototipos  
-**Fecha**: 21 Agosto 2025
+**Versión**: 1.1.0  
+**Estado**: Backend funcional. Frontend de edición cargando datos reales; guardado pendiente (400 por tipos numéricos).  
+**Fecha**: 3 Septiembre 2025
 
 ## 🎯 Descripción del Proyecto
 
@@ -33,7 +33,7 @@ cd UNIBCN
 - **Frontend**: Frontend/index.html
 - **Pruebas**: Frontend/test-api.html
 
-## 📋 Estado Actual (v0.1)
+## 📋 Estado Actual (v1.1.0)
 
 ### ✅ Completado
 - **Backend API**: Todos los endpoints implementados y funcionales

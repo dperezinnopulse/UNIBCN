@@ -32,41 +32,29 @@
 ## ⚠️ Problemas Actuales
 
 ### Backend
-- **Problema principal**: El backend no se inicia correctamente
-- **Síntomas**: 
-  - `dotnet run` no responde
-  - No se puede conectar a ningún puerto (5001, 7001, 8080)
-  - No hay errores visibles en la consola
-- **Posibles causas**:
-  - Problema con la configuración de red/firewall
-  - Conflicto de puertos
-  - Problema con Entity Framework o base de datos
-  - Error en la configuración de .NET
+- ✅ Backend .NET 8 ejecutándose en `http://localhost:5001` (CORS y HTTP habilitados)
+- ✅ Endpoints de dominios, unidades de gestión, entidades relacionadas y actividad funcionando
+- ⚠️ PUT `/api/actividades/{id}` devolviendo 400 cuando el frontend envía números como strings
 
 ### Frontend
-- ✅ **Funcionando en modo demo** con datos hardcodeados
-- ✅ **Interfaz completa** implementada
-- ✅ **Integración preparada** para cuando el backend funcione
+- ✅ Carga de datos reales completa en `editar-actividad.html?id=60`
+- ✅ Selects poblados y seleccionados correctamente (incl. reservas, centros, modalidades, etc.)
+- ✅ Secciones dinámicas (Subactividades, Participantes, Colaboradoras, Importes)
+- ⚠️ Envío: campos numéricos salen como strings (p.ej. "100", "4.5"). Falta conversión antes del fetch.
 
 ## 🔧 Próximos Pasos
 
-### 1. Resolver Problema del Backend (Prioridad Alta)
-- [ ] Verificar configuración de firewall de Windows
-- [ ] Probar con puertos diferentes
-- [ ] Verificar logs de .NET
-- [ ] Probar sin Entity Framework
-- [ ] Verificar configuración de SQL Server
+### 1. Corregir conversión de tipos en el frontend (Alta)
+- [ ] Convertir a número: `plazasTotales`, `horasTotales`, `inscripcionPlazas`
+- [ ] Convertir a decimal: `creditosTotalesCRAI`, `creditosTotalesSAE`, `creditosMinimosSAE`, `creditosMaximosSAE`, `programaDuracion`, `importeBase`, `porcentajeDescuento`
+- [ ] Mantener null para vacíos
 
-### 2. Integración Completa (Cuando Backend Funcione)
-- [ ] Conectar frontend con backend real
-- [ ] Probar todos los endpoints
-- [ ] Implementar CRUD completo de actividades
-- [ ] Agregar validaciones
+### 2. Validaciones y guardado
+- [ ] Validar obligatorios antes de PUT
+- [ ] Confirmar borrador `/api/actividades/{id}/borrador`
 
 ### 3. Funcionalidades Avanzadas
-- [ ] Gestión de subactividades
-- [ ] Gestión de participantes
-- [ ] Sistema multidioma
+- [ ] Sistema multidioma completo
 - [ ] Exportación a PDF/Excel
 - [ ] Autenticación de usuarios
 
@@ -100,8 +88,8 @@ C:\DEV\UNI BCN\
 - **Lista de Actividades**: `file:///C:/DEV/UNI%20BCN/Frontend/actividades.html`
 - **Dashboard**: `file:///C:/DEV/UNI%20BCN/Frontend/dashboard.html`
 - **Pruebas API**: `file:///C:/DEV/UNI%20BCN/Frontend/test-api.html`
-- **Backend API**: `http://localhost:5001` (cuando funcione)
-- **Swagger UI**: `http://localhost:5001/swagger` (cuando funcione)
+- **Backend API**: `http://localhost:5001`
+- **Swagger UI**: `http://localhost:5001/swagger`
 
 ## 💡 Notas Importantes
 
@@ -113,9 +101,9 @@ C:\DEV\UNI BCN\
 
 ## 🚀 Estado de Desarrollo
 
-- **Frontend**: ✅ 90% completo (funcionando en demo)
-- **Backend**: ⚠️ 70% completo (no se inicia)
-- **Base de Datos**: ✅ 100% completo
-- **Integración**: ⚠️ 80% completo (preparada, esperando backend)
+- **Frontend**: ✅ 90% (lectura completa; guardado pendiente por conversión numérica)
+- **Backend**: ✅ 90% (PUT requiere tipos correctos; resto OK)
+- **Base de Datos**: ✅ 100%
+- **Integración**: ✅ 85% (falta conversión antes de PUT)
 
-**Estado General**: El proyecto está muy cerca de estar completamente funcional. Solo falta resolver el problema de inicio del backend.
+**Estado General**: Sistema funcional leyendo y mostrando datos reales. Pendiente ajuste de tipos numéricos en el envío para completar el guardado.
