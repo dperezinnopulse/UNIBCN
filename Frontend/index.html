@@ -9,6 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <title>Propuesta de Actividad - UB</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
 
@@ -136,11 +137,10 @@ header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
 <main class="p-4"><div class="bg-white rounded shadow p-3 mb-3" id="cabeceraPropuesta">
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
 <div class="d-flex align-items-center gap-3 flex-wrap">
-<span class="badge px-3 py-2" id="estadoBadge" style="background:#2ecc71; font-weight:600;">Aprobado</span>
-<div class="text-muted small"><i class="bi bi-calendar3 me-1"></i><span id="fechaCreacion">25 oct 2024</span></div>
+<span class="badge px-3 py-2" id="estadoBadge" style="background:#6c757d; font-weight:600;">Borrador</span>
+<div class="text-muted small"><i class="bi bi-calendar3 me-1"></i><span id="fechaCreacion">—</span></div>
 <div class="text-muted small"><i class="bi bi-clock-history me-1"></i>Actualizado <span id="fechaUpdate">hoy</span></div>
-<div class="text-muted small"><i class="bi bi-hash me-1"></i><span id="codigoPropuesta">IDP-2024-00123</span></div>
-<div class="text-muted small"><i class="bi bi-person me-1"></i><span id="responsablePropuesta">IDP</span></div>
+<div class="text-muted small"><i class="bi bi-person me-1"></i><span id="responsablePropuesta">Cargando...</span></div>
 </div>
 <div class="d-flex align-items-center gap-2">
 <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis px-3 py-2">
@@ -152,9 +152,6 @@ header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
 </div>
 <div class="bg-white rounded shadow p-4 mb-5">
 <h2 class="h5 mb-4 text-primary">Información general</h2>
-<div class="alert alert-info">
-    <strong>Versión del script:</strong> scripts.js?v=1.0.29
-</div>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" id="actividadCodigo" type="text"/></div>
 <div class="col-md-4 position-relative">
@@ -511,26 +508,104 @@ function toggleImporte() {
   if (partCont && !partCont.children.length) window.addParticipante();
 })();
 
-// Inicializar dominios cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DEBUG: DOMContentLoaded - Inicializando dominios...');
-    // Esperar a que todos los scripts se carguen
-    setTimeout(() => {
-        if (typeof cargarDominios === 'function') {
-            cargarDominios();
-        } else {
-            console.log('⚠️ Función cargarDominios no disponible, esperando...');
-            setTimeout(() => {
+// Script eliminado - se maneja desde scripts-clean.js
+</script>
+<script>
+  // Poner fecha de hoy en el calendario
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      const hoy = new Date();
+      const cal = document.getElementById('fechaCreacion');
+      if (cal) {
+        cal.textContent = hoy.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch {}
+  });
+</script>
+    <!-- Script de autenticación -->
+    <script src="auth.js"></script>
+    <script src="scripts-clean.js"></script>
+    <!-- Script para campos específicos por unidad gestora -->
+    <script src="ug-specific-fields.js"></script>
+    <script>
+        // Actualizar el nombre del responsable de la propuesta
+        function updateResponsablePropuesta() {
+            try {
+                const responsableSpan = document.getElementById('responsablePropuesta');
+                if (!responsableSpan) {
+                    console.warn('⚠️ Elemento responsablePropuesta no encontrado');
+                    return;
+                }
+
+                // Verificar si Auth está disponible
+                if (typeof Auth === 'undefined') {
+                    responsableSpan.textContent = 'Auth no disponible';
+                    console.warn('⚠️ Auth no está disponible');
+                    return;
+                }
+
+                // Obtener información del usuario
+                const token = Auth.getToken();
+                const user = Auth.getUser();
+
+                console.log('🔍 DEBUG: Token:', token ? 'Presente' : 'Ausente');
+                console.log('🔍 DEBUG: Usuario:', user);
+
+                if (token && user?.username) {
+                    responsableSpan.textContent = user.username;
+                    console.log('✅ Responsable de propuesta actualizado:', user.username);
+                } else if (token) {
+                    responsableSpan.textContent = 'Usuario';
+                    console.log('⚠️ Token presente pero sin nombre de usuario');
+                } else {
+                    responsableSpan.textContent = 'No conectado';
+                    console.log('⚠️ Sin token de autenticación');
+                }
+            } catch (error) {
+                console.error('Error actualizando responsable de propuesta:', error);
+                const responsableSpan = document.getElementById('responsablePropuesta');
+                if (responsableSpan) responsableSpan.textContent = 'Error';
+            }
+        }
+
+        // Actualizar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOMContentLoaded - Iniciando actualización de responsable...');
+            
+            // Actualizar inmediatamente
+            updateResponsablePropuesta();
+            
+            // También actualizar después de delays para asegurar que Auth esté disponible
+            setTimeout(updateResponsablePropuesta, 500);
+            setTimeout(updateResponsablePropuesta, 1500);
+            setTimeout(updateResponsablePropuesta, 3000);
+        });
+
+        // Script para cargar dominios después de que todo esté listo
+        window.addEventListener('load', function() {
+            console.log('🚀 Window load - Iniciando carga de dominios...');
+            
+            // Esperar un poco más para asegurar que todos los scripts estén cargados
+            setTimeout(function() {
                 if (typeof cargarDominios === 'function') {
+                    console.log('✅ Función cargarDominios encontrada, ejecutando...');
                     cargarDominios();
                 } else {
                     console.error('❌ Función cargarDominios no encontrada');
                 }
+                
+                // Inicializar campos específicos por unidad gestora
+                setTimeout(function() {
+                    if (typeof window.initializeUGSpecificFields === 'function') {
+                        console.log('✅ Inicializando campos específicos por UG...');
+                        window.initializeUGSpecificFields();
+                    } else {
+                        console.warn('⚠️ Función initializeUGSpecificFields no encontrada');
+                    }
+                }, 1000);
+                
             }, 2000);
-        }
-    }, 1500);
-});
-</script>
-    <script src="scripts.js?v=1.0.53&t=1756368000"></script>
+        });
+    </script>
 </body>
 </html>

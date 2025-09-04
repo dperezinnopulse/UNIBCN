@@ -24,7 +24,7 @@
     <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="bellBadge"></span>
   </a>
   <i class="bi bi-person-circle fs-4 text-secondary" id="userIcon" style="cursor:pointer"></i>
-  <span class="text-muted">Docente</span>
+  <span class="text-muted" id="userLabel">Usuario</span>
 </header>
 <!-- Menú del usuario -->
 <div class="usermenu d-none" id="userMenuOverlay">
@@ -32,6 +32,7 @@
     <button class="userItem" data-action="editar">Editar Datos Usuario</button>
     <button class="userItem" data-action="modulo">Cambiar Módulo</button>
     <div class="userItem with-sub" id="openUG">Unidad Gestora: <span id="ugActual">Todas</span></div>
+    <div class="userItem with-sub" id="openAdmin">Administración <i class="bi bi-chevron-right"></i></div>
     <button class="userItem" data-action="logout">Cerrar Sesión</button>
   </div>
 </div>
@@ -42,6 +43,11 @@
   <button class="ugOption" data-ug="SAE"><span class="chip"></span>SAE</button>
   <button class="ugOption" data-ug="CRAI"><span class="chip"></span>CRAI</button>
   <button class="ugOption" data-ug="SL" disabled><span class="chip"></span>SL</button>
+</div>
+<!-- Submenú de administración -->
+<div class="usersubmenu d-none" id="adminSubmenu">
+  <button class="ugOption" data-admin="usuarios"><span class="chip"></span>Usuarios</button>
+  <button class="ugOption" data-admin="roles"><span class="chip"></span>Roles</button>
 </div>`;
 
   /**
@@ -58,7 +64,9 @@
       const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
       const menu = $('#userMenuOverlay');
       const sub = $('#ugSubmenu');
+      const adminSub = $('#adminSubmenu');
       const userIcon = $('#userIcon');
+      const userLabel = $('#userLabel');
       let UG = 'TODAS';
       const ugLabel = $('#ugActual');
       // Aplica el filtro de UG a todos los elementos con atributo data-ug
@@ -82,11 +90,13 @@
       function openMenu(){
         menu?.classList.remove('d-none');
         sub?.classList.add('d-none');
+        adminSub?.classList.add('d-none');
       }
       // Cierra ambos menús
       function closeAll(){
         menu?.classList.add('d-none');
         sub?.classList.add('d-none');
+        adminSub?.classList.add('d-none');
       }
       // Abre el submenú de UG
       function openSub(e){
@@ -96,13 +106,60 @@
       // Evita que los clics dentro de los menús propaguen fuera
       menu?.addEventListener('click', e => e.stopPropagation());
       sub?.addEventListener('click', e => e.stopPropagation());
+      adminSub?.addEventListener('click', e => e.stopPropagation());
       // Muestra el menú al clicar en el icono de usuario
       userIcon?.addEventListener('click', (e) => {
         e.stopPropagation();
         openMenu();
       });
+      // Logout
+      menu?.querySelector('[data-action="logout"]')?.addEventListener('click', () => {
+        if (typeof Auth !== 'undefined') Auth.logout();
+      });
+      // Etiqueta de usuario y permisos
+      function updateUserLabel() {
+        try {
+          const token = (typeof Auth !== 'undefined') ? Auth.getToken() : '';
+          const user = (typeof Auth !== 'undefined') ? Auth.getUser() : {};
+          
+          if (userLabel) {
+            if (token && user?.username) {
+              userLabel.textContent = user.username;
+              console.log('✅ Usuario mostrado en header:', user.username);
+            } else if (token) {
+              userLabel.textContent = 'Usuario';
+              console.log('⚠️ Token presente pero sin nombre de usuario');
+            } else {
+              userLabel.textContent = 'No conectado';
+              console.log('⚠️ Sin token de autenticación');
+            }
+          }
+          
+          // Ocultar opciones de admin si no es admin
+          if (((user?.rol||user?.Rol||'').toString().toLowerCase() !== 'admin')){
+            const adminBtn = document.getElementById('openAdmin');
+            if (adminBtn) adminBtn.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error actualizando etiqueta de usuario:', error);
+          if (userLabel) userLabel.textContent = 'Error';
+        }
+      }
+      
+      // Actualizar inmediatamente
+      updateUserLabel();
+      
+      // También actualizar después de un pequeño delay para asegurar que Auth esté disponible
+      setTimeout(updateUserLabel, 500);
       // Abre el submenú al clicar en la opción de UG
       $('#openUG')?.addEventListener('click', (e) => openSub(e));
+      // Abre submenú de administración (solo admin visible)
+      $('#openAdmin')?.addEventListener('click', (e) => {
+        if (e) e.stopPropagation();
+        const u = (typeof Auth !== 'undefined') ? Auth.getUser() : {};
+        if ((u?.rol||u?.Rol||'').toString().toLowerCase() !== 'admin') return;
+        adminSub?.classList.remove('d-none');
+      });
       // Maneja la selección de UG
       $$('.ugOption').forEach(btn => {
         if (btn.disabled) return;
@@ -110,7 +167,6 @@
           e.stopPropagation();
           UG = (btn.dataset.ug || 'Todas').toUpperCase();
           applyUG();
-          // Si el menú principal está abierto, oculta el submenú tras seleccionar
           if (menu && !menu.classList.contains('d-none')) {
             sub?.classList.add('d-none');
           }
@@ -118,7 +174,7 @@
       });
       // Cierra los menús al hacer clic fuera de ellos
       document.addEventListener('click', (e) => {
-        if (!menu?.contains(e.target) && !sub?.contains(e.target) && e.target.id !== 'userIcon') {
+        if (!menu?.contains(e.target) && !sub?.contains(e.target) && !adminSub?.contains(e.target) && e.target.id !== 'userIcon') {
           closeAll();
         }
       });

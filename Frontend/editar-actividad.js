@@ -86,6 +86,72 @@ function toggleTraduccion(type) {
     }
 }
 
+// ===== FUNCIONES DE MÁSCARAS =====
+function aplicarMascaraDecimal(elemento) {
+    if (!elemento) return;
+    
+    elemento.addEventListener('input', function(e) {
+        let valor = e.target.value;
+        
+        // Permitir solo números, comas y puntos
+        valor = valor.replace(/[^\d,.-]/g, '');
+        
+        // Asegurar que solo haya una coma decimal
+        const partes = valor.split(',');
+        if (partes.length > 2) {
+            valor = partes[0] + ',' + partes.slice(1).join('');
+        }
+        
+        // Limitar a 2 decimales después de la coma
+        if (partes.length === 2 && partes[1].length > 2) {
+            valor = partes[0] + ',' + partes[1].substring(0, 2);
+        }
+        
+        // No permitir más de un punto (para miles)
+        const puntos = valor.split('.');
+        if (puntos.length > 2) {
+            valor = puntos[0] + '.' + puntos.slice(1).join('');
+        }
+        
+        e.target.value = valor;
+    });
+    
+    elemento.addEventListener('blur', function(e) {
+        let valor = e.target.value;
+        
+        // Convertir coma a punto para cálculos internos
+        if (valor.includes(',')) {
+            valor = valor.replace(',', '.');
+        }
+        
+        // Validar que sea un número válido
+        const numero = parseFloat(valor);
+        if (!isNaN(numero) && numero >= 0) {
+            // Formatear con coma como separador decimal
+            e.target.value = numero.toFixed(2).replace('.', ',');
+        } else if (valor !== '') {
+            // Si no es válido, limpiar
+            e.target.value = '';
+        }
+    });
+    
+    elemento.addEventListener('focus', function(e) {
+        // Al hacer focus, convertir coma a punto para edición
+        let valor = e.target.value;
+        if (valor.includes(',')) {
+            e.target.value = valor.replace(',', '.');
+        }
+    });
+}
+
+// Aplicar máscaras a todos los campos decimales
+function aplicarMascarasDecimales() {
+    const camposDecimales = document.querySelectorAll('[data-mask="decimal"]');
+    camposDecimales.forEach(campo => {
+        aplicarMascaraDecimal(campo);
+    });
+}
+
 // ===== FUNCIONES DE FORMULARIOS DINÁMICOS =====
 function addSubactividad() {
     const container = document.getElementById('subactividadesContainer');
@@ -211,6 +277,18 @@ function addColaboradora() {
                     <label class="form-label">Web</label>
                     <input class="form-control" id="${colaboradoraId}_web" placeholder="https://..."/>
                 </div>
+                <div class="col-md-4">
+                    <label class="form-label">Persona de contacto</label>
+                    <input class="form-control" id="${colaboradoraId}_contacto"/>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="${colaboradoraId}_email"/>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teléfono</label>
+                    <input class="form-control" id="${colaboradoraId}_telefono"/>
+                </div>
             </div>
         </div>
     `;
@@ -287,7 +365,8 @@ async function cargarDominios() {
         const mapeoDominios = {
             'lineaEstrategica': 'LINEAS_ESTRATEGICAS',
             'objetivoEstrategico': 'OBJETIVOS_ESTRATEGICOS',
-            'actividadReservada': 'ACTIVIDADES_RESERVADAS',
+            // ActividadReservada es boolean en backend → usar Sí/No
+            'actividadReservada': 'OPCIONES_SI_NO',
             'centroUnidadUBDestinataria': 'CENTROS_UB',
             'centroTrabajoRequerido': 'OPCIONES_SI_NO',
             'tipoActividad': 'TIPOS_ACTIVIDAD',
@@ -314,12 +393,107 @@ async function cargarDominios() {
         
         // Cargar unidades de gestión
         await cargarUnidadesGestion();
+        // Cargar estados para selector de cabecera
+        await cargarEstadosActividad();
         
         Utils.log('Dominios cargados correctamente');
         
     } catch (error) {
         Utils.error('Error cargando dominios:', error);
     }
+}
+
+// Cargar estados y poblar selector cabecera
+async function cargarEstadosActividad() {
+    try {
+        const sel = document.getElementById('estadoSelect');
+        if (!sel) return;
+        // Usar siempre la ruta de la API
+        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const estados = await response.json();
+        // Fallback si no hay dominio administrable: mapa fijo pedido
+        const fallback = [
+            { id: 1, nombre: 'Borrador', color: '#6c757d' },
+            { id: 2, nombre: 'Enviada', color: '#fd7e14' },
+            { id: 4, nombre: 'Subsanar', color: '#dc3545' },
+            { id: 3, nombre: 'Aceptada', color: '#2ecc71' }
+        ];
+        const items = Array.isArray(estados) && estados.length ? estados : fallback;
+        sel.innerHTML = '';
+        items.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.id;
+            opt.textContent = e.nombre;
+            opt.dataset.color = e.color || '';
+            sel.appendChild(opt);
+        });
+        // Seleccionar el actual si existe
+        const estadoActual = document.getElementById('actividadEstadoId')?.value;
+        if (estadoActual) sel.value = estadoActual;
+        sel.addEventListener('change', onCambioEstado);
+        actualizarBadgeEstadoDesdeSelect();
+    } catch (e) {
+        Utils.error('Error cargando estados', e);
+    }
+}
+
+function actualizarBadgeEstadoDesdeSelect() {
+    const sel = document.getElementById('estadoSelect');
+    const badge = document.getElementById('estadoBadge');
+    if (!sel || !badge) return;
+    const opt = sel.selectedOptions[0];
+    const nombre = opt ? opt.textContent : '—';
+    const color = opt?.dataset?.color || (nombre === 'Borrador' ? '#6c757d' : nombre === 'Enviada' ? '#fd7e14' : nombre === 'Subsanar' ? '#dc3545' : '#2ecc71');
+    badge.style.background = color;
+    badge.innerHTML = `<i class="bi bi-check-circle me-2"></i>${nombre}`;
+}
+
+async function onCambioEstado() {
+    try {
+        const sel = document.getElementById('estadoSelect');
+        const actividadId = Utils.getUrlParameter('id') || '0';
+        const estadoId = parseInt(sel.value, 10);
+        if (!estadoId || !actividadId) return;
+        Utils.showLoading('Actualizando estado...');
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/estado`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ estadoId })
+        });
+        Utils.hideLoading();
+        if (!resp.ok) {
+            const txt = await resp.text();
+            Utils.showAlert('error', `Error cambiando estado: ${txt || resp.status}`);
+            return;
+        }
+        actualizarBadgeEstadoDesdeSelect();
+        // Refrescar reloj con último cambio de estado
+        try {
+            const respHist = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/estado/historial/ultimo`);
+            if (respHist.ok) {
+                const h = await respHist.json();
+                const reloj = document.getElementById('fechaUpdate');
+                if (reloj && h?.fechaCambio) {
+                    const f = new Date(h.fechaCambio);
+                    reloj.textContent = isNaN(f.getTime()) ? h.fechaCambio : f.toLocaleString();
+                }
+            }
+        } catch {}
+        Utils.showAlert('success', 'Estado actualizado');
+    } catch (e) {
+        Utils.hideLoading();
+        Utils.showAlert('error', 'Error cambiando estado');
+        Utils.error('onCambioEstado', e);
+    }
+}
+
+// Simular contador de mensajes (placeholder)
+function actualizarMensajesHeader(noLeidos, total) {
+    const badge = document.getElementById('mensajesBadge');
+    if (!badge) return;
+    badge.textContent = String(noLeidos ?? 0);
+    badge.classList.toggle('d-none', !noLeidos);
 }
 
 async function poblarSelect(campoId, valores) {
@@ -424,7 +598,12 @@ async function guardarActividad() {
             // Recargar datos para confirmar cambios
             await cargarDatosReales(actividadId);
         } else {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            let detalle = '';
+            try {
+                detalle = await response.text();
+            } catch {}
+            Utils.error('Respuesta de error del backend:', { status: response.status, statusText: response.statusText, body: detalle });
+            throw new Error(`HTTP ${response.status}: ${detalle || response.statusText}`);
         }
         
     } catch (error) {
@@ -498,6 +677,9 @@ async function initEditarActividad() {
         const actividadId = Utils.getUrlParameter('id') || '60';
         Utils.log('ID de actividad obtenido:', actividadId);
         
+        // Asignar a variable global para uso en mensajería
+        window.ACTIVIDAD_ID = actividadId;
+        
         // Establecer ID en el formulario
         const idField = document.getElementById('actividadId');
         if (idField) {
@@ -527,6 +709,11 @@ async function initEditarActividad() {
         // Marcar como inicializado
         globalState.initialized = true;
         Utils.log('Página de edición inicializada correctamente');
+        
+        // Cargar resumen de mensajes después de la inicialización
+        setTimeout(() => {
+            cargarResumenMensajes();
+        }, 500);
         
     } catch (error) {
         Utils.error('Error inicializando página de edición', error);
@@ -564,6 +751,8 @@ async function cargarDatosReales(actividadId) {
         
         // Cargar entidades relacionadas
         await cargarEntidadesRelacionadasReales(actividadId);
+
+        // Nota: no consultar historial en carga inicial para evitar 404 si aún no hay registros
         
         Utils.log('Datos reales aplicados correctamente');
         
@@ -656,7 +845,6 @@ async function aplicarDatosReales(actividad) {
         'estadoId': 'actividadEstadoId',
         'fechaCreacion': 'fechaCreacion',
         'fechaModificacion': 'fechaUpdate',
-        'codigoPropuesta': 'codigoPropuesta',
         'responsablePropuesta': 'responsablePropuesta',
         
         // Campos adicionales que faltaban
@@ -755,6 +943,22 @@ async function aplicarDatosReales(actividad) {
                     } catch (e) {
                         elemento.value = valor.toString();
                     }
+                } else if (elemento.id === 'fechaUpdate' && valor) {
+                    // Mostrar fecha legible (última modificación o cambio de estado) en el bloque de reloj
+                    try {
+                        const fecha = new Date(valor);
+                        elemento.textContent = isNaN(fecha.getTime()) ? valor.toString() : fecha.toLocaleString();
+                    } catch {
+                        elemento.textContent = valor.toString();
+                    }
+                } else if (elemento.id === 'fechaCreacion' && valor) {
+                    // Mostrar fecha de creación en el bloque de calendario
+                    try {
+                        const fecha = new Date(valor);
+                        elemento.textContent = isNaN(fecha.getTime()) ? valor.toString() : fecha.toLocaleString();
+                    } catch {
+                        elemento.textContent = valor.toString();
+                    }
                 } else {
                     elemento.value = valor.toString();
                 }
@@ -764,6 +968,18 @@ async function aplicarDatosReales(actividad) {
             }
         }
     });
+
+    // Mostrar información del usuario autor
+    const responsableSpan = document.getElementById('responsablePropuesta');
+    if (responsableSpan) {
+        if (actividad.usuarioAutorNombre) {
+            responsableSpan.textContent = actividad.usuarioAutorNombre;
+        } else if (actividad.usuarioAutorId) {
+            responsableSpan.textContent = `Usuario ID: ${actividad.usuarioAutorId}`;
+        } else {
+            responsableSpan.textContent = 'Usuario no registrado';
+        }
+    }
     
     // Aplicar campos de entidad organizadora si existen
     if (actividad.entidadOrganizadora) {
@@ -820,6 +1036,9 @@ async function aplicarDatosReales(actividad) {
     
     // Actualizar campos específicos por UG
     actualizarCamposUG();
+    
+    // Aplicar máscaras decimales después de cargar los datos
+    aplicarMascarasDecimales();
     
     // Debug específico para los 3 campos problemáticos
     Utils.log('=== DEBUG CAMPOS PROBLEMÁTICOS ===');
@@ -1187,17 +1406,45 @@ function recogerDatosFormulario() {
                 if (campoBackend === 'actividadReservada' || 
                     campoBackend === 'actividadPago' || 
                     campoBackend === 'inscripcionListaEspera') {
-                    // Si el valor es "true" o "false", convertirlo a "S"/"N"
-                    if (valor === 'true') {
-                        valor = 'S';
-                    } else if (valor === 'false') {
-                        valor = 'N';
-                    }
+                    // Normalizar: Sí/Si/true -> 'S'; No/false -> 'N'; vacío -> 'N'
+                    if (valor === 'true' || valor === 'Si' || valor === 'Sí' || valor === 'S') valor = 'S';
+                    else if (valor === 'false' || valor === 'No' || valor === 'N') valor = 'N';
+                    else if (!valor) valor = 'N';
                 }
             } else if (elemento.type === 'date') {
                 valor = elemento.value || null;
             } else {
                 valor = elemento.value || null;
+            }
+            
+            // Conversión de tipos numéricos antes de asignar
+            if (valor !== null && valor !== '') {
+                // Campos enteros
+                if (campoBackend === 'plazasTotales' ||
+                    campoBackend === 'inscripcionPlazas' ||
+                    campoBackend === 'unidadGestionId') {
+                    const n = parseInt(valor, 10);
+                    if (!isNaN(n)) {
+                        valor = n;
+                    }
+                }
+                // Campos decimales
+                else if (campoBackend === 'horasTotales' ||
+                         campoBackend === 'creditosTotalesCRAI' ||
+                         campoBackend === 'creditosTotalesSAE' ||
+                         campoBackend === 'creditosMinimosSAE' ||
+                         campoBackend === 'creditosMaximosSAE' ||
+                         campoBackend === 'programaDuracion') {
+                    // Convertir coma a punto para parseFloat
+                    let valorNumerico = valor;
+                    if (typeof valor === 'string' && valor.includes(',')) {
+                        valorNumerico = valor.replace(',', '.');
+                    }
+                    const f = parseFloat(valorNumerico);
+                    if (!isNaN(f)) {
+                        valor = f;
+                    }
+                }
             }
             
             // Solo incluir campos que tengan valores válidos (no null, no vacíos)
@@ -1308,6 +1555,25 @@ function recogerColaboradoras() {
         });
     }
     
+    // Soporte para sección estática (org_*) si existe y el usuario la usa
+    const orgNombre = document.getElementById('org_principal')?.value || '';
+    const orgNif = document.getElementById('org_nif')?.value || '';
+    const orgWeb = document.getElementById('org_web')?.value || '';
+    const orgContacto = document.getElementById('org_contacto')?.value || '';
+    const orgEmail = document.getElementById('org_email')?.value || '';
+    const orgTel = document.getElementById('org_tel')?.value || '';
+    
+    if (orgNombre.trim()) {
+        colaboradoras.push({
+            nombre: orgNombre,
+            nifCif: orgNif,
+            web: orgWeb,
+            personaContacto: orgContacto,
+            email: orgEmail,
+            telefono: orgTel
+        });
+    }
+    
     return colaboradoras;
 }
 
@@ -1324,6 +1590,20 @@ function recogerImportes() {
         condicionesCA: document.getElementById('imp_condiciones_ca')?.value || null,
         condicionesEN: document.getElementById('imp_condiciones_en')?.value || null
     };
+    
+    // Convertir numéricos si tienen valor
+    if (importe.importeBase !== null && importe.importeBase !== '') {
+        const f = parseFloat(importe.importeBase);
+        if (!isNaN(f)) {
+            importe.importeBase = f;
+        }
+    }
+    if (importe.porcentajeDescuento !== null && importe.porcentajeDescuento !== '') {
+        const f = parseFloat(importe.porcentajeDescuento);
+        if (!isNaN(f)) {
+            importe.porcentajeDescuento = f;
+        }
+    }
     
     // Solo incluir si hay al menos un campo con valor
     if (Object.values(importe).some(valor => valor && valor.toString().trim() !== '')) {
@@ -1398,6 +1678,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initEditarActividad();
     }
     
+    // El resumen de mensajes se carga desde initEditarActividad()
+    
     // Test rápido de dominios (para debugging)
     setTimeout(async () => {
         Utils.log('=== TEST RÁPIDO DE DOMINIOS ===');
@@ -1411,6 +1693,9 @@ document.addEventListener('DOMContentLoaded', function() {
             Utils.error('Test falló:', error);
         }
     }, 2000);
+    
+    // Aplicar máscaras decimales
+    aplicarMascarasDecimales();
     
     // Event listeners adicionales
     const unidadGestionSelect = document.getElementById('actividadUnidadGestion');
@@ -1432,6 +1717,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Función para eliminar mensaje
+async function eliminarMensaje(mensajeId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/mensajes/${mensajeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            // Recargar el contenido del modal para actualizar la lista
+            await cargarContenidoModalMensajes();
+            console.log('Mensaje eliminado correctamente');
+        } else {
+            const error = await response.text();
+            console.error('Error eliminando mensaje:', error);
+            alert('Error eliminando mensaje: ' + error);
+        }
+    } catch (error) {
+        console.error('Error eliminando mensaje:', error);
+        alert('Error eliminando mensaje');
+    }
+}
+
 // ===== EXPORTAR FUNCIONES GLOBALES =====
 window.guardarActividad = guardarActividad;
 window.guardarBorrador = guardarBorrador;
@@ -1445,3 +1759,828 @@ window.eliminarParticipante = eliminarParticipante;
 window.eliminarColaboradora = eliminarColaboradora;
 window.duplicarSubactividad = duplicarSubactividad;
 window.duplicarParticipante = duplicarParticipante;
+window.abrirMensajes = abrirMensajes;
+window.cargarContenidoModalMensajes = cargarContenidoModalMensajes;
+window.mostrarHiloEnModal = mostrarHiloEnModal;
+window.mostrarFormularioNuevoHilo = mostrarFormularioNuevoHilo;
+window.crearNuevoHiloDesdeModal = crearNuevoHiloDesdeModal;
+window.enviarNuevoMensaje = enviarNuevoMensaje;
+window.descargarAdjunto = descargarAdjunto;
+window.cerrarModalMensajes = cerrarModalMensajes;
+window.eliminarMensaje = eliminarMensaje;
+
+// ===== FUNCIONES DE MENSAJERÍA =====
+
+// Variable para almacenar información del usuario actual
+let usuarioActual = null;
+
+// Función para obtener el token de autenticación
+function getToken() {
+    return localStorage.getItem('authToken');
+}
+
+// Cargar resumen de mensajes para la actividad actual
+async function cargarResumenMensajes() {
+    try {
+        if (!ACTIVIDAD_ID) return;
+        
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes/actividad/${ACTIVIDAD_ID}/no-leidos`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const data = await resp.json();
+        actualizarBadgeMensajes(data.mensajesNoLeidos);
+    } catch (e) {
+        console.error('Error cargando resumen de mensajes:', e);
+    }
+}
+
+// Actualizar badge de mensajes
+function actualizarBadgeMensajes(mensajesNoLeidos) {
+    const badge = document.getElementById('mensajesBadge');
+    const mensajesBtn = document.getElementById('mensajesBtn');
+    const icono = mensajesBtn?.querySelector('i');
+    
+    if (!badge || !mensajesBtn || !icono) return;
+    
+    if (mensajesNoLeidos > 0) {
+        badge.textContent = mensajesNoLeidos;
+        badge.classList.remove('d-none');
+        // Cambiar color del icono a azul
+        icono.style.color = '#007bff';
+        mensajesBtn.style.borderColor = '#007bff';
+    } else {
+        badge.classList.add('d-none');
+        // Restaurar color gris del icono
+        icono.style.color = '';
+        mensajesBtn.style.borderColor = '';
+    }
+}
+
+// Abrir mensajes de la actividad
+async function abrirMensajes() {
+    console.log('🔍 DEBUG: abrirMensajes() llamada');
+    console.log('🔍 DEBUG: ACTIVIDAD_ID =', ACTIVIDAD_ID);
+    console.log('🔍 DEBUG: window.ACTIVIDAD_ID =', window.ACTIVIDAD_ID);
+    
+    if (!ACTIVIDAD_ID && !window.ACTIVIDAD_ID) {
+        console.error('❌ ERROR: ACTIVIDAD_ID no está definido');
+        alert('No se puede abrir mensajes sin una actividad válida');
+        return;
+    }
+    
+    // Usar window.ACTIVIDAD_ID si ACTIVIDAD_ID no está disponible
+    const actividadId = ACTIVIDAD_ID || window.ACTIVIDAD_ID;
+    console.log('🔍 DEBUG: Usando actividadId =', actividadId);
+    console.log('🔍 DEBUG: typeof actividadId =', typeof actividadId);
+    console.log('🔍 DEBUG: actividadId === "60" =', actividadId === "60");
+    console.log('🔍 DEBUG: actividadId === 60 =', actividadId === 60);
+    
+    try {
+        // Mostrar modal de carga
+        const modal = new bootstrap.Modal(document.getElementById('mensajesModal'));
+        modal.show();
+        
+        // Cargar contenido del modal
+        await cargarContenidoModalMensajes();
+        
+    } catch (e) {
+        console.error('Error abriendo mensajes:', e);
+        alert('Error abriendo mensajes: ' + e.message);
+    }
+}
+
+// Cargar contenido del modal de mensajes
+async function cargarContenidoModalMensajes() {
+    try {
+        const actividadId = ACTIVIDAD_ID || window.ACTIVIDAD_ID;
+        console.log('🔍 DEBUG: cargarContenidoModalMensajes() - actividadId =', actividadId);
+        console.log('🔍 DEBUG: CONFIG.API_BASE_URL =', CONFIG.API_BASE_URL);
+        console.log('🔍 DEBUG: getToken() =', Auth.getToken() ? 'Token disponible' : 'Sin token');
+        
+        // Obtener información del usuario actual
+        if (Auth.getUser()) {
+            usuarioActual = Auth.getUser();
+            console.log('🔍 DEBUG: Usuario actual =', usuarioActual);
+        }
+        
+        // Verificar si ya existe un hilo para esta actividad
+        const url = `${CONFIG.API_BASE_URL}/mensajes/hilos?actividadId=${actividadId}`;
+        console.log('🔍 DEBUG: URL de petición =', url);
+        console.log('🔍 DEBUG: actividadId =', actividadId);
+        console.log('🔍 DEBUG: typeof actividadId =', typeof actividadId);
+        
+        const resp = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            }
+        });
+        
+        console.log('🔍 DEBUG: Respuesta HTTP =', resp.status, resp.statusText);
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        
+        const hilos = await resp.json();
+        console.log('🔍 DEBUG: Hilos recibidos =', hilos);
+        console.log('🔍 DEBUG: hilos.length =', hilos ? hilos.length : 'hilos es null/undefined');
+        
+        if (hilos && hilos.length > 0) {
+            // Ya existe un hilo, mostrar en modal
+            console.log('🔍 DEBUG: Mostrando hilo existente:', hilos[0]);
+            await mostrarHiloEnModal(hilos[0]);
+            
+            // Marcar mensajes como leídos
+            await marcarMensajesComoLeidos(hilos[0].id);
+        } else {
+            // No existe hilo, mostrar formulario para crear uno nuevo
+            console.log('🔍 DEBUG: No hay hilos, mostrando formulario para crear nuevo');
+            await mostrarFormularioNuevoHilo();
+        }
+    } catch (e) {
+        console.error('Error cargando contenido del modal:', e);
+        mostrarErrorEnModal('Error cargando mensajes: ' + e.message);
+    }
+}
+
+// Marcar mensajes como leídos
+async function marcarMensajesComoLeidos(hiloId) {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/mensajes/${hiloId}/marcar-leido`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            // Actualizar el badge de mensajes
+            await cargarResumenMensajes();
+        }
+    } catch (e) {
+        console.error('Error marcando mensajes como leídos:', e);
+    }
+}
+
+// Mostrar hilo existente en el modal
+async function mostrarHiloEnModal(hilo) {
+    try {
+        console.log('🔍 DEBUG: mostrarHiloEnModal() - hilo recibido =', hilo);
+        console.log('🔍 DEBUG: hilo.Id =', hilo.Id);
+        console.log('🔍 DEBUG: hilo.id =', hilo.id);
+        console.log('🔍 DEBUG: Object.keys(hilo) =', Object.keys(hilo));
+        
+        // Intentar diferentes formas de acceder al ID
+        const hiloId = hilo.Id || hilo.id || hilo.ID;
+        console.log('🔍 DEBUG: hiloId final =', hiloId);
+        
+        if (!hiloId) {
+            throw new Error('No se pudo obtener el ID del hilo');
+        }
+        
+        // Cargar mensajes del hilo
+        const url = `${CONFIG.API_BASE_URL}/mensajes/hilos/${hiloId}/mensajes`;
+        console.log('🔍 DEBUG: URL para cargar mensajes =', url);
+        
+        const resp = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            }
+        });
+        
+        console.log('🔍 DEBUG: Respuesta HTTP para mensajes =', resp.status, resp.statusText);
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        
+        const mensajes = await resp.json();
+        console.log('🔍 DEBUG: Mensajes recibidos =', mensajes);
+        console.log('🔍 DEBUG: Primer mensaje =', mensajes[0]);
+        console.log('🔍 DEBUG: Keys del primer mensaje =', mensajes[0] ? Object.keys(mensajes[0]) : 'No hay mensajes');
+        
+        // Obtener título de la actividad
+        const tituloActividad = document.getElementById('actividadTitulo')?.value || 'Mensajes de Actividad';
+        const fechaCreacion = new Date().toLocaleDateString('es-ES');
+        
+        // Filtrar mensajes válidos (que tengan contenido) - usar camelCase
+        const mensajesValidos = mensajes && mensajes.length > 0 ? 
+            mensajes.filter(mensaje => mensaje.contenido && mensaje.contenido !== 'undefined' && mensaje.contenido.trim() !== '') : [];
+        
+        console.log('🔍 DEBUG: Mensajes válidos filtrados =', mensajesValidos);
+        
+        // Renderizar mensajes en el modal
+        const modalContent = document.getElementById('mensajesModalContent');
+        console.log('🔍 DEBUG: Renderizando contenido del modal...');
+        modalContent.innerHTML = `
+            <div class="mb-3">
+                <h6 class="text-muted">${tituloActividad}</h6>
+                <p class="text-muted small">Hilo creado el ${fechaCreacion}</p>
+            </div>
+            <div class="mensajes-container" style="max-height: 400px; overflow-y: auto;">
+                ${mensajesValidos.length > 0 ? 
+                    mensajesValidos.map(mensaje => `
+                        <div class="mensaje mb-3 p-3 border rounded ${mensaje.usuarioId === usuarioActual?.id ? 'bg-light' : 'bg-white'}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong class="text-primary">${mensaje.usuarioNombre || 'Usuario'}</strong>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted">${mensaje.fechaCreacion ? new Date(mensaje.fechaCreacion).toLocaleString() : fechaCreacion}</small>
+                                    ${mensaje.usuarioId === usuarioActual?.id ? `
+                                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarMensaje(${mensaje.id})" title="Eliminar mensaje">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div class="mensaje-contenido">${mensaje.contenido}</div>
+                            ${mensaje.adjuntos && mensaje.adjuntos.length > 0 ? `
+                                <div class="adjuntos mt-2">
+                                    <small class="text-muted">Adjuntos:</small>
+                                    ${mensaje.adjuntos.map(adjunto => `
+                                        <a href="#" class="btn btn-sm btn-outline-secondary ms-2" onclick="descargarAdjunto(${adjunto.id})">
+                                            <i class="bi bi-paperclip"></i> ${adjunto.nombreArchivo}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('') :
+                    `<div class="text-center text-muted py-4">
+                        <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No hay mensajes en este hilo</p>
+                        <small>Escribe el primer mensaje abajo</small>
+                    </div>`
+                }
+            </div>
+            <div class="mt-3">
+                <form id="formNuevoMensaje" onsubmit="enviarNuevoMensaje(event, ${hiloId})">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="nuevoMensajeContenido" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="nuevoMensajeAdjuntos" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-2"></i>Enviar Mensaje
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="probarCampoMensaje()">
+                            <i class="bi bi-bug me-2"></i>Probar Campo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        // Verificar que el campo se creó correctamente
+        setTimeout(() => {
+            const campoMensaje = document.getElementById('nuevoMensajeContenido');
+            console.log('🔍 DEBUG: Campo de mensaje encontrado =', campoMensaje);
+            console.log('🔍 DEBUG: Campo disabled =', campoMensaje?.disabled);
+            console.log('🔍 DEBUG: Campo readonly =', campoMensaje?.readOnly);
+            console.log('🔍 DEBUG: Campo style =', campoMensaje?.style.cssText);
+            console.log('🔍 DEBUG: Campo classList =', campoMensaje?.classList.toString());
+            console.log('🔍 DEBUG: Campo parentElement =', campoMensaje?.parentElement);
+            console.log('🔍 DEBUG: Campo visible =', campoMensaje?.offsetParent !== null);
+            console.log('🔍 DEBUG: Campo offsetParent =', campoMensaje?.offsetParent);
+            console.log('🔍 DEBUG: Campo offsetWidth =', campoMensaje?.offsetWidth);
+            console.log('🔍 DEBUG: Campo offsetHeight =', campoMensaje?.offsetHeight);
+            console.log('🔍 DEBUG: Campo getBoundingClientRect =', campoMensaje?.getBoundingClientRect());
+            
+            // Verificar estilos CSS aplicados
+            const computedStyle = window.getComputedStyle(campoMensaje);
+            console.log('🔍 DEBUG: CSS display =', computedStyle.display);
+            console.log('🔍 DEBUG: CSS visibility =', computedStyle.visibility);
+            console.log('🔍 DEBUG: CSS opacity =', computedStyle.opacity);
+            console.log('🔍 DEBUG: CSS position =', computedStyle.position);
+            console.log('🔍 DEBUG: CSS z-index =', computedStyle.zIndex);
+            
+            if (campoMensaje) {
+                // Intentar habilitar el campo explícitamente
+                campoMensaje.disabled = false;
+                campoMensaje.readOnly = false;
+                campoMensaje.style.pointerEvents = 'auto';
+                campoMensaje.style.opacity = '1';
+                campoMensaje.style.display = 'block';
+                campoMensaje.style.visibility = 'visible';
+                campoMensaje.style.position = 'relative';
+                campoMensaje.style.zIndex = '9999';
+                campoMensaje.style.width = '100%';
+                campoMensaje.style.height = 'auto';
+                campoMensaje.style.minHeight = '80px';
+                
+                // Forzar que el campo sea visible
+                campoMensaje.style.setProperty('display', 'block', 'important');
+                campoMensaje.style.setProperty('visibility', 'visible', 'important');
+                campoMensaje.style.setProperty('opacity', '1', 'important');
+                campoMensaje.style.setProperty('width', '100%', 'important');
+                campoMensaje.style.setProperty('height', '80px', 'important');
+                campoMensaje.style.setProperty('min-height', '80px', 'important');
+                campoMensaje.style.setProperty('max-height', '200px', 'important');
+                campoMensaje.style.setProperty('position', 'relative', 'important');
+                campoMensaje.style.setProperty('z-index', '9999', 'important');
+                campoMensaje.style.setProperty('background-color', 'white', 'important');
+                campoMensaje.style.setProperty('border', '1px solid #ccc', 'important');
+                campoMensaje.style.setProperty('padding', '8px', 'important');
+                campoMensaje.style.setProperty('margin', '0', 'important');
+                campoMensaje.style.setProperty('box-sizing', 'border-box', 'important');
+                
+                // Forzar que el contenedor padre también sea visible
+                const parentDiv = campoMensaje.parentElement;
+                if (parentDiv) {
+                    parentDiv.style.setProperty('display', 'block', 'important');
+                    parentDiv.style.setProperty('visibility', 'visible', 'important');
+                    parentDiv.style.setProperty('opacity', '1', 'important');
+                    parentDiv.style.setProperty('width', '100%', 'important');
+                    parentDiv.style.setProperty('height', 'auto', 'important');
+                    parentDiv.style.setProperty('min-height', '100px', 'important');
+                    
+                    console.log('🔍 DEBUG: Contenedor padre encontrado:', parentDiv);
+                    console.log('🔍 DEBUG: Contenedor padre classList:', parentDiv.classList.toString());
+                    console.log('🔍 DEBUG: Contenedor padre offsetParent:', parentDiv.offsetParent);
+                    console.log('🔍 DEBUG: Contenedor padre offsetWidth:', parentDiv.offsetWidth);
+                    console.log('🔍 DEBUG: Contenedor padre offsetHeight:', parentDiv.offsetHeight);
+                }
+                
+                // Verificar el modal completo
+                const modal = document.getElementById('mensajesModal');
+                if (modal) {
+                    console.log('🔍 DEBUG: Modal encontrado:', modal);
+                    console.log('🔍 DEBUG: Modal classList:', modal.classList.toString());
+                    console.log('🔍 DEBUG: Modal offsetParent:', modal.offsetParent);
+                    console.log('🔍 DEBUG: Modal offsetWidth:', modal.offsetWidth);
+                    console.log('🔍 DEBUG: Modal offsetHeight:', modal.offsetHeight);
+                    console.log('🔍 DEBUG: Modal getBoundingClientRect:', modal.getBoundingClientRect());
+                    
+                    // Forzar que el modal sea visible
+                    modal.style.setProperty('display', 'block', 'important');
+                    modal.style.setProperty('visibility', 'visible', 'important');
+                    modal.style.setProperty('opacity', '1', 'important');
+                    modal.style.setProperty('position', 'fixed', 'important');
+                    modal.style.setProperty('top', '0', 'important');
+                    modal.style.setProperty('left', '0', 'important');
+                    modal.style.setProperty('width', '100%', 'important');
+                    modal.style.setProperty('height', '100%', 'important');
+                    modal.style.setProperty('z-index', '9999', 'important');
+                    modal.style.setProperty('background-color', 'rgba(0,0,0,0.5)', 'important');
+                    
+                    // Forzar que el modal-dialog sea visible
+                    const modalDialog = modal.querySelector('.modal-dialog');
+                    if (modalDialog) {
+                        modalDialog.style.setProperty('display', 'block', 'important');
+                        modalDialog.style.setProperty('visibility', 'visible', 'important');
+                        modalDialog.style.setProperty('opacity', '1', 'important');
+                        modalDialog.style.setProperty('position', 'relative', 'important');
+                        modalDialog.style.setProperty('width', '80%', 'important');
+                        modalDialog.style.setProperty('max-width', '800px', 'important');
+                        modalDialog.style.setProperty('height', 'auto', 'important');
+                        modalDialog.style.setProperty('min-height', '400px', 'important');
+                        modalDialog.style.setProperty('margin', '50px auto', 'important');
+                        modalDialog.style.setProperty('background-color', 'white', 'important');
+                        modalDialog.style.setProperty('border-radius', '8px', 'important');
+                        modalDialog.style.setProperty('box-shadow', '0 4px 20px rgba(0,0,0,0.3)', 'important');
+                        
+                        console.log('🔍 DEBUG: Modal-dialog encontrado y configurado:', modalDialog);
+                    }
+                    
+                    // Forzar que el modal-content sea visible
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.style.setProperty('display', 'block', 'important');
+                        modalContent.style.setProperty('visibility', 'visible', 'important');
+                        modalContent.style.setProperty('opacity', '1', 'important');
+                        modalContent.style.setProperty('width', '100%', 'important');
+                        modalContent.style.setProperty('height', '100%', 'important');
+                        modalContent.style.setProperty('background-color', 'white', 'important');
+                        modalContent.style.setProperty('border', 'none', 'important');
+                        modalContent.style.setProperty('border-radius', '8px', 'important');
+                        
+                        console.log('🔍 DEBUG: Modal-content encontrado y configurado:', modalContent);
+                    }
+                    
+                    console.log('🔍 DEBUG: Modal configurado para ser visible');
+                    
+                    // Forzar que el modal sea visible inmediatamente
+                    modal.classList.remove('fade');
+                    modal.classList.add('show');
+                    modal.setAttribute('aria-hidden', 'false');
+                    modal.setAttribute('aria-modal', 'true');
+                    
+                    // Forzar que el body no tenga scroll
+                    document.body.classList.add('modal-open');
+                    
+                    // Crear un backdrop si no existe
+                    let backdrop = document.querySelector('.modal-backdrop');
+                    if (!backdrop) {
+                        backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop fade show';
+                        backdrop.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 1040; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5);';
+                        document.body.appendChild(backdrop);
+                    }
+                    
+                    console.log('🔍 DEBUG: Modal forzado a ser visible');
+                }
+                
+                // Intentar enfocar
+                campoMensaje.focus();
+                console.log('🔍 DEBUG: Campo habilitado y enfocado');
+                
+                // Agregar evento de prueba
+                campoMensaje.addEventListener('input', () => {
+                    console.log('🔍 DEBUG: Campo recibió input');
+                });
+                
+                // Agregar evento de click
+                campoMensaje.addEventListener('click', () => {
+                    console.log('🔍 DEBUG: Campo recibió click');
+                });
+                
+                // Agregar evento de focus
+                campoMensaje.addEventListener('focus', () => {
+                    console.log('🔍 DEBUG: Campo recibió focus');
+                });
+            } else {
+                console.error('❌ ERROR: Campo de mensaje no encontrado');
+            }
+        }, 100);
+        
+        // Hacer scroll automático al último mensaje
+        setTimeout(() => {
+            const mensajesContainer = modalContent.querySelector('.mensajes-container');
+            console.log('🔍 DEBUG: mensajesContainer encontrado =', mensajesContainer);
+            if (mensajesContainer) {
+                console.log('🔍 DEBUG: scrollHeight =', mensajesContainer.scrollHeight);
+                console.log('🔍 DEBUG: clientHeight =', mensajesContainer.clientHeight);
+                
+                // Si las dimensiones son 0, esperar un poco más
+                if (mensajesContainer.scrollHeight === 0 || mensajesContainer.clientHeight === 0) {
+                    console.log('🔍 DEBUG: Dimensiones 0, esperando más tiempo...');
+                    setTimeout(() => {
+                        console.log('🔍 DEBUG: scrollHeight (segundo intento) =', mensajesContainer.scrollHeight);
+                        console.log('🔍 DEBUG: clientHeight (segundo intento) =', mensajesContainer.clientHeight);
+                        mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+                        console.log('🔍 DEBUG: scrollTop después (segundo intento) =', mensajesContainer.scrollTop);
+                    }, 300);
+                } else {
+                    mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+                    console.log('🔍 DEBUG: scrollTop después =', mensajesContainer.scrollTop);
+                }
+            } else {
+                console.error('❌ ERROR: No se encontró .mensajes-container');
+            }
+        }, 200);
+        
+    } catch (e) {
+        console.error('Error mostrando hilo en modal:', e);
+        mostrarErrorEnModal('Error cargando mensajes del hilo');
+    }
+}
+
+// Mostrar formulario para crear nuevo hilo
+async function mostrarFormularioNuevoHilo() {
+    const titulo = document.getElementById('actividadTitulo')?.value || 'Mensajes de actividad';
+    const modalContent = document.getElementById('mensajesModalContent');
+    
+    modalContent.innerHTML = `
+        <div class="text-center py-4">
+            <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+            <h6 class="mt-3 text-muted">No hay mensajes para esta actividad</h6>
+            <p class="text-muted">Crea el primer hilo de mensajes para comenzar la conversación.</p>
+        </div>
+        <form id="formNuevoHilo" onsubmit="crearNuevoHiloDesdeModal(event)">
+            <div class="mb-3">
+                <label class="form-label">Título del hilo</label>
+                <input type="text" class="form-control" id="nuevoHiloTitulo" value="${titulo}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" id="nuevoHiloDescripcion" rows="3" placeholder="Describe el propósito de este hilo de mensajes"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Primer mensaje</label>
+                <textarea class="form-control" id="nuevoHiloPrimerMensaje" rows="4" placeholder="Escribe el primer mensaje..." required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Adjuntos (opcional)</label>
+                <input type="file" class="form-control" id="nuevoHiloAdjuntos" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Crear Hilo de Mensajes
+            </button>
+        </form>
+    `;
+}
+
+// Mostrar error en el modal
+function mostrarErrorEnModal(mensaje) {
+    const modalContent = document.getElementById('mensajesModalContent');
+    modalContent.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            ${mensaje}
+        </div>
+    `;
+}
+
+// Crear nuevo hilo desde el modal
+async function crearNuevoHiloDesdeModal(event) {
+    event.preventDefault();
+    
+    try {
+        const titulo = document.getElementById('nuevoHiloTitulo').value;
+        const descripcion = document.getElementById('nuevoHiloDescripcion').value;
+        const contenidoPrimerMensaje = document.getElementById('nuevoHiloPrimerMensaje').value;
+        
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes/hilos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ActividadId: parseInt(ACTIVIDAD_ID),
+                Titulo: titulo,
+                Descripcion: descripcion,
+                ContenidoPrimerMensaje: contenidoPrimerMensaje
+            })
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const nuevoHilo = await resp.json();
+        
+        // Mostrar el hilo creado en el modal
+        await mostrarHiloEnModal(nuevoHilo);
+        
+        // Recargar resumen de mensajes
+        cargarResumenMensajes();
+        
+    } catch (e) {
+        console.error('Error creando hilo desde modal:', e);
+        mostrarErrorEnModal('Error creando el hilo de mensajes');
+    }
+}
+
+// Función para cerrar el modal correctamente
+function cerrarModalMensajes() {
+    const modal = document.getElementById('mensajesModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.classList.add('fade');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.setAttribute('aria-modal', 'false');
+        modal.style.display = 'none';
+        
+        // Remover backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
+        // Restaurar scroll del body
+        document.body.classList.remove('modal-open');
+        
+        console.log('🔍 DEBUG: Modal cerrado correctamente');
+    }
+}
+
+// Función de prueba para verificar el campo de mensaje
+function probarCampoMensaje() {
+    console.log('🔍 DEBUG: Probando campo de mensaje...');
+    const campo = document.getElementById('nuevoMensajeContenido');
+    
+    if (!campo) {
+        console.error('❌ ERROR: Campo no encontrado');
+        return false;
+    }
+    
+    console.log('🔍 DEBUG: Campo encontrado, probando interacción...');
+    
+    // Intentar hacer clic en el campo
+    campo.click();
+    console.log('🔍 DEBUG: Click ejecutado');
+    
+    // Intentar enfocar
+    campo.focus();
+    console.log('🔍 DEBUG: Focus ejecutado');
+    
+    // Intentar escribir
+    campo.value = 'Prueba de escritura';
+    console.log('🔍 DEBUG: Valor establecido:', campo.value);
+    
+    // Disparar evento de input
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    console.log('🔍 DEBUG: Evento input disparado');
+    
+    return true;
+}
+
+// Función para verificar autenticación
+function verificarAutenticacion() {
+    console.log('🔍 DEBUG: Verificando autenticación...');
+    console.log('🔍 DEBUG: typeof Auth =', typeof Auth);
+    
+    if (typeof Auth === 'undefined') {
+        console.error('❌ ERROR: Auth no está disponible');
+        return false;
+    }
+    
+    const token = Auth.getToken();
+    console.log('🔍 DEBUG: Token =', token);
+    console.log('🔍 DEBUG: Token length =', token ? token.length : 0);
+    
+    if (!token || token.trim() === '') {
+        console.error('❌ ERROR: No hay token válido');
+        return false;
+    }
+    
+    // Verificar si el token está expirado
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expDate = new Date(payload.exp * 1000);
+        const now = new Date();
+        
+        console.log('🔍 DEBUG: Token expira:', expDate);
+        console.log('🔍 DEBUG: Ahora:', now);
+        console.log('🔍 DEBUG: Expirado:', now > expDate);
+        
+        if (now > expDate) {
+            console.error('❌ ERROR: Token expirado');
+            alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            Auth.requireAuth();
+            return false;
+        }
+    } catch (e) {
+        console.error('❌ ERROR: No se pudo verificar la expiración del token:', e);
+        // Continuar con el token aunque no se pueda verificar la expiración
+    }
+    
+    console.log('✅ DEBUG: Autenticación OK');
+    return true;
+}
+
+// Enviar nuevo mensaje en el modal
+async function enviarNuevoMensaje(event, hiloId) {
+    event.preventDefault();
+    
+    // Sin verificación de autenticación para simplificar
+    console.log('🔍 DEBUG: Enviando mensaje sin autenticación');
+    
+    try {
+        const contenido = document.getElementById('nuevoMensajeContenido').value;
+        const adjuntos = document.getElementById('nuevoMensajeAdjuntos').files;
+        
+        console.log('🔍 DEBUG: enviarNuevoMensaje() - hiloId =', hiloId);
+        console.log('🔍 DEBUG: contenido =', contenido);
+        console.log('🔍 DEBUG: adjuntos =', adjuntos.length, 'archivos');
+        console.log('🔍 DEBUG: Auth.getToken() =', Auth.getToken() ? 'Token disponible' : 'Sin token');
+        console.log('🔍 DEBUG: typeof Auth =', typeof Auth);
+        console.log('🔍 DEBUG: Token completo =', Auth.getToken());
+        console.log('🔍 DEBUG: localStorage.getItem("ub_token") =', localStorage.getItem('ub_token'));
+        
+        // Verificar si el usuario está logueado
+        const user = Auth.getUser();
+        console.log('🔍 DEBUG: Usuario =', user);
+        console.log('🔍 DEBUG: Usuario username =', user?.username);
+        
+        // Crear FormData para enviar contenido y adjuntos
+        const formData = new FormData();
+        formData.append('Contenido', contenido);
+        formData.append('HiloMensajeId', parseInt(hiloId));
+        
+        // Agregar adjuntos si los hay
+        if (adjuntos && adjuntos.length > 0) {
+            for (let i = 0; i < adjuntos.length; i++) {
+                formData.append('Adjuntos', adjuntos[i]);
+                console.log('🔍 DEBUG: Adjunto agregado =', adjuntos[i].name, 'Tamaño:', adjuntos[i].size);
+            }
+        }
+        
+        console.log('🔍 DEBUG: FormData creado con', adjuntos.length, 'adjuntos');
+        console.log('🔍 DEBUG: URL completa =', `${CONFIG.API_BASE_URL}/mensajes`);
+        
+        const token = Auth.getToken();
+        console.log('🔍 DEBUG: Token obtenido =', token ? 'Token disponible' : 'Sin token');
+        console.log('🔍 DEBUG: Token completo =', token);
+        
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        console.log('🔍 DEBUG: Respuesta HTTP =', resp.status, resp.statusText);
+        
+        if (!resp.ok) {
+            const errorText = await resp.text();
+            console.error('🔍 DEBUG: Error response =', errorText);
+            throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+        
+        const resultado = await resp.json();
+        console.log('🔍 DEBUG: Resultado =', resultado);
+        
+        // Limpiar formulario
+        document.getElementById('nuevoMensajeContenido').value = '';
+        document.getElementById('nuevoMensajeAdjuntos').value = '';
+        
+        // Recargar mensajes del hilo
+        const hilo = { Id: hiloId };
+        await mostrarHiloEnModal(hilo);
+        
+        // Hacer scroll al último mensaje después de enviar
+        setTimeout(() => {
+            const modalContent = document.getElementById('mensajesModalContent');
+            const mensajesContainer = modalContent.querySelector('.mensajes-container');
+            console.log('🔍 DEBUG: mensajesContainer encontrado (después de enviar) =', mensajesContainer);
+            if (mensajesContainer) {
+                console.log('🔍 DEBUG: scrollHeight (después de enviar) =', mensajesContainer.scrollHeight);
+                console.log('🔍 DEBUG: clientHeight (después de enviar) =', mensajesContainer.clientHeight);
+                
+                // Si las dimensiones son 0, esperar un poco más
+                if (mensajesContainer.scrollHeight === 0 || mensajesContainer.clientHeight === 0) {
+                    console.log('🔍 DEBUG: Dimensiones 0 (después de enviar), esperando más tiempo...');
+                    setTimeout(() => {
+                        console.log('🔍 DEBUG: scrollHeight (segundo intento después de enviar) =', mensajesContainer.scrollHeight);
+                        console.log('🔍 DEBUG: clientHeight (segundo intento después de enviar) =', mensajesContainer.clientHeight);
+                        mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+                        console.log('🔍 DEBUG: scrollTop después (segundo intento después de enviar) =', mensajesContainer.scrollTop);
+                    }, 300);
+                } else {
+                    mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+                    console.log('🔍 DEBUG: scrollTop después (después de enviar) =', mensajesContainer.scrollTop);
+                }
+            } else {
+                console.error('❌ ERROR: No se encontró .mensajes-container (después de enviar)');
+            }
+        }, 300);
+        
+        // Recargar resumen de mensajes
+        cargarResumenMensajes();
+        
+    } catch (e) {
+        console.error('Error enviando mensaje:', e);
+        alert('Error enviando mensaje: ' + e.message);
+    }
+}
+
+// Descargar adjunto
+async function descargarAdjunto(adjuntoId) {
+    try {
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes/adjuntos/${adjuntoId}/descargar`, {
+            headers: {
+                'Authorization': `Bearer ${Auth.getToken()}`
+            }
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `adjunto_${adjuntoId}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+    } catch (e) {
+        console.error('Error descargando adjunto:', e);
+        alert('Error descargando adjunto');
+    }
+}
+
+// Crear nuevo hilo de mensajes
+async function crearNuevoHilo(titulo) {
+    try {
+        const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes/hilos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            },
+            body: JSON.stringify({
+                ActividadId: parseInt(ACTIVIDAD_ID),
+                Titulo: titulo,
+                Descripcion: 'Hilo de mensajes para la actividad',
+                ContenidoPrimerMensaje: 'Hilo de mensajes creado automáticamente para esta actividad.'
+            })
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const nuevoHilo = await resp.json();
+        window.open(`mensaje.html?id=${nuevoHilo.id}`, '_blank');
+        
+        // Recargar resumen de mensajes
+        cargarResumenMensajes();
+    } catch (e) {
+        console.error('Error creando hilo de mensajes:', e);
+        alert('Error creando hilo de mensajes');
+    }
+}

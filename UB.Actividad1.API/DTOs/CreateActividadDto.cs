@@ -11,11 +11,9 @@ namespace UB.Actividad1.API.DTOs
         public string? Codigo { get; set; }
         public string? AnioAcademico { get; set; }
         
-        [Required(ErrorMessage = "La fecha de inicio es obligatoria")]
-        public DateTime FechaInicio { get; set; }
+        public DateTime? FechaInicio { get; set; }
         
-        [Required(ErrorMessage = "La fecha de fin es obligatoria")]
-        public DateTime FechaFin { get; set; }
+        public DateTime? FechaFin { get; set; }
         
         public string? Lugar { get; set; }
         public int UnidadGestionId { get; set; }

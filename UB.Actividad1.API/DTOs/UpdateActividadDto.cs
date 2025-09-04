@@ -68,7 +68,7 @@ public class UpdateActividadDto
     
     public int? PlazasTotales { get; set; }
     
-    public int? HorasTotales { get; set; }
+    public decimal? HorasTotales { get; set; }
     
     [MaxLength(10)]
     public string? CentroTrabajoRequerido { get; set; }
@@ -96,13 +96,13 @@ public class UpdateActividadDto
     [MaxLength(200)]
     public string? CentreTreballeAlumne { get; set; }
     
-    public int? CreditosTotalesCRAI { get; set; }
+    public decimal? CreditosTotalesCRAI { get; set; }
     
-    public int? CreditosTotalesSAE { get; set; }
+    public decimal? CreditosTotalesSAE { get; set; }
     
-    public int? CreditosMinimosSAE { get; set; }
+    public decimal? CreditosMinimosSAE { get; set; }
     
-    public int? CreditosMaximosSAE { get; set; }
+    public decimal? CreditosMaximosSAE { get; set; }
     
     [MaxLength(100)]
     public string? TipusEstudiSAE { get; set; }

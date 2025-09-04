@@ -19,6 +19,14 @@ public class UbFormacionContext : DbContext
     public DbSet<ImporteDescuento> ImportesDescuentos { get; set; }
     public DbSet<Dominio> Dominios { get; set; }
     public DbSet<ValorDominio> ValoresDominio { get; set; }
+    public DbSet<ActividadEstadoHistorial> ActividadEstadoHistorial { get; set; }
+    public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<HiloMensaje> HilosMensajes { get; set; }
+    public DbSet<Mensaje> Mensajes { get; set; }
+    public DbSet<Adjunto> Adjuntos { get; set; }
+    public DbSet<ActividadAdjunto> ActividadAdjuntos { get; set; }
+    public DbSet<CambioEstadoActividad> CambiosEstadoActividad { get; set; }
+    public DbSet<MensajeUsuario> MensajesUsuarios { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -103,7 +111,7 @@ public class UbFormacionContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.Telefono).HasMaxLength(50);
             entity.HasOne(e => e.Actividad)
-                  .WithMany()
+                  .WithMany(a => a.EntidadesOrganizadoras)
                   .HasForeignKey(e => e.ActividadId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
@@ -126,8 +134,8 @@ public class UbFormacionContext : DbContext
         modelBuilder.Entity<Dominio>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100).IsUnicode();
+            entity.Property(e => e.Descripcion).HasMaxLength(500).IsUnicode();
             entity.HasIndex(e => e.Nombre).IsUnique();
         });
 
@@ -149,6 +157,87 @@ public class UbFormacionContext : DbContext
             entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100).IsUnicode();
             entity.Property(e => e.Descripcion).HasMaxLength(500).IsUnicode();
             entity.HasIndex(e => e.Nombre).IsUnique();
+        });
+
+        // Historial de cambios de estado
+        modelBuilder.Entity<ActividadEstadoHistorial>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FechaCambio).IsRequired();
+            entity.HasOne(e => e.Actividad)
+                  .WithMany()
+                  .HasForeignKey(e => e.ActividadId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Estado)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstadoId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Rol).IsRequired().HasMaxLength(20);
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasOne(e => e.UnidadGestion)
+                  .WithMany()
+                  .HasForeignKey(e => e.UnidadGestionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configuración de mensajería
+        modelBuilder.Entity<HiloMensaje>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Titulo).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Descripcion).HasMaxLength(1000);
+            entity.HasOne(e => e.Actividad)
+                  .WithMany()
+                  .HasForeignKey(e => e.ActividadId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Mensaje>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Contenido).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Asunto).HasMaxLength(200);
+            entity.HasOne(e => e.HiloMensaje)
+                  .WithMany(h => h.Mensajes)
+                  .HasForeignKey(e => e.HiloMensajeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Usuario)
+                  .WithMany()
+                  .HasForeignKey(e => e.UsuarioId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Adjunto>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.NombreArchivo).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.RutaArchivo).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.TipoMime).HasMaxLength(100);
+            entity.HasOne(e => e.Mensaje)
+                  .WithMany(m => m.Adjuntos)
+                  .HasForeignKey(e => e.MensajeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MensajeUsuario>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Mensaje)
+                  .WithMany(m => m.MensajesUsuarios)
+                  .HasForeignKey(e => e.MensajeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Usuario)
+                  .WithMany()
+                  .HasForeignKey(e => e.UsuarioId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.MensajeId, e.UsuarioId }).IsUnique();
         });
     }
 }

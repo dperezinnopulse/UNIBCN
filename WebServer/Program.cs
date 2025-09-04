@@ -34,6 +34,12 @@ app.Map("/api/{**path}", async (HttpContext context, IHttpClientFactory httpClie
         client.DefaultRequestHeaders.Add("Content-Type", context.Request.Headers["Content-Type"].ToString());
     }
     
+    // Copiar header de autorización
+    if (context.Request.Headers.ContainsKey("Authorization"))
+    {
+        client.DefaultRequestHeaders.Add("Authorization", context.Request.Headers["Authorization"].ToString());
+    }
+    
     try
     {
         HttpResponseMessage response;

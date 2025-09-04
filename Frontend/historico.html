@@ -4,12 +4,37 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Histórico de Propuestas - UB</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     body { background-color: #f5f7fa; }
+    /* Unified sidebar + header */
+    .sidebar { background-color:#f2f2f2; min-height:100vh; transition: width .3s ease; overflow-x:hidden; }
+    .sidebar.collapsed { width: 72px !important; }
+    .sidebar:hover { width: 260px !important; }
+    .sidebar .nav-link { color:#333; display:flex; align-items:center; gap:10px; transition: background-color .2s; border-radius:.6rem; padding:.6rem .75rem; white-space:nowrap; }
+    .sidebar .nav-link:hover { background-color:#e6e6e6; }
+    .sidebar.collapsed .nav-link { justify-content:center; }
+    .sidebar.collapsed .nav-link i { margin-right:0 !important; }
+    .sidebar.collapsed .link-text { display:none !important; }
+    header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
+    /* UG user menu */
+    .usermenu.d-none,.usersubmenu.d-none{display:none}
+    .usermenu,.usersubmenu{
+      position:fixed; top:70px; right:20px; z-index:1200;
+      background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08); padding:8px; width:260px;
+    }
+    .userItem,.ugOption{ display:block; width:100%; text-align:left; border:0; background:transparent;
+      padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14px; }
+    .userItem:hover,.ugOption:hover{ background:#f2f4f7 }
+    .userItem.with-sub{ display:flex; justify-content:space-between; align-items:center }
+    .ugOption[disabled]{ opacity:.5; cursor:not-allowed }
     /* Contenedor para diferenciar secciones */
     .section-title {
       margin-bottom: 1rem;
@@ -78,145 +103,56 @@
       background-color: #e7effb;
       color: #0366d6;
     }
-  </style>
-  <!-- Estilos para menú lateral y cabecera unificados -->
-  <style>
-    /* Sidebar basic styling: same as otras páginas */
-    .sidebar {
-      background-color: #f7f7f7;
-      width: 260px;
-      min-height: 100vh;
-      transition: width 0.25s ease;
-      overflow-x: hidden;
+    /* Filtros avanzados */
+    .filtros-avanzados {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #dee2e6;
     }
-    .sidebar.collapsed {
-      width: 72px !important;
+    .filtros-avanzados .row {
+      margin-bottom: 0.5rem;
     }
-    .sidebar .nav-link {
-      color: #333;
+    .filtros-avanzados .col-md-3 {
+      margin-bottom: 0.5rem;
+    }
+    /* Controles de ordenación */
+    .ordenacion-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 0.6rem 0.75rem;
-      border-radius: 0.6rem;
-      font-weight: 500;
-      white-space: nowrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
-    .sidebar .nav-link.active {
-      background-color: #e7effb;
-      color: #0366d6;
-      font-weight: 600;
+    .ordenacion-controls select {
+      min-width: 200px;
     }
-    .sidebar .nav-link:hover {
-      background-color: #e6e6e6;
-      color: #0366d6;
-    }
-    .sidebar.collapsed .nav-link {
-      justify-content: center;
-    }
-    .sidebar.collapsed .link-text {
-      display: none !important;
-    }
-    #sidebarToggle {
-      background-color: transparent;
-      border: none;
-      color: #333;
-      font-size: 1.5rem;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 0.375rem;
-      transition: background-color 0.2s;
-    }
-    #sidebarToggle:hover {
-      background-color: #e6e6e6;
-    }
-
-    /* User menu and UG submenu styling for header */
-    .usermenu.d-none, .usersubmenu.d-none { display: none; }
-    .usermenu, .usersubmenu {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      z-index: 1200;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      padding: 8px;
-      width: 260px;
-    }
-    .userItem, .ugOption {
-      display: block;
-      width: 100%;
-      text-align: left;
-      border: 0;
-      background: transparent;
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .userItem:hover, .ugOption:hover {
-      background: #f2f4f7;
-    }
-    .userItem.with-sub {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .ugOption[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .usersubmenu .ugOption {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .usersubmenu .ugOption .chip {
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      display: inline-block;
-    }
-    .usersubmenu .ugOption[data-ug="IDP"] .chip { background: #f59e0b; }
-    .usersubmenu .ugOption[data-ug="CRAI"] .chip { background: #3b82f6; }
-    .usersubmenu .ugOption[data-ug="SAE"] .chip { background: #10b981; }
-    .usersubmenu .ugOption[data-ug="Todas"] .chip { background: #6b7280; }
-    .ugOption.active { background-color: #eef5ff; }
   </style>
 </head>
-<body>
-  <div class="d-flex">
-    <!-- Menú lateral reutilizable -->
-    <div id="sidebarContainer"></div>
-    <!-- Contenedor principal -->
-    <div class="flex-grow-1">
-      <!-- Cabecera reutilizable -->
-      <div id="headerContainer"></div>
-      <!-- Contenido -->
-      <main class="p-4">
+  <body>
+<div class="d-flex">
+<!-- Contenedor para el menú lateral cargado dinámicamente -->
+<div id="sidebarContainer"></div>
+<!-- Contenido principal -->
+<div class="flex-grow-1">
+<!-- Contenedor de la cabecera (se insertará dinámicamente) -->
+<div id="headerContainer"></div>
+<!-- Contenido -->
+<main class="p-4">
         <div class="d-flex align-items-center mb-3 flex-wrap gap-3">
           <h1 class="h4 mb-0 flex-grow-1">Histórico de Propuestas</h1>
           <!-- Zona de búsqueda, filtros y cambio de vista -->
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" placeholder="Buscar" />
+              <input type="text" class="form-control" id="buscador" placeholder="Buscar por título o código" />
             </div>
-            <div class="dropdown">
-              <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Filtrar</button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#">Todos</a></li>
-                <li><a class="dropdown-item" href="#">Aprobados</a></li>
-                <li><a class="dropdown-item" href="#">Pendientes</a></li>
-                <li><a class="dropdown-item" href="#">Rechazados</a></li>
-                <li><a class="dropdown-item" href="#">Borrador</a></li>
-              </ul>
-            </div>
+            <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosAvanzados">
+              <i class="bi bi-funnel"></i> Filtros
+            </button>
+            <button class="btn btn-success" type="button" onclick="exportarAExcel()">
+              <i class="bi bi-file-earmark-excel"></i> Exportar
+            </button>
             <div class="view-toggle btn-group" role="group">
               <button id="listViewBtn" type="button" class="btn btn-outline-secondary" title="Vista de lista">
                 <i class="bi bi-list"></i>
@@ -227,62 +163,87 @@
             </div>
           </div>
         </div>
-        <!-- Lista de propuestas -->
-        <div id="proposalList" data-view="list">
-          <!-- Ejemplo de propuesta aprobada -->
-          <div class="proposal-item d-flex justify-content-between align-items-center">
-            <div class="proposal-content">
-              <div class="fw-semibold">Taller de Introducción a Python</div>
-              <div class="small text-muted">25 de octubre de 2024</div>
+
+        <!-- Filtros avanzados colapsables -->
+        <div class="collapse" id="filtrosAvanzados">
+          <div class="filtros-avanzados">
+            <div class="row">
+              <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <select class="form-select" id="filtroEstado">
+                  <option value="">Todos los estados</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Unidad Gestora</label>
+                <select class="form-select" id="filtroUnidadGestion">
+                  <option value="">Todas las unidades</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Autor</label>
+                <input type="text" class="form-control" id="filtroAutor" placeholder="Nombre del autor">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha desde</label>
+                <input type="date" class="form-control" id="filtroFechaDesde">
+              </div>
             </div>
-            <div class="proposal-meta d-flex align-items-center gap-2">
-              <span class="badge bg-success">Aprobado</span>
-              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
-            </div>
-          </div>
-          <!-- Ejemplo de propuesta pendiente -->
-          <div class="proposal-item d-flex justify-content-between align-items-center">
-            <div class="proposal-content">
-              <div class="fw-semibold">Curso de Diseño UX/UI</div>
-              <div class="small text-muted">25 de octubre de 2024</div>
-            </div>
-            <div class="proposal-meta d-flex align-items-center gap-2">
-              <span class="badge bg-warning text-dark">Pendiente</span>
-              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
-            </div>
-          </div>
-          <!-- Ejemplo de propuesta rechazada -->
-          <div class="proposal-item d-flex justify-content-between align-items-center">
-            <div class="proposal-content">
-              <div class="fw-semibold">Seminario de Ciberseguridad</div>
-              <div class="small text-muted">25 de octubre de 2024</div>
-            </div>
-            <div class="proposal-meta d-flex align-items-center gap-2">
-              <span class="badge bg-danger">Rechazada</span>
-              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
-            </div>
-          </div>
-          <!-- Ejemplo de propuesta borrador -->
-          <div class="proposal-item d-flex justify-content-between align-items-center">
-            <div class="proposal-content">
-              <div class="fw-semibold">Taller de fotografía Digital</div>
-              <div class="small text-muted">25 de octubre de 2024</div>
-            </div>
-            <div class="proposal-meta d-flex align-items-center gap-2">
-              <span class="badge bg-secondary">Borrador</span>
-              <a href="#" class="btn btn-sm btn-outline-secondary">Ver detalles</a>
+            <div class="row">
+              <div class="col-md-3">
+                <label class="form-label">Fecha hasta</label>
+                <input type="date" class="form-control" id="filtroFechaHasta">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Tipo de actividad</label>
+                <select class="form-select" id="filtroTipoActividad">
+                  <option value="">Todos los tipos</option>
+                </select>
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <button class="btn btn-primary me-2" onclick="aplicarFiltros()">
+                  <i class="bi bi-search"></i> Aplicar filtros
+                </button>
+                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                  <i class="bi bi-x-circle"></i> Limpiar
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Controles de ordenación -->
+        <div class="ordenacion-controls">
+          <label class="form-label mb-0">Ordenar por:</label>
+          <select class="form-select" id="ordenacionCampo">
+            <option value="fechaModificacion">Fecha de modificación</option>
+            <option value="fechaCreacion">Fecha de creación</option>
+            <option value="titulo">Título</option>
+            <option value="estado">Estado</option>
+            <option value="unidadGestion">Unidad gestora</option>
+          </select>
+          <select class="form-select" id="ordenacionDireccion">
+            <option value="desc">Descendente (más reciente)</option>
+            <option value="asc">Ascendente (más antiguo)</option>
+          </select>
+        </div>
+
+        <!-- Lista de propuestas -->
+        <div id="proposalList" data-view="list"></div>
+        <nav class="mt-3" aria-label="Paginación">
+          <ul class="pagination justify-content-center" id="historicoPager"></ul>
+        </nav>
       </main>
     </div>
   </div>
   <!-- Bootstrap JS bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Cargamos el menú lateral reutilizable -->
+  <script src="auth.js"></script>
   <script src="menu.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      if (typeof Auth !== 'undefined') { Auth.requireAuth(); }
       loadSidebarMenu('sidebarContainer');
     });
   </script>
@@ -293,11 +254,31 @@
       loadHeader('headerContainer');
     });
   </script>
-  <!-- Script para cambiar la vista de lista a tarjetas -->
+  <!-- Script para cambiar la vista y cargar datos del backend -->
   <script>
     const listBtn = document.getElementById('listViewBtn');
     const cardBtn = document.getElementById('cardViewBtn');
     const proposalList = document.getElementById('proposalList');
+    const BUSCADOR = document.getElementById('buscador');
+    const API_BASE_URL = 'http://localhost:5001/api';
+    let actividades = [];
+    let paginaActual = 1;
+    const pageSize = 50;
+    let totalPaginas = 1;
+    let filtros = {
+      estado: '',
+      unidadGestion: '',
+      autor: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      tipoActividad: '',
+      search: ''
+    };
+    let ordenacion = {
+      campo: 'fechaModificacion',
+      direccion: 'desc'
+    };
+    
     function setView(view) {
       proposalList.setAttribute('data-view', view);
       if (view === 'list') {
@@ -312,6 +293,338 @@
     cardBtn.addEventListener('click', () => setView('cards'));
     // Inicializamos la vista por defecto
     setView('list');
+
+    // Cargar dominios para filtros
+    async function cargarDominios() {
+      try {
+        // Cargar estados
+        const respEstados = await fetch(`${API_BASE_URL}/estados`, { 
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        if (respEstados.ok) {
+          const estados = await respEstados.json();
+          const selectEstado = document.getElementById('filtroEstado');
+          estados.forEach(estado => {
+            const option = document.createElement('option');
+            option.value = estado.id;
+            option.textContent = estado.nombre;
+            selectEstado.appendChild(option);
+          });
+        }
+
+        // Cargar unidades de gestión
+        const respUG = await fetch(`${API_BASE_URL}/unidades-gestion`, { 
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        if (respUG.ok) {
+          const unidades = await respUG.json();
+          const selectUG = document.getElementById('filtroUnidadGestion');
+          unidades.forEach(ug => {
+            const option = document.createElement('option');
+            option.value = ug.id;
+            option.textContent = ug.nombre;
+            selectUG.appendChild(option);
+          });
+        }
+
+        // Cargar tipos de actividad
+        const respTipos = await fetch(`${API_BASE_URL}/dominios/TIPOS_ACTIVIDAD/valores`, { 
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        if (respTipos.ok) {
+          const tipos = await respTipos.json();
+          const selectTipo = document.getElementById('filtroTipoActividad');
+          tipos.forEach(tipo => {
+            const option = document.createElement('option');
+            option.value = tipo.valor;
+            option.textContent = tipo.descripcion;
+            selectTipo.appendChild(option);
+          });
+        }
+      } catch (e) {
+        console.error('Error cargando dominios:', e);
+      }
+    }
+
+    // Cargar actividades desde backend
+    async function cargarActividadesHistorico() {
+      try {
+        renderLoading();
+        const url = new URL(`${API_BASE_URL}/actividades`);
+        
+        // Aplicar filtros
+        if (filtros.search) url.searchParams.set('search', filtros.search);
+        if (filtros.estado) url.searchParams.set('estado', filtros.estado);
+        if (filtros.unidadGestion) url.searchParams.set('ug', filtros.unidadGestion);
+        if (filtros.tipoActividad) url.searchParams.set('tipoActividad', filtros.tipoActividad);
+        if (filtros.fechaDesde) url.searchParams.set('fechaDesde', filtros.fechaDesde);
+        if (filtros.fechaHasta) url.searchParams.set('fechaHasta', filtros.fechaHasta);
+        if (filtros.autor) url.searchParams.set('autor', filtros.autor);
+        
+        // Aplicar ordenación
+        url.searchParams.set('ordenarPor', ordenacion.campo);
+        url.searchParams.set('orden', ordenacion.direccion);
+        
+        // Paginación
+        url.searchParams.set('page', String(paginaActual));
+        url.searchParams.set('pageSize', String(pageSize));
+        
+        const resp = await fetch(url.toString(), { 
+          headers: { 
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${Auth.getToken()}`
+          } 
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        actividades = Array.isArray(data) ? data : (data.items || []);
+        totalPaginas = Array.isArray(data) ? 1 : (data.totalPages || 1);
+        renderActividades();
+        renderPaginacion();
+      } catch (e) {
+        renderError('Error cargando actividades');
+        console.error(e);
+      }
+    }
+
+    function aplicarFiltros() {
+      filtros.estado = document.getElementById('filtroEstado').value;
+      filtros.unidadGestion = document.getElementById('filtroUnidadGestion').value;
+      filtros.autor = document.getElementById('filtroAutor').value;
+      filtros.fechaDesde = document.getElementById('filtroFechaDesde').value;
+      filtros.fechaHasta = document.getElementById('filtroFechaHasta').value;
+      filtros.tipoActividad = document.getElementById('filtroTipoActividad').value;
+      filtros.search = BUSCADOR.value.trim();
+      
+      paginaActual = 1; // Resetear a primera página
+      cargarActividadesHistorico();
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('filtroEstado').value = '';
+      document.getElementById('filtroUnidadGestion').value = '';
+      document.getElementById('filtroAutor').value = '';
+      document.getElementById('filtroFechaDesde').value = '';
+      document.getElementById('filtroFechaHasta').value = '';
+      document.getElementById('filtroTipoActividad').value = '';
+      BUSCADOR.value = '';
+      
+      filtros = {
+        estado: '',
+        unidadGestion: '',
+        autor: '',
+        fechaDesde: '',
+        fechaHasta: '',
+        tipoActividad: '',
+        search: ''
+      };
+      
+      paginaActual = 1;
+      cargarActividadesHistorico();
+    }
+
+    function aplicarOrdenacion() {
+      ordenacion.campo = document.getElementById('ordenacionCampo').value;
+      ordenacion.direccion = document.getElementById('ordenacionDireccion').value;
+      paginaActual = 1;
+      cargarActividadesHistorico();
+    }
+
+    // Exportar a Excel
+    function exportarAExcel() {
+      try {
+        // Preparar datos para exportar
+        const datosExportar = actividades.map(a => ({
+          'ID': a.id,
+          'Código': a.codigo || '',
+          'Título': a.titulo || '',
+          'Descripción': a.descripcion || '',
+          'Estado': a.estado?.nombre || '',
+          'Unidad Gestora': a.unidadGestion?.nombre || '',
+          'Fecha Inicio': a.fechaInicio ? new Date(a.fechaInicio).toLocaleDateString() : '',
+          'Fecha Fin': a.fechaFin ? new Date(a.fechaFin).toLocaleDateString() : '',
+          'Fecha Modificación': a.fechaModificacion ? new Date(a.fechaModificacion).toLocaleDateString() : '',
+          'Fecha Creación': a.fechaCreacion ? new Date(a.fechaCreacion).toLocaleDateString() : '',
+          'Tipo Actividad': a.tipoActividad || '',
+          'Año Académico': a.anioAcademico || '',
+          'Plazas Totales': a.plazasTotales || '',
+          'Horas Totales': a.horasTotales || ''
+        }));
+
+        // Crear workbook y worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(datosExportar);
+
+        // Ajustar anchos de columna
+        const colWidths = [
+          { wch: 8 },   // ID
+          { wch: 15 },  // Código
+          { wch: 40 },  // Título
+          { wch: 50 },  // Descripción
+          { wch: 15 },  // Estado
+          { wch: 25 },  // Unidad Gestora
+          { wch: 12 },  // Fecha Inicio
+          { wch: 12 },  // Fecha Fin
+          { wch: 15 },  // Fecha Modificación
+          { wch: 15 },  // Fecha Creación
+          { wch: 20 },  // Tipo Actividad
+          { wch: 12 },  // Año Académico
+          { wch: 12 },  // Plazas Totales
+          { wch: 12 }   // Horas Totales
+        ];
+        ws['!cols'] = colWidths;
+
+        // Añadir worksheet al workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Actividades');
+
+        // Generar nombre de archivo con fecha
+        const fecha = new Date().toISOString().split('T')[0];
+        const nombreArchivo = `Actividades_UB_${fecha}.xlsx`;
+
+        // Descargar archivo
+        XLSX.writeFile(wb, nombreArchivo);
+
+        // Mostrar mensaje de éxito
+        alert(`Archivo exportado correctamente: ${nombreArchivo}`);
+      } catch (e) {
+        console.error('Error exportando a Excel:', e);
+        alert('Error al exportar a Excel. Revisa la consola para más detalles.');
+      }
+    }
+
+    function getEstadoBadgeClass(estadoId) {
+      switch (estadoId) {
+        case 6: return 'bg-secondary'; // Borrador
+        case 7: return 'bg-warning text-dark'; // Enviada
+        case 8: return 'bg-danger'; // Subsanar
+        case 9: return 'bg-success'; // Aceptada
+        default: return 'bg-secondary';
+      }
+    }
+
+    function renderLoading() {
+      proposalList.innerHTML = `
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-hourglass-split"></i> Cargando actividades...
+        </div>`;
+    }
+
+    function renderError(msg) {
+      proposalList.innerHTML = `
+        <div class="alert alert-danger" role="alert">${msg}</div>`;
+    }
+
+    function renderActividades() {
+      if (!actividades || actividades.length === 0) {
+        proposalList.innerHTML = `
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-inbox"></i> No se encontraron actividades
+          </div>`;
+        return;
+      }
+
+      const html = actividades.map(a => `
+        <a class="proposal-item" href="editar-actividad.html?id=${a.id}">
+          <div class="proposal-content">
+            <div class="fw-semibold">#${a.id} · ${escapeHtml(a.titulo || 'Sin título')}</div>
+            <div class="small text-muted">
+              ${a.fechaInicio ? `Inicio: ${new Date(a.fechaInicio).toLocaleDateString()}` : 'Sin fecha'}
+              ${a.fechaFin ? ` · Fin: ${new Date(a.fechaFin).toLocaleDateString()}` : ''}
+            </div>
+            <div class="small text-muted">
+              <i class="bi bi-clock"></i> Modificado: ${a.fechaModificacion ? new Date(a.fechaModificacion).toLocaleDateString() : 'N/A'}
+              ${a.fechaCreacion ? ` · Creado: ${new Date(a.fechaCreacion).toLocaleDateString()}` : ''}
+            </div>
+          </div>
+          <div class="proposal-meta d-flex align-items-center gap-2">
+            <span class="badge ${getEstadoBadgeClass(a.estadoId)}">${a.estado?.nombre || 'Estado'}</span>
+            <span class="badge bg-info">${a.unidadGestion?.nombre || 'Unidad'}</span>
+            ${a.tipoActividad ? `<span class="badge bg-secondary">${a.tipoActividad}</span>` : ''}
+          </div>
+        </a>
+      `).join('');
+      proposalList.innerHTML = html;
+    }
+
+    function renderPaginacion() {
+      const pager = document.getElementById('historicoPager');
+      if (!pager) return;
+      if (totalPaginas <= 1) { pager.innerHTML = ''; return; }
+      let html = '';
+      html += `
+        <li class="page-item ${paginaActual === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="return cambiarPaginaHistorico(${paginaActual - 1})">Anterior</a>
+        </li>`;
+      const maxVisible = 7;
+      let start = Math.max(1, paginaActual - Math.floor(maxVisible/2));
+      let end = Math.min(totalPaginas, start + maxVisible - 1);
+      if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+      for (let i = start; i <= end; i++) {
+        html += `
+          <li class="page-item ${i === paginaActual ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="return cambiarPaginaHistorico(${i})">${i}</a>
+          </li>`;
+      }
+      html += `
+        <li class="page-item ${paginaActual === totalPaginas ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="return cambiarPaginaHistorico(${paginaActual + 1})">Siguiente</a>
+        </li>`;
+      pager.innerHTML = html;
+    }
+
+    window.cambiarPaginaHistorico = function(page) {
+      if (page < 1 || page > totalPaginas || page === paginaActual) return false;
+      paginaActual = page;
+      cargarActividadesHistorico();
+      return false;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    // Eventos
+    if (BUSCADOR) {
+      BUSCADOR.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          filtros.search = BUSCADOR.value.trim();
+          paginaActual = 1;
+          cargarActividadesHistorico();
+        }
+      });
+    }
+
+    // Eventos de ordenación
+    document.getElementById('ordenacionCampo').addEventListener('change', aplicarOrdenacion);
+    document.getElementById('ordenacionDireccion').addEventListener('change', aplicarOrdenacion);
+
+    // Arranque
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarDominios();
+      cargarActividadesHistorico();
+    });
   </script>
+  
+  <!-- Scripts para menú y funcionalidad -->
+  <script src="auth.js"></script>
+  <script src="menu.js"></script>
+  <script src="header.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadSidebarMenu('sidebarContainer');
+      loadHeader('headerContainer');
+      
+      // Requiere login
+      if (typeof Auth !== 'undefined') { Auth.requireAuth(); }
+    });
+  </script>
+</main>
+</div>
+</div>
 </body>
 </html>

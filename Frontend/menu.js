@@ -31,7 +31,7 @@
   </nav>
   <!-- Elemento flexible para empujar el enlace de desconexión al final -->
   <div class="flex-grow-1"></div>
-  <a class="nav-link mt-auto" href="#">
+  <a class="nav-link mt-auto" href="#" onclick="desconectarUsuario(); return false;">
     <i class="bi bi-box-arrow-right"></i> <span class="link-text">Desconectar</span>
   </a>
 </aside>`;
@@ -67,5 +67,23 @@
         link.classList.add('active');
       }
     });
+  };
+
+  /**
+   * Función para desconectar al usuario y redirigir al login
+   */
+  window.desconectarUsuario = function() {
+    // Limpiar el token de autenticación
+    if (typeof Auth !== 'undefined') {
+      Auth.logout();
+    }
+    
+    // Limpiar cualquier dato de sesión almacenado
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    sessionStorage.clear();
+    
+    // Redirigir al login
+    window.location.href = 'login.html';
   };
 })();

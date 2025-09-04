@@ -1,41 +1,75 @@
-# Script para probar el frontend automáticamente
-Write-Host "Probando el frontend..." -ForegroundColor Yellow
+# Test del frontend - Simulación de creación de actividad
+Write-Host "=== TEST FRONTEND - CREACIÓN DE ACTIVIDAD ===" -ForegroundColor Green
 
-$apiUrl = "https://localhost:7001"
-
-# Probar crear una actividad desde el frontend
-Write-Host "Creando actividad de prueba desde frontend..." -ForegroundColor Cyan
-
-$actividadData = @{
-    titulo = "Actividad de Prueba Frontend"
-    descripcion = "Esta actividad fue creada automáticamente para probar el frontend"
-    fechaInicio = "2025-01-20"
-    fechaFin = "2025-01-25"
-    estadoId = 1
-    unidadGestionId = 1
-} | ConvertTo-Json
-
+# 1. Login
+Write-Host "1. Haciendo login con usuario SAE..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/actividades" -Method POST -Body $actividadData -ContentType "application/json"
-    Write-Host "SUCCESS: Actividad creada desde frontend con ID: $($response.id)" -ForegroundColor Green
-    Write-Host "Título: $($response.titulo)" -ForegroundColor Green
-    Write-Host "Descripción: $($response.descripcion)" -ForegroundColor Green
+    $loginResponse = Invoke-RestMethod -Uri "http://localhost:5001/api/auth/login" -Method POST -ContentType "application/json" -Body '{"username":"SAE","password":"SAE"}'
+    $token = $loginResponse.token
+    Write-Host "   ✅ Login exitoso" -ForegroundColor Green
 } catch {
-    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "   ❌ Error en login: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 }
 
-# Probar obtener actividades
-Write-Host "Obteniendo lista de actividades..." -ForegroundColor Cyan
+# 2. Crear actividad (simulando datos del frontend)
+Write-Host "2. Creando actividad desde frontend..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/actividades" -Method GET -ContentType "application/json"
-    Write-Host "SUCCESS: Total de actividades: $($response.totalItems)" -ForegroundColor Green
-    Write-Host "Actividades encontradas: $($response.items.Count)" -ForegroundColor Green
-    
-    foreach ($actividad in $response.items) {
-        Write-Host "  - ID: $($actividad.id), Título: $($actividad.titulo)" -ForegroundColor Gray
+    $headers = @{
+        'Content-Type' = 'application/json'
+        'Authorization' = "Bearer $token"
     }
+    
+    # Datos como los enviaría el frontend (PascalCase)
+    $actividadData = @{
+        Titulo = "Test Actividad SAE desde Frontend"
+        Descripcion = ""
+        FechaInicio = $null
+        FechaFin = $null
+        Lugar = ""
+        Codigo = ""
+        AnioAcademico = ""
+        UnidadGestionId = 1
+        TipoActividad = "Seminario"
+        CoordinadorCentreUnitat = ""
+        CentreTreballeAlumne = ""
+        CreditosTotalesCRAI = $null
+        CreditosTotalesSAE = $null
+        CreditosMinimosSAE = $null
+        CreditosMaximosSAE = $null
+        TipusEstudiSAE = "Master"
+        CategoriaSAE = "Intermedi"
+        CompetenciesSAE = "Test competencies"
+        InscripcionInicio = $null
+        InscripcionFin = $null
+        InscripcionPlazas = $null
+        InscripcionListaEspera = $false
+        InscripcionModalidad = ""
+        InscripcionRequisitosES = ""
+        InscripcionRequisitosCA = ""
+        InscripcionRequisitosEN = ""
+        ProgramaDescripcionES = ""
+        ProgramaDescripcionCA = ""
+        ProgramaDescripcionEN = ""
+        ProgramaContenidosES = ""
+        ProgramaContenidosCA = ""
+        ProgramaContenidosEN = ""
+        ProgramaObjetivosES = ""
+        ProgramaObjetivosCA = ""
+        ProgramaObjetivosEN = ""
+        ProgramaDuracion = $null
+        ProgramaInicio = $null
+        ProgramaFin = $null
+    } | ConvertTo-Json
+    
+    $response = Invoke-RestMethod -Uri "http://localhost:5001/api/actividades" -Method POST -Headers $headers -Body $actividadData
+    Write-Host "   ✅ Actividad creada exitosamente con ID: $($response.id)" -ForegroundColor Green
+    Write-Host "   📋 Título: $($response.titulo)" -ForegroundColor Cyan
+    Write-Host "   🏢 Unidad Gestión ID: $($response.unidadGestionId)" -ForegroundColor Cyan
+    
 } catch {
-    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "   ❌ Error creando actividad: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 }
 
-Write-Host "Prueba del frontend completada" -ForegroundColor Yellow
+Write-Host "=== TEST COMPLETADO EXITOSAMENTE ===" -ForegroundColor Green

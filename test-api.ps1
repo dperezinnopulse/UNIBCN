@@ -1,53 +1,27 @@
-# Script de prueba para la API UB Actividades
-Write-Host "🧪 Probando conexión a la API..." -ForegroundColor Yellow
+# Script para probar el filtrado de la API
+$token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwidXNlcm5hbWUiOiJTQUUiLCJyb2wiOiJHZXN0b3IiLCJ1Z0lkIjoiMyIsIm5iZiI6MTc1Njk4MTQwMywiZXhwIjoxNzU3MDEwMjAzLCJpYXQiOjE3NTY5ODE0MDN9.abc123"
 
-$apiUrl = "https://localhost:7001"
+Write-Host "🔍 Probando API de actividades con usuario SAE..." -ForegroundColor Cyan
 
-# Probar endpoint de estados
 try {
-    Write-Host "📡 Probando GET /api/estados..." -ForegroundColor Cyan
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/estados" -Method GET -ContentType "application/json"
-    Write-Host "✅ Estados obtenidos: $($response.Count) estados" -ForegroundColor Green
-    $response | ForEach-Object { Write-Host "  - $($_.nombre)" -ForegroundColor Gray }
-} catch {
-    Write-Host "❌ Error obteniendo estados: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# Probar endpoint de unidades de gestión
-try {
-    Write-Host "📡 Probando GET /api/unidades-gestion..." -ForegroundColor Cyan
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/unidades-gestion" -Method GET -ContentType "application/json"
-    Write-Host "✅ Unidades obtenidas: $($response.Count) unidades" -ForegroundColor Green
-    $response | ForEach-Object { Write-Host "  - $($_.nombre)" -ForegroundColor Gray }
-} catch {
-    Write-Host "❌ Error obteniendo unidades: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# Probar endpoint de actividades
-try {
-    Write-Host "📡 Probando GET /api/actividades..." -ForegroundColor Cyan
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/actividades" -Method GET -ContentType "application/json"
-    Write-Host "✅ Actividades obtenidas: $($response.items.Count) actividades" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Error obteniendo actividades: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# Probar crear una actividad
-try {
-    Write-Host "📡 Probando POST /api/actividades..." -ForegroundColor Cyan
-    $actividadData = @{
-        titulo = "Prueba desde PowerShell"
-        descripcion = "Actividad de prueba creada desde script"
-        fechaInicio = "2025-01-15"
-        fechaFin = "2025-01-16"
-        estadoId = 1
-        unidadGestionId = 1
-    } | ConvertTo-Json
+    $headers = @{
+        "Authorization" = "Bearer $token"
+        "Accept" = "application/json"
+    }
     
-    $response = Invoke-RestMethod -Uri "$apiUrl/api/actividades" -Method POST -Body $actividadData -ContentType "application/json"
-    Write-Host "✅ Actividad creada con ID: $($response.id)" -ForegroundColor Green
+    $response = Invoke-RestMethod -Uri "http://localhost:5001/api/actividades?page=1&pageSize=5" -Headers $headers -Method GET
+    
+    Write-Host "✅ Respuesta recibida:" -ForegroundColor Green
+    Write-Host "   Total de actividades: $($response.Count)" -ForegroundColor Yellow
+    
+    if ($response.Count -gt 0) {
+        Write-Host "   Primeras actividades:" -ForegroundColor Yellow
+        for ($i = 0; $i -lt [Math]::Min(3, $response.Count); $i++) {
+            $actividad = $response[$i]
+            Write-Host "     $($i+1). ID: $($actividad.id), Título: $($actividad.titulo), Autor: $($actividad.usuarioAutorNombre)" -ForegroundColor Gray
+        }
+    }
+    
 } catch {
-    Write-Host "❌ Error creando actividad: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
 }
-
-Write-Host "🏁 Prueba completada" -ForegroundColor Yellow

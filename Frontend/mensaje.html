@@ -139,36 +139,41 @@
         <a href="mensajes.html" class="text-decoration-none d-inline-flex align-items-center mb-3">
           <i class="bi bi-arrow-left me-1"></i> Volver a la bandeja de entrada
         </a>
-        <!-- Message detail card -->
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-              <h6 class="mb-0">Técnico de Formación</h6>
-              <span class="badge bg-warning text-dark">No leído</span>
-            </div>
-            <div class="row g-3 mt-3">
-              <div class="col-md-4">
-                <label class="small text-muted d-block">Fecha de propuesta</label>
-                <div class="border rounded px-2 py-1 small d-flex align-items-center gap-2">
-                  12/03/2025 <i class="bi bi-calendar"></i>
-                </div>
-              </div>
-              <div class="col-md-5">
-                <label class="small text-muted d-block">Aprobación</label>
-                <div class="border rounded px-2 py-1 small">Taller de fotografía Digital</div>
-              </div>
-              <div class="col-md-3 d-flex align-items-end justify-content-end">
-                <a href="#" class="btn btn-sm btn-primary">Ver detalles</a>
-              </div>
-              <div class="col-12">
-                <label class="small text-muted d-block">Mensaje</label>
-                <textarea class="form-control" rows="3" disabled>Su propuesta 'Taller de Introducción a Python' ha sido aprobada. Puede ver los detalles en su histórico.</textarea>
-              </div>
-            </div>
+        <!-- Información del hilo -->
+        <div class="card shadow-sm mb-4" id="hiloInfo">
+          <!-- Se cargará dinámicamente -->
+        </div>
+
+        <!-- Lista de mensajes -->
+        <div id="mensajesContainer">
+          <!-- Los mensajes se cargarán dinámicamente -->
+        </div>
+
+        <!-- Formulario para responder -->
+        <div class="card shadow-sm mt-4">
+          <div class="card-header">
+            <h6 class="mb-0">Responder</h6>
           </div>
-          <div class="card-footer bg-transparent d-flex gap-2">
-            <button class="btn btn-secondary" type="button">Responder</button>
-            <button class="btn btn-success" type="button">Marcar como leído</button>
+          <div class="card-body">
+            <form id="formRespuesta">
+              <div class="mb-3">
+                <label class="form-label">Mensaje</label>
+                <textarea class="form-control" id="contenidoRespuesta" rows="4" placeholder="Escribe tu respuesta..." required></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Adjuntos</label>
+                <input type="file" class="form-control" id="adjuntosRespuesta" multiple>
+                <div class="form-text">Puedes adjuntar múltiples archivos</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-send"></i> Enviar respuesta
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormulario()">
+                  <i class="bi bi-x-circle"></i> Limpiar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </main>
@@ -188,6 +193,282 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       loadHeader('headerContainer');
+    });
+  </script>
+
+  <!-- Script para gestionar mensajes -->
+  <script src="auth.js"></script>
+  <script src="mensajes.js"></script>
+  <script>
+    // Variables globales
+    const API_BASE_URL = 'http://localhost:5001/api';
+    let hiloId = null;
+    let hiloInfo = null;
+    let mensajes = [];
+    let usuarioActual = null;
+
+    // Obtener ID del hilo de la URL
+    function obtenerHiloId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      hiloId = urlParams.get('id');
+      if (!hiloId) {
+        mostrarError('ID de hilo no especificado');
+        return false;
+      }
+      return true;
+    }
+
+    // Cargar información del hilo
+    async function cargarHiloInfo() {
+      try {
+        const resp = await fetch(`${API_BASE_URL}/mensajes/hilos/${hiloId}`, {
+          headers: {
+            'Authorization': `Bearer ${Auth.getToken()}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        hiloInfo = await resp.json();
+        renderizarHiloInfo();
+      } catch (e) {
+        console.error('Error cargando información del hilo:', e);
+        mostrarError('Error cargando información del hilo');
+      }
+    }
+
+    // Cargar mensajes del hilo
+    async function cargarMensajes() {
+      try {
+        const resp = await fetch(`${API_BASE_URL}/mensajes/hilos/${hiloId}/mensajes`, {
+          headers: {
+            'Authorization': `Bearer ${Auth.getToken()}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        mensajes = await resp.json();
+        renderizarMensajes();
+        
+        // Marcar mensajes como leídos
+        marcarMensajesComoLeidos();
+      } catch (e) {
+        console.error('Error cargando mensajes:', e);
+        mostrarError('Error cargando mensajes');
+      }
+    }
+
+    // Renderizar información del hilo
+    function renderizarHiloInfo() {
+      if (!hiloInfo) return;
+      
+      const hiloInfoContainer = document.getElementById('hiloInfo');
+      hiloInfoContainer.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h5 class="mb-1">${escapeHtml(hiloInfo.Titulo)}</h5>
+              <p class="text-muted mb-2">${escapeHtml(hiloInfo.Descripcion || 'Sin descripción')}</p>
+            </div>
+            <div class="text-end">
+              <div class="small text-muted">Creado: ${formatearFecha(hiloInfo.FechaCreacion)}</div>
+              <div class="small text-muted">Modificado: ${formatearFecha(hiloInfo.FechaModificacion)}</div>
+            </div>
+          </div>
+          <div class="row g-3 mt-2">
+            <div class="col-md-4">
+              <span class="badge bg-info">${hiloInfo.TotalMensajes} mensaje${hiloInfo.TotalMensajes !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="col-md-4">
+              <span class="badge bg-warning">${hiloInfo.MensajesNoLeidos} no leído${hiloInfo.MensajesNoLeidos !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="col-md-4">
+              <a href="editar-actividad.html?id=${hiloInfo.ActividadId}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver actividad
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Renderizar mensajes
+    function renderizarMensajes() {
+      if (!mensajes || mensajes.length === 0) {
+        document.getElementById('mensajesContainer').innerHTML = `
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-chat"></i> No hay mensajes en este hilo
+          </div>`;
+        return;
+      }
+
+      const html = mensajes.map(mensaje => `
+        <div class="card shadow-sm mb-3 ${!mensaje.Leido ? 'border-warning' : ''}">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${escapeHtml(mensaje.UsuarioNombre)}</strong>
+              <small class="text-muted ms-2">${formatearFecha(mensaje.FechaCreacion)}</small>
+            </div>
+            <div>
+              ${!mensaje.Leido ? '<span class="badge bg-warning text-dark">No leído</span>' : ''}
+              ${mensaje.Adjuntos && mensaje.Adjuntos.length > 0 ? 
+                `<span class="badge bg-info ms-1"><i class="bi bi-paperclip"></i> ${mensaje.Adjuntos.length}</span>` : ''}
+            </div>
+          </div>
+          <div class="card-body">
+            ${mensaje.Asunto ? `<h6 class="mb-2">${escapeHtml(mensaje.Asunto)}</h6>` : ''}
+            <div class="mb-3">${escapeHtml(mensaje.Contenido)}</div>
+            
+            ${mensaje.Adjuntos && mensaje.Adjuntos.length > 0 ? `
+              <div class="border-top pt-3">
+                <h6 class="mb-2"><i class="bi bi-paperclip"></i> Adjuntos:</h6>
+                <div class="d-flex flex-wrap gap-2">
+                  ${mensaje.Adjuntos.map(adjunto => `
+                    <a href="#" class="btn btn-sm btn-outline-secondary" onclick="descargarAdjunto(${adjunto.Id})">
+                      <i class="bi bi-download"></i> ${escapeHtml(adjunto.NombreArchivo)}
+                      <small class="d-block">${formatearTamaño(adjunto.TamañoBytes)}</small>
+                    </a>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('mensajesContainer').innerHTML = html;
+    }
+
+    // Marcar mensajes como leídos
+    async function marcarMensajesComoLeidos() {
+      if (!usuarioActual) return;
+      
+      try {
+        const mensajesNoLeidos = mensajes.filter(m => !m.Leido);
+        
+        for (const mensaje of mensajesNoLeidos) {
+          await fetch(`${API_BASE_URL}/mensajes/${mensaje.Id}/leer`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Auth.getToken()}`
+            },
+            body: JSON.stringify({
+              MensajeId: mensaje.Id,
+              UsuarioId: usuarioActual.id
+            })
+          });
+        }
+      } catch (e) {
+        console.error('Error marcando mensajes como leídos:', e);
+      }
+    }
+
+    // Enviar respuesta
+    async function enviarRespuesta(event) {
+      event.preventDefault();
+      
+      const contenido = document.getElementById('contenidoRespuesta').value.trim();
+      if (!contenido) return;
+      
+      try {
+        const formData = new FormData();
+        formData.append('HiloMensajeId', hiloId);
+        formData.append('Contenido', contenido);
+        
+        const adjuntos = document.getElementById('adjuntosRespuesta').files;
+        for (let i = 0; i < adjuntos.length; i++) {
+          formData.append('Adjuntos', adjuntos[i]);
+        }
+        
+        const resp = await fetch(`${API_BASE_URL}/mensajes`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${Auth.getToken()}`
+          },
+          body: formData
+        });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        // Limpiar formulario y recargar mensajes
+        limpiarFormulario();
+        await cargarMensajes();
+        
+        // Scroll al último mensaje
+        window.scrollTo(0, document.body.scrollHeight);
+        
+      } catch (e) {
+        console.error('Error enviando respuesta:', e);
+        alert('Error enviando respuesta');
+      }
+    }
+
+    // Limpiar formulario
+    function limpiarFormulario() {
+      document.getElementById('contenidoRespuesta').value = '';
+      document.getElementById('adjuntosRespuesta').value = '';
+    }
+
+    // Funciones auxiliares
+    function mostrarError(mensaje) {
+      document.getElementById('mensajesContainer').innerHTML = `
+        <div class="alert alert-danger" role="alert">
+          <i class="bi bi-exclamation-triangle"></i> ${mensaje}
+        </div>`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function formatearFecha(fecha) {
+      if (!fecha) return 'N/A';
+      return new Date(fecha).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatearTamaño(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Obtener información del usuario actual
+    function obtenerUsuarioActual() {
+      try {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          usuarioActual = JSON.parse(userData);
+        }
+      } catch (e) {
+        console.error('Error obteniendo usuario actual:', e);
+      }
+    }
+
+    // Eventos
+    document.getElementById('formRespuesta').addEventListener('submit', enviarRespuesta);
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      obtenerUsuarioActual();
+      if (obtenerHiloId()) {
+        cargarHiloInfo();
+        cargarMensajes();
+      }
     });
   </script>
 </body>

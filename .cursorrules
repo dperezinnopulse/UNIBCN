@@ -1,0 +1,172 @@
+# Cursor Rules - Proyecto UB Formación
+
+## 🚫 COMANDOS QUE BLOQUEAN AL ASISTENTE
+
+### Comandos que NO usar (se quedan esperando):
+- `Start-Process` - ❌ BLOQUEA (cualquier variante)
+- `Start-Sleep` - ❌ BLOQUEA (tiempos largos)
+- `Get-Process` - ❌ BLOQUEA
+- `Start-Job` - ❌ BLOQUEA
+- `dotnet build` - ❌ BLOQUEA (sin flags)
+- `dotnet run` - ❌ BLOQUEA (sin &)
+- `netstat` - ❌ BLOQUEA (en algunos casos)
+- Comandos que abren ventanas del navegador
+
+### Alternativas que SÍ usar:
+- `netstat -an | findstr :puerto` - ✅ NO BLOQUEA (con pipe)
+- `dotnet build --verbosity quiet --no-restore` - ✅ NO BLOQUEA
+- `dotnet run --urls="http://localhost:5001" &` - ✅ NO BLOQUEA (con &)
+- `Invoke-RestMethod` - ✅ NO BLOQUEA
+- `Invoke-WebRequest` - ✅ NO BLOQUEA
+- `Write-Host` - ✅ NO BLOQUEA
+- `cd` - ✅ NO BLOQUEA
+- `&` (operador de background) - ✅ NO BLOQUEA
+- `tasklist` - ✅ NO BLOQUEA
+
+## 🏗️ ARQUITECTURA DEL PROYECTO
+
+### Backend (API)
+- **Puerto**: 5001
+- **URL**: http://localhost:5001
+- **Proyecto**: UB.Actividad1.API
+- **Framework**: .NET 8 Minimal APIs
+- **Base de datos**: SQL Server con Entity Framework Core
+
+### Frontend (WebServer)
+- **Puerto**: 8080
+- **URL**: http://localhost:8080
+- **Proyecto**: WebServer (actúa como proxy)
+- **Tecnologías**: HTML5, JavaScript, Bootstrap 5
+
+## 🔧 COMANDOS DE INICIO
+
+### Iniciar Backend:
+```powershell
+cd "UB.Actividad1.API" && dotnet run --urls="http://localhost:5001" &
+```
+
+### Iniciar Frontend:
+```powershell
+cd WebServer && dotnet run --urls="http://localhost:8080" &
+```
+
+### Verificar servicios:
+```powershell
+netstat -an | findstr ":5001\|:8080"
+```
+
+## 🔐 AUTENTICACIÓN
+
+### Usuarios de prueba:
+- **SAE**: username="SAE", password="SAE", rol="Gestor", UnidadGestionId=3
+- **Admin**: username="Admin", password="Admin", rol="Admin"
+
+### Endpoints de autenticación:
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Registro
+- `GET /api/auth/hash` - Generar hash BCrypt
+
+## 📊 BASE DE DATOS
+
+### Estados de Actividad:
+- ID 6: "Borrador" (BOR) - Estado por defecto para nuevas actividades
+- ID 7: "Enviada" (ENV)
+- ID 8: "Subsanar" (SUB)
+- ID 9: "Aceptada" (ACE)
+
+### Unidades de Gestión:
+- ID 1: IDP
+- ID 2: CRAI  
+- ID 3: SAE
+
+## 🎯 FUNCIONALIDADES IMPLEMENTADAS
+
+### Creación de Actividades:
+- ✅ Solo el campo "Título" es obligatorio
+- ✅ Validación en frontend y backend
+- ✅ Estado "Borrador" asignado automáticamente
+- ✅ UsuarioAutorId extraído del token JWT
+- ✅ Código automático generado si no se proporciona
+
+### Validación:
+- ✅ Frontend: Indicación visual en rojo para campos obligatorios
+- ✅ Backend: Error 400 Bad Request si falta título
+- ✅ Mensaje: "El título es obligatorio"
+
+### Sistema de Mensajes No Leídos:
+- ✅ Backend: Marca mensajes como no leídos cuando otros usuarios escriben
+- ✅ Endpoint para marcar mensajes como leídos
+- ✅ Endpoint para obtener conteo de mensajes no leídos por actividad
+- ✅ Frontend: Filtro de mensajes no leídos (switch on/off)
+- ✅ Frontend: Etiquetas de mensajes no leídos en lista
+- ✅ Frontend: Icono de mensajes cambia a azul cuando hay no leídos
+- ✅ Marcado automático como leído al abrir mensajes
+
+## 🔄 FLUJO DE TRABAJO
+
+### Para probar funcionalidad:
+1. Verificar servicios: `netstat -an | findstr ":5001\|:8080"`
+2. Login: `Invoke-RestMethod -Uri "http://localhost:5001/api/auth/login" -Method POST -ContentType "application/json" -Body '{"username":"SAE","password":"SAE"}'`
+3. Crear actividad: `Invoke-RestMethod -Uri "http://localhost:5001/api/actividades" -Method POST -Headers $headers -Body '{"Titulo":"Test","UnidadGestionId":1}'`
+
+### Para desarrollo:
+- Usar scripts de prueba: `.\test-frontend.ps1`, `.\test-validation.ps1`, `.\test-final.ps1`
+- Verificar logs en consola del navegador
+- Usar `Invoke-WebRequest` para capturar páginas HTML
+
+## 📁 ARCHIVOS IMPORTANTES
+
+### Frontend:
+- `Frontend/index.html` - Página principal de creación
+- `Frontend/scripts-clean.js` - Lógica principal
+- `Frontend/auth.js` - Autenticación
+- `Frontend/ug-specific-fields.js` - Campos por unidad gestora
+
+### Backend:
+- `UB.Actividad1.API/Program.cs` - Endpoints principales
+- `UB.Actividad1.API/DTOs/CreateActividadDto.cs` - DTO para crear actividades
+
+## 🚨 PROBLEMAS CONOCIDOS Y SOLUCIONES
+
+### Error 404 en /api/actividades-frontend:
+- **Solución**: Usar `/api/actividades` (endpoint correcto)
+
+### Error 400 Bad Request:
+- **Causa**: Formato de datos incorrecto (camelCase vs PascalCase)
+- **Solución**: Enviar datos en PascalCase desde frontend
+
+### Error de clave foránea FK_Actividades_EstadosActividad:
+- **Causa**: EstadoId hardcodeado a 1 (no existe)
+- **Solución**: Usar EstadoId = 6 (Borrador)
+
+### Redirección con ID undefined:
+- **Causa**: Frontend accede a `resultado.Id` (PascalCase) pero backend devuelve `id` (camelCase)
+- **Solución**: Usar `resultado.id` en lugar de `resultado.Id`
+
+### Error 401 (Unauthorized) en mensajes:
+- **Causa**: Backend no reiniciado después de cambios en endpoints de mensajes
+- **Solución**: Reiniciar backend con `taskkill /F /IM dotnet.exe` y `cd "UB.Actividad1.API" && dotnet run --urls="http://localhost:5001" &`
+
+### Comandos que bloquean:
+- **Solución**: Usar alternativas que retornen inmediatamente
+
+### Comando Start-Sleep bloquea:
+- **Causa**: `Start-Sleep -Seconds 5` bloquea la ejecución
+- **Solución**: Usar `netstat` directamente sin sleep, o usar `&` para ejecutar en background
+
+### Comando dotnet build bloquea:
+- **Causa**: `dotnet build` puede bloquear si hay errores de compilación
+- **Solución**: Usar `dotnet build --verbosity quiet` o verificar errores con `dotnet build --no-restore` y luego usar `&` para background
+
+### Comando dotnet run bloquea:
+- **Causa**: `dotnet run` sin `&` bloquea la ejecución esperando que termine el servidor
+- **Solución**: SIEMPRE usar `dotnet run --urls="http://localhost:5001" &` para ejecutar en background
+- **Alternativa**: Usar `Start-Process dotnet -ArgumentList "run", "--urls=http://localhost:5001"` para ejecutar en proceso separado
+
+## 📝 NOTAS DE DESARROLLO
+
+- El frontend envía datos en PascalCase para coincidir con el DTO del backend
+- Las fechas se envían como ISO string o null
+- El token JWT se añade automáticamente por auth.js
+- Los usuarios no-Admin solo ven sus propias actividades
+- La unidad gestora se preselecciona según el usuario logueado

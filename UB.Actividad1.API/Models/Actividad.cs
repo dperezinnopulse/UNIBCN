@@ -91,7 +91,7 @@ public class Actividad
     public DateTime? FechaInicioImparticion { get; set; }
     public DateTime? FechaFinImparticion { get; set; }
     
-    public bool ActividadPago { get; set; } = false;
+    public bool? ActividadPago { get; set; }
     
     // Campos específicos por unidad de gestión
     [MaxLength(200)]
@@ -109,7 +109,7 @@ public class Actividad
     public DateTime? InscripcionInicio { get; set; }
     public DateTime? InscripcionFin { get; set; }
     public int? InscripcionPlazas { get; set; }
-    public bool InscripcionListaEspera { get; set; } = false;
+    public bool? InscripcionListaEspera { get; set; }
     
     [MaxLength(50)]
     public string? InscripcionModalidad { get; set; }
@@ -167,9 +167,13 @@ public class Actividad
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
     
+    // Usuario que creó la propuesta
+    public int? UsuarioAutorId { get; set; }
+    
     // Navigation properties
     public virtual EstadoActividad Estado { get; set; } = null!;
     public virtual UnidadGestion? UnidadGestion { get; set; }
+    public virtual Usuario? UsuarioAutor { get; set; }
     public virtual ICollection<Subactividad> Subactividades { get; set; } = new List<Subactividad>();
     public virtual ICollection<Participante> Participantes { get; set; } = new List<Participante>();
     public virtual ICollection<Internacionalizacion> Internacionalizaciones { get; set; } = new List<Internacionalizacion>();
