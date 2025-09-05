@@ -1735,6 +1735,8 @@ async function eliminarMensaje(mensajeId) {
             // Recargar el contenido del modal para actualizar la lista
             await cargarContenidoModalMensajes();
             console.log('Mensaje eliminado correctamente');
+        } else if (response.status === 403) {
+            alert('No tienes permisos para eliminar este mensaje');
         } else {
             const error = await response.text();
             console.error('Error eliminando mensaje:', error);
@@ -1988,7 +1990,7 @@ async function mostrarHiloEnModal(hilo) {
                                 <strong class="text-primary">${mensaje.usuarioNombre || 'Usuario'}</strong>
                                 <div class="d-flex align-items-center gap-2">
                                     <small class="text-muted">${mensaje.fechaCreacion ? new Date(mensaje.fechaCreacion).toLocaleString() : fechaCreacion}</small>
-                                    ${mensaje.usuarioId === usuarioActual?.id ? `
+                                    ${(mensaje.usuarioId === usuarioActual?.id || usuarioActual?.rol === 'Admin') ? `
                                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarMensaje(${mensaje.id})" title="Eliminar mensaje">
                                             <i class="bi bi-trash"></i>
                                         </button>

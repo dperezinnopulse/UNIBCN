@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UB.Actividad1.API.Data;
 
@@ -11,9 +12,11 @@ using UB.Actividad1.API.Data;
 namespace UB.Actividad1.API.Migrations
 {
     [DbContext(typeof(UbFormacionContext))]
-    partial class UbFormacionContextModelSnapshot : ModelSnapshot
+    [Migration("20250903163340_AddUsuariosAuth")]
+    partial class AddUsuariosAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -261,68 +264,13 @@ namespace UB.Actividad1.API.Migrations
                     b.Property<int?>("UnidadGestionId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UsuarioAutorId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("EstadoId");
 
                     b.HasIndex("UnidadGestionId");
 
-                    b.HasIndex("UsuarioAutorId");
-
                     b.ToTable("Actividades");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.ActividadAdjunto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActividadId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("FechaSubida")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("NombreArchivo")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("RutaArchivo")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<long>("TamañoBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("TipoMime")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("UsuarioSubidaId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActividadId");
-
-                    b.HasIndex("UsuarioSubidaId");
-
-                    b.ToTable("ActividadAdjuntos");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.ActividadEstadoHistorial", b =>
@@ -349,90 +297,6 @@ namespace UB.Actividad1.API.Migrations
                     b.HasIndex("EstadoId");
 
                     b.ToTable("ActividadEstadoHistorial");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.Adjunto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("FechaSubida")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("MensajeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NombreArchivo")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("RutaArchivo")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<long>("TamañoBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("TipoMime")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MensajeId");
-
-                    b.ToTable("Adjuntos");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.CambioEstadoActividad", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActividadId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("DescripcionMotivos")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("EstadoAnteriorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EstadoNuevoId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaCambio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UsuarioCambioId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActividadId");
-
-                    b.HasIndex("EstadoAnteriorId");
-
-                    b.HasIndex("EstadoNuevoId");
-
-                    b.HasIndex("UsuarioCambioId");
-
-                    b.ToTable("CambiosEstadoActividad");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.Dominio", b =>
@@ -564,42 +428,6 @@ namespace UB.Actividad1.API.Migrations
                     b.ToTable("EstadosActividad");
                 });
 
-            modelBuilder.Entity("UB.Actividad1.API.Models.HiloMensaje", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActividadId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaModificacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActividadId");
-
-                    b.ToTable("HilosMensajes");
-                });
-
             modelBuilder.Entity("UB.Actividad1.API.Models.ImporteDescuento", b =>
                 {
                     b.Property<int>("Id")
@@ -684,86 +512,6 @@ namespace UB.Actividad1.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Internacionalizaciones");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.Mensaje", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Asunto")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Contenido")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<bool>("Eliminado")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaEliminacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaModificacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("HiloMensajeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HiloMensajeId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Mensajes");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.MensajeUsuario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaLectura")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("Leido")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MensajeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.HasIndex("MensajeId", "UsuarioId")
-                        .IsUnique();
-
-                    b.ToTable("MensajesUsuarios");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.Participante", b =>
@@ -1004,34 +752,9 @@ namespace UB.Actividad1.API.Migrations
                         .WithMany("Actividades")
                         .HasForeignKey("UnidadGestionId");
 
-                    b.HasOne("UB.Actividad1.API.Models.Usuario", "UsuarioAutor")
-                        .WithMany()
-                        .HasForeignKey("UsuarioAutorId");
-
                     b.Navigation("Estado");
 
                     b.Navigation("UnidadGestion");
-
-                    b.Navigation("UsuarioAutor");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.ActividadAdjunto", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.Actividad", "Actividad")
-                        .WithMany()
-                        .HasForeignKey("ActividadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.Usuario", "UsuarioSubida")
-                        .WithMany()
-                        .HasForeignKey("UsuarioSubidaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actividad");
-
-                    b.Navigation("UsuarioSubida");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.ActividadEstadoHistorial", b =>
@@ -1053,67 +776,10 @@ namespace UB.Actividad1.API.Migrations
                     b.Navigation("Estado");
                 });
 
-            modelBuilder.Entity("UB.Actividad1.API.Models.Adjunto", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.Mensaje", "Mensaje")
-                        .WithMany("Adjuntos")
-                        .HasForeignKey("MensajeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Mensaje");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.CambioEstadoActividad", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.Actividad", "Actividad")
-                        .WithMany()
-                        .HasForeignKey("ActividadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.EstadoActividad", "EstadoAnterior")
-                        .WithMany()
-                        .HasForeignKey("EstadoAnteriorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.EstadoActividad", "EstadoNuevo")
-                        .WithMany()
-                        .HasForeignKey("EstadoNuevoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.Usuario", "UsuarioCambio")
-                        .WithMany()
-                        .HasForeignKey("UsuarioCambioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actividad");
-
-                    b.Navigation("EstadoAnterior");
-
-                    b.Navigation("EstadoNuevo");
-
-                    b.Navigation("UsuarioCambio");
-                });
-
             modelBuilder.Entity("UB.Actividad1.API.Models.EntidadOrganizadora", b =>
                 {
                     b.HasOne("UB.Actividad1.API.Models.Actividad", "Actividad")
                         .WithMany("EntidadesOrganizadoras")
-                        .HasForeignKey("ActividadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actividad");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.HiloMensaje", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.Actividad", "Actividad")
-                        .WithMany()
                         .HasForeignKey("ActividadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1141,44 +807,6 @@ namespace UB.Actividad1.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Actividad");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.Mensaje", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.HiloMensaje", "HiloMensaje")
-                        .WithMany("Mensajes")
-                        .HasForeignKey("HiloMensajeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("HiloMensaje");
-
-                    b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.MensajeUsuario", b =>
-                {
-                    b.HasOne("UB.Actividad1.API.Models.Mensaje", "Mensaje")
-                        .WithMany("MensajesUsuarios")
-                        .HasForeignKey("MensajeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UB.Actividad1.API.Models.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Mensaje");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.Participante", b =>
@@ -1245,18 +873,6 @@ namespace UB.Actividad1.API.Migrations
             modelBuilder.Entity("UB.Actividad1.API.Models.EstadoActividad", b =>
                 {
                     b.Navigation("Actividades");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.HiloMensaje", b =>
-                {
-                    b.Navigation("Mensajes");
-                });
-
-            modelBuilder.Entity("UB.Actividad1.API.Models.Mensaje", b =>
-                {
-                    b.Navigation("Adjuntos");
-
-                    b.Navigation("MensajesUsuarios");
                 });
 
             modelBuilder.Entity("UB.Actividad1.API.Models.UnidadGestion", b =>

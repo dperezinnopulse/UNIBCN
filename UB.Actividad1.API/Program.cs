@@ -772,11 +772,11 @@ app.MapGet("/api/mensajes/hilos", async (UbFormacionContext context, HttpContext
                 Descripcion = h.Descripcion,
                 FechaCreacion = h.FechaCreacion,
                 FechaModificacion = h.FechaModificacion,
-                TotalMensajes = h.Mensajes.Count(m => m.Activo),
+                TotalMensajes = h.Mensajes.Count(m => m.Activo && !m.Eliminado),
                 MensajesNoLeidos = currentUserId.HasValue ? 
-                    h.Mensajes.Count(m => m.Activo && !m.MensajesUsuarios.Any(mu => mu.UsuarioId == currentUserId.Value && mu.Leido)) : 0,
+                    h.Mensajes.Count(m => m.Activo && !m.Eliminado && !m.MensajesUsuarios.Any(mu => mu.UsuarioId == currentUserId.Value && mu.Leido)) : 0,
                 UltimoMensaje = h.Mensajes
-                    .Where(m => m.Activo)
+                    .Where(m => m.Activo && !m.Eliminado)
                     .OrderByDescending(m => m.FechaCreacion)
                     .Select(m => new MensajeDto
                     {
@@ -992,7 +992,7 @@ app.MapPost("/api/mensajes/{hiloId}/marcar-leido", async (int hiloId, HttpContex
         var mensajesNoLeidos = await context.MensajesUsuarios
             .Where(mu => mu.UsuarioId == usuarioId && 
                         !mu.Leido && 
-                        context.Mensajes.Any(m => m.Id == mu.MensajeId && m.HiloMensajeId == hiloId))
+                        context.Mensajes.Any(m => m.Id == mu.MensajeId && m.HiloMensajeId == hiloId && m.Activo && !m.Eliminado))
             .ToListAsync();
 
         // Marcar como leídos
@@ -1002,9 +1002,27 @@ app.MapPost("/api/mensajes/{hiloId}/marcar-leido", async (int hiloId, HttpContex
             mensajeUsuario.FechaLectura = DateTime.UtcNow;
         }
 
+        // También crear registros para mensajes que no tienen registro de lectura
+        var mensajesSinRegistro = await context.Mensajes
+            .Where(m => m.HiloMensajeId == hiloId && m.Activo && !m.Eliminado &&
+                       !context.MensajesUsuarios.Any(mu => mu.MensajeId == m.Id && mu.UsuarioId == usuarioId))
+            .Select(m => m.Id)
+            .ToListAsync();
+
+        foreach (var mensajeId in mensajesSinRegistro)
+        {
+            context.MensajesUsuarios.Add(new MensajeUsuario
+            {
+                MensajeId = mensajeId,
+                UsuarioId = usuarioId,
+                Leido = true,
+                FechaLectura = DateTime.UtcNow
+            });
+        }
+
         await context.SaveChangesAsync();
 
-        return Results.Ok(new { mensajesMarcados = mensajesNoLeidos.Count });
+        return Results.Ok(new { mensajesMarcados = mensajesNoLeidos.Count + mensajesSinRegistro.Count() });
     }
     catch (Exception ex)
     {
@@ -1188,11 +1206,11 @@ app.MapGet("/api/mensajes/actividad/{actividadId}/resumen", async (int actividad
             {
                 h.Id,
                 h.Titulo,
-                TotalMensajes = h.Mensajes.Count(m => m.Activo),
+                TotalMensajes = h.Mensajes.Count(m => m.Activo && !m.Eliminado),
                 MensajesNoLeidos = usuarioId.HasValue ? 
-                    h.Mensajes.Count(m => m.Activo && !m.MensajesUsuarios.Any(mu => mu.UsuarioId == usuarioId.Value && mu.Leido)) : 0,
+                    h.Mensajes.Count(m => m.Activo && !m.Eliminado && !m.MensajesUsuarios.Any(mu => mu.UsuarioId == usuarioId.Value && mu.Leido)) : 0,
                 UltimoMensaje = h.Mensajes
-                    .Where(m => m.Activo)
+                    .Where(m => m.Activo && !m.Eliminado)
                     .OrderByDescending(m => m.FechaCreacion)
                     .Select(m => new
                     {
@@ -1235,6 +1253,72 @@ app.MapGet("/api/mensajes/adjuntos/{id}/descargar", async (int id, UbFormacionCo
         return Results.Problem($"Error descargando adjunto: {ex.Message}");
     }
 });
+
+// Endpoint para obtener historial completo de cambios de estado
+app.MapGet("/api/actividades/{actividadId}/historial-estados", async (int actividadId, UbFormacionContext context) =>
+{
+    try
+    {
+        var historial = await context.CambiosEstadoActividad
+            .Where(c => c.ActividadId == actividadId && c.Activo)
+            .Include(c => c.UsuarioCambio)
+            .Include(c => c.EstadoAnterior)
+            .Include(c => c.EstadoNuevo)
+            .OrderByDescending(c => c.FechaCambio)
+            .Select(c => new
+            {
+                c.Id,
+                c.ActividadId,
+                EstadoAnterior = new { c.EstadoAnterior.Id, c.EstadoAnterior.Nombre, c.EstadoAnterior.Codigo },
+                EstadoNuevo = new { c.EstadoNuevo.Id, c.EstadoNuevo.Nombre, c.EstadoNuevo.Codigo },
+                c.DescripcionMotivos,
+                c.FechaCambio,
+                UsuarioCambio = new { c.UsuarioCambio.Id, c.UsuarioCambio.Username, c.UsuarioCambio.Rol }
+            })
+            .ToListAsync();
+
+        return Results.Ok(historial);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error obteniendo historial de estados: {ex.Message}");
+    }
+});
+
+// Endpoint para editar descripción de cambio de estado
+app.MapPut("/api/actividades/cambios-estado/{cambioId}", async (int cambioId, HttpContext httpContext, UbFormacionContext context, CambioEstadoDto cambioDto) =>
+{
+    try
+    {
+        // Obtener el usuario actual del token JWT
+        var userIdClaim = httpContext.User.FindFirst("sub") ?? 
+                          httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var usuarioId))
+            return Results.Unauthorized();
+
+        var cambio = await context.CambiosEstadoActividad.FindAsync(cambioId);
+        if (cambio == null)
+            return Results.NotFound("Cambio de estado no encontrado");
+
+        // Solo permitir editar si es el usuario que lo creó o es Admin
+        var usuario = await context.Usuarios.FindAsync(usuarioId);
+        var isAdmin = usuario?.Rol == "Admin";
+        
+        if (cambio.UsuarioCambioId != usuarioId && !isAdmin)
+            return Results.Forbid();
+
+        // Actualizar la descripción
+        cambio.DescripcionMotivos = cambioDto.DescripcionMotivos;
+        await context.SaveChangesAsync();
+
+        return Results.Ok(new { message = "Descripción actualizada correctamente" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error actualizando descripción: {ex.Message}");
+    }
+}).RequireAuthorization();
 
 // Endpoints para adjuntos de actividades
 app.MapGet("/api/actividades/{actividadId}/adjuntos", async (int actividadId, UbFormacionContext context) =>
@@ -1283,6 +1367,30 @@ app.MapPost("/api/actividades/{actividadId}/adjuntos", async (int actividadId, H
         var archivos = form.Files.Where(f => f.Name == "archivos").ToList();
         var descripciones = form["descripciones"].ToList();
 
+        // Validaciones de archivos
+        const long maxFileSize = 10 * 1024 * 1024; // 10MB
+        var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".gif", ".txt", ".xlsx", ".xls" };
+        
+        foreach (var archivo in archivos)
+        {
+            if (archivo.Length > maxFileSize)
+                return Results.BadRequest($"El archivo {archivo.FileName} es demasiado grande. Máximo permitido: 10MB");
+            
+            var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return Results.BadRequest($"Tipo de archivo no permitido: {extension}. Tipos permitidos: {string.Join(", ", allowedExtensions)}");
+            
+            // Sanitizar nombre de archivo
+            var sanitizedFileName = Path.GetFileNameWithoutExtension(archivo.FileName)
+                .Replace(" ", "_")
+                .Replace("..", "")
+                .Replace("/", "")
+                .Replace("\\", "");
+            
+            if (string.IsNullOrEmpty(sanitizedFileName))
+                return Results.BadRequest("Nombre de archivo inválido");
+        }
+
         if (archivos.Count == 0)
             return Results.BadRequest("No se han enviado archivos");
 
@@ -1299,7 +1407,13 @@ app.MapPost("/api/actividades/{actividadId}/adjuntos", async (int actividadId, H
 
             if (archivo.Length > 0)
             {
-                var fileName = $"{Guid.NewGuid()}_{archivo.FileName}";
+                var sanitizedFileName = Path.GetFileNameWithoutExtension(archivo.FileName)
+                    .Replace(" ", "_")
+                    .Replace("..", "")
+                    .Replace("/", "")
+                    .Replace("\\", "");
+                var extension = Path.GetExtension(archivo.FileName);
+                var fileName = $"{Guid.NewGuid()}_{sanitizedFileName}{extension}";
                 var filePath = Path.Combine(uploadsPath, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))

@@ -11,7 +11,7 @@ async function cargarAdjuntos() {
             return;
         }
 
-        const response = await fetch(`/api/actividades/${actividadId}/adjuntos`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/adjuntos`);
         if (response.ok) {
             adjuntosActuales = await response.json();
             renderizarAdjuntos();
@@ -99,7 +99,7 @@ async function subirAdjuntos() {
             formData.append('descripciones', descripcionInput.value.trim());
         }
 
-        const response = await fetch(`/api/actividades/${actividadId}/adjuntos`, {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/adjuntos`, {
             method: 'POST',
             body: formData
         });
@@ -127,7 +127,7 @@ async function subirAdjuntos() {
 // Descargar adjunto
 async function descargarAdjunto(adjuntoId) {
     try {
-        const response = await fetch(`/api/actividades/adjuntos/${adjuntoId}/descargar`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/adjuntos/${adjuntoId}/descargar`);
         if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -165,7 +165,7 @@ async function eliminarAdjunto(adjuntoId) {
     }
 
     try {
-        const response = await fetch(`/api/actividades/adjuntos/${adjuntoId}`, {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/adjuntos/${adjuntoId}`, {
             method: 'DELETE'
         });
 
