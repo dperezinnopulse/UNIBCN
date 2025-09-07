@@ -6,7 +6,12 @@ let estadosDisponibles = [];
 // Cargar estados disponibles según el rol del usuario
 async function cargarEstadosDisponibles() {
     try {
-        const response = await fetch('/api/estados');
+        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`, {
+            headers: {
+                'Accept': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
+            }
+        });
         if (response.ok) {
             estadosDisponibles = await response.json();
             console.log('Estados disponibles:', estadosDisponibles);
@@ -27,12 +32,18 @@ async function cargarCambiosEstado() {
             return;
         }
 
-        const response = await fetch(`/api/actividades/${actividadId}/cambios-estado`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/cambios-estado`, {
+            headers: {
+                'Accept': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
+            }
+        });
         if (response.ok) {
             cambiosEstadoActuales = await response.json();
             actualizarDescripcionEnCabecera();
         } else {
-            console.error('Error cargando cambios de estado:', response.statusText);
+            const txt = await response.text().catch(()=>'');
+            console.error('Error cargando cambios de estado:', response.status, response.statusText, txt);
         }
     } catch (error) {
         console.error('Error cargando cambios de estado:', error);
@@ -90,10 +101,12 @@ async function cambiarEstadoActividad() {
     }
 
     try {
-        const response = await fetch('/api/actividades/cambiar-estado', {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/cambiar-estado`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
             },
             body: JSON.stringify({
                 actividadId: parseInt(actividadId),
@@ -111,14 +124,45 @@ async function cambiarEstadoActividad() {
                 modal.hide();
             }
             
-            // Recargar datos
-            await cargarCambiosEstado();
-            await cargarActividad(); // Recargar la actividad para actualizar el estado
+            // Sincronizar estado en la UI inmediatamente
+            try {
+                // Actualizar hidden/inputs si existen
+                const hiddenEstado = document.getElementById('actividadEstadoId');
+                if (hiddenEstado) hiddenEstado.value = parseInt(nuevoEstadoId, 10);
+                const sel = document.getElementById('estadoSelect');
+                if (sel) sel.value = String(parseInt(nuevoEstadoId, 10));
+
+                // Actualizar badge directamente si existe
+                const badge = document.getElementById('estadoBadge');
+                const estadoInfo = (estadosDisponibles || []).find(e => e.id === parseInt(nuevoEstadoId, 10));
+                if (badge && estadoInfo) {
+                    const nombre = estadoInfo.nombre || '—';
+                    const color = estadoInfo.color || (nombre === 'Borrador' ? '#6c757d' : nombre === 'Enviada' ? '#fd7e14' : nombre === 'Subsanar' ? '#dc3545' : '#2ecc71');
+                    badge.style.background = color;
+                    badge.innerHTML = `<i class="bi bi-check-circle me-2"></i>${nombre}`;
+                }
+
+                // Si existe helper de la página, reutilizarlo
+                if (typeof actualizarBadgeEstadoDesdeSelect === 'function') {
+                    actualizarBadgeEstadoDesdeSelect();
+                }
+            } catch {}
+
+            // Recargar datos con tolerancia si no existen helpers globales
+            if (typeof cargarCambiosEstado === 'function') {
+                await cargarCambiosEstado();
+            }
+            if (typeof cargarActividad === 'function') {
+                await cargarActividad(); // Recargar la actividad para actualizar el estado
+            } else {
+                // Fallback: recargar la página para reflejar el nuevo estado
+                location.reload();
+            }
             
             alert('Estado cambiado correctamente');
         } else {
             const error = await response.text();
-            alert('Error cambiando estado: ' + error);
+            alert('Error cambiando estado: ' + (error || (response.status + ' ' + response.statusText)));
         }
     } catch (error) {
         console.error('Error cambiando estado:', error);
@@ -136,7 +180,8 @@ async function editarDescripcionEstado(cambioId) {
         const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/cambios-estado/${cambioId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
             },
             body: JSON.stringify({
                 DescripcionMotivos: nuevaDescripcion.trim() || null
@@ -145,8 +190,20 @@ async function editarDescripcionEstado(cambioId) {
 
         if (response.ok) {
             console.log('Descripción actualizada correctamente');
-            // Recargar la descripción en la cabecera
-            await cargarUltimoCambioEstado(ACTIVIDAD_ID);
+            // Recargar la descripción en la cabecera e historial
+            if (typeof cargarCambiosEstado === 'function') {
+                await cargarCambiosEstado();
+            }
+            if (typeof obtenerActividadId === 'function') {
+                const actId = obtenerActividadId();
+                if (actId) {
+                    // Si el modal de historial está abierto, refrescar su contenido
+                    const modalAbierto = document.getElementById('modalHistorialEstados');
+                    if (modalAbierto) {
+                        await mostrarHistorialEstados();
+                    }
+                }
+            }
         } else if (response.status === 403) {
             alert('No tienes permisos para editar esta descripción');
         } else {
@@ -157,6 +214,41 @@ async function editarDescripcionEstado(cambioId) {
     } catch (error) {
         console.error('Error actualizando descripción:', error);
         alert('Error actualizando descripción');
+    }
+}
+
+// Borrar (vaciar) descripción del cambio de estado (autor o Admin)
+async function borrarDescripcionEstado(cambioId) {
+    if (!confirm('¿Deseas borrar la descripción de este cambio de estado?')) return;
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/cambios-estado/${cambioId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
+            },
+            body: JSON.stringify({ DescripcionMotivos: null })
+        });
+
+        if (response.ok) {
+            console.log('Descripción borrada correctamente');
+            if (typeof cargarCambiosEstado === 'function') {
+                await cargarCambiosEstado();
+            }
+            const modalAbierto = document.getElementById('modalHistorialEstados');
+            if (modalAbierto) {
+                await mostrarHistorialEstados();
+            }
+        } else if (response.status === 403) {
+            alert('No tienes permisos para borrar esta descripción');
+        } else {
+            const error = await response.text();
+            console.error('Error borrando descripción:', error);
+            alert('Error borrando descripción: ' + error);
+        }
+    } catch (error) {
+        console.error('Error borrando descripción:', error);
+        alert('Error borrando descripción');
     }
 }
 
@@ -201,9 +293,15 @@ async function mostrarHistorialEstados() {
             return;
         }
 
-        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/historial-estados`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/historial-estados`, {
+            headers: {
+                'Accept': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
+            }
+        });
         if (!response.ok) {
-            throw new Error('Error obteniendo historial');
+            const txt = await response.text().catch(()=> '');
+            throw new Error('Error obteniendo historial: ' + (txt || (response.status + ' ' + response.statusText)));
         }
 
         const historial = await response.json();
@@ -235,12 +333,29 @@ async function mostrarHistorialEstados() {
                                                 <strong>De:</strong> ${cambio.estadoAnterior.nombre}<br>
                                                 <strong>A:</strong> ${cambio.estadoNuevo.nombre}
                                             </div>
-                                            ${cambio.descripcionMotivos ? `
-                                                <div class="mb-2">
-                                                    <strong>Descripción:</strong><br>
-                                                    <span class="text-muted">${cambio.descripcionMotivos}</span>
-                                                </div>
-                                            ` : ''}
+                                            <div class="mb-2">
+                                                <strong>Descripción:</strong><br>
+                                                <span class="text-muted">${cambio.descripcionMotivos ? cambio.descripcionMotivos : '<em>Sin descripción</em>'}</span>
+                                            </div>
+                                            ${(() => {
+                                                try {
+                                                    const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+                                                    const autorId = (typeof cambio.usuarioCambioId !== 'undefined' && cambio.usuarioCambioId !== null)
+                                                        ? cambio.usuarioCambioId
+                                                        : (cambio.usuarioCambio && typeof cambio.usuarioCambio.id !== 'undefined' ? cambio.usuarioCambio.id : null);
+                                                    const canEdit = user && ((autorId === user.id) || user.rol === 'Admin');
+                                                    return canEdit ? `
+                                                        <div class="d-flex gap-2 mb-2">
+                                                            <button class="btn btn-sm btn-outline-primary" onclick="editarDescripcionEstado(${cambio.id})">
+                                                                <i class="bi bi-pencil me-1"></i>Editar descripción
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger" onclick="borrarDescripcionEstado(${cambio.id})">
+                                                                <i class="bi bi-trash me-1"></i>Borrar descripción
+                                                            </button>
+                                                        </div>
+                                                    ` : '';
+                                                } catch { return ''; }
+                                            })()}
                                             <div class="text-muted small">
                                                 <i class="bi bi-person me-1"></i>Cambiado por ${cambio.usuarioCambio.username} (${cambio.usuarioCambio.rol})
                                             </div>

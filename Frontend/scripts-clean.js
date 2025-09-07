@@ -1,7 +1,7 @@
 // UB Actividad 1 - Scripts de Integración Frontend-Backend
 // Versión: scripts.js?v=1.0.21
 // Configuración de la API
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = (function(){ try{ const p=location.protocol, h=location.hostname; return `${p}//${h}:5001`; } catch{ return 'http://localhost:5001'; } })();
 
 // Clase principal para manejar las operaciones de la API
 class UBActividadAPI {

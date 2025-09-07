@@ -79,8 +79,8 @@
     }
     
     // Limpiar cualquier dato de sesión almacenado
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
+    localStorage.removeItem('ub_token');
+    localStorage.removeItem('ub_user');
     sessionStorage.clear();
     
     // Redirigir al login

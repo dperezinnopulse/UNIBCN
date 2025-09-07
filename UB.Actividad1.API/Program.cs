@@ -59,6 +59,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    // Página de excepciones detalladas en desarrollo
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -256,6 +258,131 @@ app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext ht
     {
         return Results.Problem($"Error interno: {ex.Message}");
     }
+}).RequireAuthorization();
+
+// ==========================
+// Gestión de usuarios (Admin) y perfil propio
+// ==========================
+
+app.MapGet("/api/usuarios", async (UbFormacionContext context, HttpContext http) =>
+{
+    var role = http.User.FindFirst("rol")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) return Results.Forbid();
+
+    var usuarios = await context.Usuarios
+        .AsNoTracking()
+        .Select(u => new { u.Id, u.Username, u.Rol, u.UnidadGestionId, u.Email, u.Activo, u.FechaCreacion })
+        .ToListAsync();
+    return Results.Ok(usuarios);
+}).RequireAuthorization();
+
+app.MapGet("/api/usuarios/{id}", async (int id, UbFormacionContext context, HttpContext http) =>
+{
+    var role = http.User.FindFirst("rol")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) return Results.Forbid();
+
+    var u = await context.Usuarios.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+    if (u == null) return Results.NotFound();
+    return Results.Ok(new { u.Id, u.Username, u.Rol, u.UnidadGestionId, u.Email, u.Activo, u.FechaCreacion });
+}).RequireAuthorization();
+
+app.MapPost("/api/usuarios", async (AdminCreateUserDto dto, UbFormacionContext context, HttpContext http) =>
+{
+    var role = http.User.FindFirst("rol")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) return Results.Forbid();
+
+    if (await context.Usuarios.AnyAsync(u => u.Username == dto.Username))
+        return Results.BadRequest("Usuario ya existe");
+
+    // Nota: Por compatibilidad con el login actual, almacenamos la contraseña como texto plano
+    // (el sistema ya incluye BCrypt, se podrá activar cuando migremos login)
+    var u = new Usuario
+    {
+        Username = dto.Username.Trim(),
+        PasswordHash = dto.Password,
+        Rol = string.IsNullOrWhiteSpace(dto.Rol) ? "Gestor" : dto.Rol,
+        UnidadGestionId = string.Equals(dto.Rol, "Admin", StringComparison.OrdinalIgnoreCase) ? null : dto.UnidadGestionId,
+        Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email,
+        Activo = dto.Activo
+    };
+    context.Usuarios.Add(u);
+    await context.SaveChangesAsync();
+    return Results.Created($"/api/usuarios/{u.Id}", new { u.Id, u.Username, u.Rol, u.UnidadGestionId, u.Email, u.Activo });
+}).RequireAuthorization();
+
+app.MapPut("/api/usuarios/{id}", async (int id, AdminUpdateUserDto dto, UbFormacionContext context, HttpContext http) =>
+{
+    var role = http.User.FindFirst("rol")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) return Results.Forbid();
+
+    var u = await context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+    if (u == null) return Results.NotFound();
+
+    if (!string.IsNullOrWhiteSpace(dto.Username)) u.Username = dto.Username.Trim();
+    if (!string.IsNullOrWhiteSpace(dto.NewPassword)) u.PasswordHash = dto.NewPassword;
+    if (!string.IsNullOrWhiteSpace(dto.Rol)) u.Rol = dto.Rol;
+    if (string.Equals(u.Rol, "Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        u.UnidadGestionId = null; // Admin sin UG
+    }
+    else if (dto.UnidadGestionId.HasValue)
+    {
+        u.UnidadGestionId = dto.UnidadGestionId;
+    }
+    if (!string.IsNullOrWhiteSpace(dto.Email)) u.Email = dto.Email;
+    if (dto.Activo.HasValue) u.Activo = dto.Activo.Value;
+
+    await context.SaveChangesAsync();
+    return Results.Ok(new { u.Id, u.Username, u.Rol, u.UnidadGestionId, u.Email, u.Activo });
+}).RequireAuthorization();
+
+app.MapDelete("/api/usuarios/{id}", async (int id, UbFormacionContext context, HttpContext http) =>
+{
+    var role = http.User.FindFirst("rol")?.Value ?? string.Empty;
+    if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)) return Results.Forbid();
+
+    var u = await context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+    if (u == null) return Results.NotFound();
+    u.Activo = false;
+    await context.SaveChangesAsync();
+    return Results.Ok(new { message = "Usuario desactivado" });
+}).RequireAuthorization();
+
+app.MapGet("/api/usuarios/yo", async (UbFormacionContext context, HttpContext http) =>
+{
+    var userIdClaim = http.User.FindFirst("sub") ?? http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+    if (userIdClaim == null) return Results.Unauthorized();
+    var id = int.Parse(userIdClaim.Value);
+    var u = await context.Usuarios.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+    if (u == null) return Results.NotFound();
+    return Results.Ok(new { u.Id, u.Username, u.Email, u.Rol, u.UnidadGestionId, u.Activo, u.FechaCreacion });
+}).RequireAuthorization();
+
+app.MapPut("/api/usuarios/yo", async (UpdateOwnProfileDto dto, UbFormacionContext context, HttpContext http) =>
+{
+    var userIdClaim = http.User.FindFirst("sub") ?? http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+    if (userIdClaim == null) return Results.Unauthorized();
+    var id = int.Parse(userIdClaim.Value);
+    var u = await context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+    if (u == null) return Results.NotFound();
+
+    if (!string.IsNullOrWhiteSpace(dto.Username)) u.Username = dto.Username.Trim();
+    if (!string.IsNullOrWhiteSpace(dto.NewPassword)) u.PasswordHash = dto.NewPassword;
+    if (!string.IsNullOrWhiteSpace(dto.Email)) u.Email = dto.Email;
+
+    await context.SaveChangesAsync();
+    return Results.Ok(new { u.Id, u.Username, u.Email });
+}).RequireAuthorization();
+
+// Listado de Unidades de Gestión (para selects)
+app.MapGet("/api/unidades-gestion", async (UbFormacionContext context) =>
+{
+    var ugs = await context.UnidadesGestion.AsNoTracking()
+        .Where(u => u.Activo)
+        .OrderBy(u => u.Nombre)
+        .Select(u => new { u.Id, u.Nombre, u.Codigo })
+        .ToListAsync();
+    return Results.Ok(ugs);
 }).RequireAuthorization();
 
 app.MapGet("/api/actividades/{id}", async (int id, UbFormacionContext context) =>
@@ -596,14 +723,7 @@ app.MapGet("/api/actividades/{id}/estado/historial/ultimo", async (int id, UbFor
     return Results.Ok(ultimo);
 });
 
-app.MapGet("/api/unidades-gestion", async (UbFormacionContext context) =>
-{
-    var unidades = await context.UnidadesGestion 
-        .Where(u => u.Activo)
-        .OrderBy(u => u.Nombre)
-        .ToListAsync();
-    return Results.Ok(unidades);
-});
+// (Eliminado endpoint duplicado de /api/unidades-gestion; se mantiene el definido más arriba con RequireAuthorization y proyección)
 
 // Endpoints para entidades relacionadas
 app.MapGet("/api/actividades/{actividadId}/subactividades", async (int actividadId, UbFormacionContext context) =>
@@ -1155,6 +1275,146 @@ app.MapPost("/api/mensajes", async (HttpContext httpContext, UbFormacionContext 
 
         await context.SaveChangesAsync();
 
+        // Notificar por email a gestores/participantes (excepto el autor del mensaje)
+        try
+        {
+            var config = httpContext.RequestServices.GetRequiredService<IConfiguration>();
+            var smtpSection = config.GetSection("Smtp");
+            var notifSection = config.GetSection("Notifications");
+            var notifEnabled = notifSection.GetValue<bool>("Enabled");
+            if (notifEnabled)
+            {
+                var host = smtpSection.GetValue<string>("Host");
+                var port = smtpSection.GetValue<int>("Port");
+                var enableSsl = smtpSection.GetValue<bool>("EnableSsl");
+                var userSmtp = smtpSection.GetValue<string>("User");
+                var pass = smtpSection.GetValue<string>("Password");
+                var fromEmail = smtpSection.GetValue<string>("FromEmail");
+                var fromName = smtpSection.GetValue<string>("FromName");
+                // El fallback por configuración está deshabilitado: sólo emails reales de BD
+
+                using var client = new System.Net.Mail.SmtpClient(host, port)
+                {
+                    EnableSsl = enableSsl,
+                    DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new System.Net.NetworkCredential(userSmtp, pass),
+                    Timeout = 15000
+                };
+
+                // Destinatarios: todos los participantes del hilo y autor de la actividad (si tienen email), excepto el autor del nuevo mensaje
+                var actividadRef = await context.Actividades.FindAsync(hilo.ActividadId);
+                var destinatarios = new List<string>();
+
+                // Participantes con email
+                var participantesIds = await context.Mensajes
+                    .Where(m => m.HiloMensajeId == hilo.Id && m.Activo && !m.Eliminado)
+                    .Select(m => m.UsuarioId)
+                    .Distinct()
+                    .ToListAsync();
+                var participantesConEmail = await context.Usuarios
+                    .Where(u => participantesIds.Contains(u.Id) && u.Id != usuarioId && !string.IsNullOrEmpty(u.Email))
+                    .Select(u => u.Email!)
+                    .ToListAsync();
+                destinatarios.AddRange(participantesConEmail);
+
+                // Autor de la actividad si no es el autor del mensaje
+                if (actividadRef?.UsuarioAutorId.HasValue == true && actividadRef.UsuarioAutorId.Value != usuarioId)
+                {
+                    var autor = await context.Usuarios.FindAsync(actividadRef.UsuarioAutorId.Value);
+                    if (!string.IsNullOrEmpty(autor?.Email)) destinatarios.Add(autor!.Email!);
+                }
+
+                // fallback deshabilitado: si no hay destinatarios, no se envía
+                Console.WriteLine($"📧 Notificación mensaje: candidatos={string.Join(",", destinatarios)}");
+                var subject = $"[UB] Nuevo mensaje en actividad #{hilo.ActividadId}: '{actividadRef?.Titulo ?? hilo.Titulo}'";
+                var editarUrl = $"http://localhost:8080/editar-actividad.html?id={hilo.ActividadId}";
+                var preheader = $"Nuevo mensaje en actividad #{hilo.ActividadId}";
+                var brandColor = "#0d6efd";
+                var html = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><meta http-equiv='x-ua-compatible' content='ie=edge'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>{subject}</title>
+<style>
+  .wrapper {{ width:100% !important; background:#f5f7fa; padding:20px 0; }}
+  .container {{ width:600px; margin:0 auto; background:#ffffff; border:1px solid #e5e7eb; }}
+  .brandbar {{ background:{brandColor}; color:#ffffff; padding:12px 20px; font-family:Arial,Helvetica,sans-serif; }}
+  .brandtbl {{ width:100%; }}
+  .logoImg {{ width:36px; height:36px; border-radius:6px; display:block; }}
+  .brandName {{ font-size:16px; font-weight:700; padding-left:10px; font-family:Arial,Helvetica,sans-serif; }}
+  .header {{ background:#f3f6ff; color:#0f172a; padding:16px 24px; font-family:Arial,Helvetica,sans-serif; font-size:18px; font-weight:bold; border-bottom:1px solid #e5e7eb; }}
+  .content {{ padding:24px; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:14px; line-height:1.5; }}
+  .muted {{ color:#6b7280; font-size:12px; }}
+  .btn {{ display:inline-block; padding:10px 16px; background:{brandColor}; color:#fff !important; text-decoration:none; border-radius:6px; font-weight:bold; }}
+  .footer {{ padding:16px 24px; background:#f9fafb; color:#6b7280; font-family:Arial,Helvetica,sans-serif; font-size:12px; }}
+  .quote {{ border-left:3px solid #e5e7eb; padding-left:12px; color:#374151; font-style:italic; background:#fafafa; }}
+  .table {{ width:100%; border-collapse:collapse; }}
+  .row {{ border-bottom:1px solid #e5e7eb; }}
+  .cellK {{ width:180px; padding:8px 0; color:#6b7280; }}
+  .cellV {{ padding:8px 0; color:#111827; font-weight:bold; }}
+  a {{ color:#0d6efd; }}
+</style></head>
+<body class='wrapper'>
+  <div style='display:none; max-height:0; overflow:hidden; mso-hide:all;'>{preheader}</div>
+  <table role='presentation' class='container' cellpadding='0' cellspacing='0' width='600'>
+    <tr><td class='brandbar'>
+      <table role='presentation' class='brandtbl' cellpadding='0' cellspacing='0'>
+        <tr>
+          <td style='width:40px;'><img class='logoImg' src='http://localhost:8080/img/logo_ub.png' alt='UB'></td>
+          <td class='brandName'>UB Formación</td>
+        </tr>
+      </table>
+    </td></tr>
+    <tr><td class='header'>Nuevo mensaje en actividad</td></tr>
+    <tr><td class='content'>
+      <p>Se ha publicado un nuevo mensaje en la actividad <strong>{System.Net.WebUtility.HtmlEncode(actividadRef?.Titulo ?? hilo.Titulo)}</strong>.</p>
+      <table role='presentation' class='table'>
+        <tr class='row'><td class='cellK'>ID Actividad</td><td class='cellV'>#{hilo.ActividadId}</td></tr>
+        <tr class='row'><td class='cellK'>Hilo</td><td class='cellV'>{System.Net.WebUtility.HtmlEncode(hilo.Titulo)}</td></tr>
+        <tr class='row'><td class='cellK'>Fecha</td><td class='cellV'>{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</td></tr>
+      </table>
+      <p class='muted'>Resumen del mensaje:</p>
+      <p class='quote'>{System.Net.WebUtility.HtmlEncode((mensaje.Contenido ?? string.Empty).Length > 300 ? mensaje.Contenido.Substring(0,300) + "…" : mensaje.Contenido ?? string.Empty)}</p>
+      <p style='margin:16px 0;'>
+        <a href='{editarUrl}' class='btn'>Abrir actividad</a>
+      </p>
+      <p class='muted'>Si no has iniciado sesión, se te solicitará al abrir el enlace.</p>
+    </td></tr>
+    <tr><td class='footer'>Este es un mensaje automático del sistema UB Formación.</td></tr>
+  </table>
+</body></html>";
+
+                var mail = new System.Net.Mail.MailMessage()
+                {
+                    From = new System.Net.Mail.MailAddress(fromEmail, fromName),
+                    Subject = subject,
+                    Body = html,
+                    IsBodyHtml = true
+                };
+                var únicos = destinatarios.Distinct().ToList();
+                foreach (var to in únicos)
+                {
+                    mail.To.Add(to);
+                }
+                if (únicos.Count > 0)
+                {
+                    try
+                    {
+                        await client.SendMailAsync(mail);
+                        Console.WriteLine($"📧 Enviado nuevo mensaje a: {string.Join(",", únicos)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Error enviando correo (mensaje): {ex.Message}\n{ex}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ℹ️ Sin destinatarios (mensaje): no se envía correo.");
+                }
+            }
+        }
+        catch { }
+
         return Results.Created($"/api/mensajes/{mensaje.Id}", mensaje);
     }
     catch (Exception ex)
@@ -1665,6 +1925,135 @@ app.MapPost("/api/actividades/cambiar-estado", async (SolicitudCambioEstadoDto s
             UsuarioCambioNombre = usuario?.Username ?? "Usuario",
             Activo = cambioEstado.Activo
         };
+
+        // Notificación por email a gestores implicados
+        try
+        {
+            var config = httpContext.RequestServices.GetRequiredService<IConfiguration>();
+            var smtpSection = config.GetSection("Smtp");
+            var notifSection = config.GetSection("Notifications");
+            var notifEnabled = notifSection.GetValue<bool>("Enabled");
+            if (notifEnabled)
+            {
+                var host = smtpSection.GetValue<string>("Host");
+                var port = smtpSection.GetValue<int>("Port");
+                var enableSsl = smtpSection.GetValue<bool>("EnableSsl");
+                var user = smtpSection.GetValue<string>("User");
+                var pass = smtpSection.GetValue<string>("Password");
+                var fromEmail = smtpSection.GetValue<string>("FromEmail");
+                var fromName = smtpSection.GetValue<string>("FromName");
+                // Fallback deshabilitado: no usar DefaultRecipientOverride
+
+                using var client = new System.Net.Mail.SmtpClient(host, port)
+                {
+                    EnableSsl = enableSsl,
+                    DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new System.Net.NetworkCredential(user, pass),
+                    Timeout = 15000
+                };
+
+                // Destinatarios: autor Gestor de la actividad (si tiene email); si no, override
+                var destinatarios = new List<string>();
+                var autor = actividad.UsuarioAutorId.HasValue ? await context.Usuarios.FindAsync(actividad.UsuarioAutorId.Value) : null;
+                if (!string.IsNullOrWhiteSpace(autor?.Email) && string.Equals(autor?.Rol, "Gestor", StringComparison.OrdinalIgnoreCase))
+                {
+                    destinatarios.Add(autor!.Email!);
+                }
+                Console.WriteLine($"📧 Notificación estado: candidatos={string.Join(",", destinatarios)}");
+                var subject = $"[UB] Actividad #{actividad.Id} cambió a '{nuevoEstado.Nombre}'";
+                var editarUrl = $"http://localhost:8080/editar-actividad.html?id={actividad.Id}";
+                var preheader = $"Actividad #{actividad.Id} cambió a '{nuevoEstado.Nombre}'";
+                var brandColor = "#0d6efd";
+                var html = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><meta http-equiv='x-ua-compatible' content='ie=edge'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>{subject}</title>
+<style>
+  /* Estilos básicos inline-friendly para Outlook Classic */
+  .wrapper {{ width:100% !important; background:#f5f7fa; padding:20px 0; }}
+  .container {{ width:600px; margin:0 auto; background:#ffffff; border:1px solid #e5e7eb; }}
+  .brandbar {{ background:{brandColor}; color:#ffffff; padding:12px 20px; font-family:Arial,Helvetica,sans-serif; }}
+  .brandtbl {{ width:100%; }}
+  .logoImg {{ width:36px; height:36px; border-radius:6px; display:block; }}
+  .brandName {{ font-size:16px; font-weight:700; padding-left:10px; font-family:Arial,Helvetica,sans-serif; }}
+  .header {{ background:#f3f6ff; color:#0f172a; padding:16px 24px; font-family:Arial,Helvetica,sans-serif; font-size:18px; font-weight:bold; border-bottom:1px solid #e5e7eb; }}
+  .content {{ padding:24px; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:14px; line-height:1.5; }}
+  .badge {{ display:inline-block; padding:4px 10px; background:{brandColor}; color:#fff; border-radius:999px; font-size:12px; }}
+  .muted {{ color:#6b7280; font-size:12px; }}
+  .btn {{ display:inline-block; padding:10px 16px; background:{brandColor}; color:#fff !important; text-decoration:none; border-radius:6px; font-weight:bold; }}
+  .footer {{ padding:16px 24px; background:#f9fafb; color:#6b7280; font-family:Arial,Helvetica,sans-serif; font-size:12px; }}
+  .table {{ width:100%; border-collapse:collapse; }}
+  .row {{ border-bottom:1px solid #e5e7eb; }}
+  .cellK {{ width:200px; padding:8px 0; color:#6b7280; }}
+  .cellV {{ padding:8px 0; color:#111827; font-weight:bold; }}
+  a {{ color:#0d6efd; }}
+  /* Responsive reducido para compatibilidad */
+  .container {{ width:100% !important; max-width:600px; }}
+  /* Para Outlook / Apple Mail: forzar links azules */
+  a#xapple {{ color: inherit !important; text-decoration: none !important; }}
+</style></head>
+<body class='wrapper'>
+  <div style='display:none; max-height:0; overflow:hidden; mso-hide:all;'>{preheader}</div>
+  <table role='presentation' class='container' cellpadding='0' cellspacing='0' width='600'>
+    <tr><td class='brandbar'>
+      <table role='presentation' class='brandtbl' cellpadding='0' cellspacing='0'>
+        <tr>
+          <td style='width:40px;'><img class='logoImg' src='http://localhost:8080/img/logo_ub.png' alt='UB'></td>
+          <td class='brandName'>UB Formación</td>
+        </tr>
+      </table>
+    </td></tr>
+    <tr><td class='header'>Cambio de estado de actividad</td></tr>
+    <tr><td class='content'>
+      <p>La actividad <strong>{System.Net.WebUtility.HtmlEncode(actividad.Titulo)}</strong> ha cambiado su estado a <span class='badge'>{System.Net.WebUtility.HtmlEncode(nuevoEstado.Nombre)}</span>.</p>
+      <table role='presentation' class='table'>
+        <tr class='row'><td class='cellK'>ID Actividad</td><td class='cellV'>#{actividad.Id}</td></tr>
+        <tr class='row'><td class='cellK'>Título</td><td class='cellV'>{System.Net.WebUtility.HtmlEncode(actividad.Titulo)}</td></tr>
+        <tr class='row'><td class='cellK'>Estado anterior</td><td class='cellV'>{System.Net.WebUtility.HtmlEncode(estadoAnterior?.Nombre ?? "Desconocido")}</td></tr>
+        <tr class='row'><td class='cellK'>Estado nuevo</td><td class='cellV'>{System.Net.WebUtility.HtmlEncode(nuevoEstado.Nombre)}</td></tr>
+        <tr class='row'><td class='cellK'>Descripción/motivos</td><td class='cellV'>{System.Net.WebUtility.HtmlEncode(solicitud.DescripcionMotivos ?? "(sin descripción)")}</td></tr>
+        <tr class='row'><td class='cellK'>Fecha</td><td class='cellV'>{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</td></tr>
+      </table>
+      <p style='margin:16px 0;'>
+        <a href='{editarUrl}' class='btn'>Abrir actividad</a>
+      </p>
+      <p class='muted'>Si no has iniciado sesión, se te solicitará al abrir el enlace.</p>
+    </td></tr>
+    <tr><td class='footer'>Este es un mensaje automático del sistema UB Formación.</td></tr>
+  </table>
+</body></html>";
+
+                var únicos = destinatarios.Distinct().ToList();
+                if (únicos.Count > 0)
+                {
+                    var mail = new System.Net.Mail.MailMessage()
+                    {
+                        From = new System.Net.Mail.MailAddress(fromEmail, fromName),
+                        Subject = subject,
+                        Body = html,
+                        IsBodyHtml = true
+                    };
+                    foreach (var to in únicos)
+                    {
+                        mail.To.Add(to);
+                    }
+                    try
+                    {
+                        await client.SendMailAsync(mail);
+                        Console.WriteLine($"📧 Enviado cambio estado a: {string.Join(",", únicos)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Error enviando correo (estado): {ex.Message}\n{ex}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ℹ️ Sin destinatarios (estado): no se envía correo.");
+                }
+            }
+        }
+        catch { /* evitar que el fallo de correo rompa la respuesta */ }
 
         return Results.Ok(cambioDto);
     }

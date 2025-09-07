@@ -15,5 +15,24 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dperezinnopulse/UNIBCN.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dperezinnopulse/UNIBCN/issues"
+  },
+  "homepage": "https://github.com/dperezinnopulse/UNIBCN#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }

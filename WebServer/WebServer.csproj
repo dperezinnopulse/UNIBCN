@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.4.0</Version>
+    <PackageReleaseNotes>Frontend unificado (menu/header), mensajes no leídos, adjuntos, cambios de estado, admin usuarios, perfil, manual /manual y assets, CSS unificado sidebar/menús.</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

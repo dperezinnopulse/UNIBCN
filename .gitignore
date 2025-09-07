@@ -1,3 +1,16 @@
+bin/
+obj/
+.vs/
+node_modules/
+test-artifacts/
+test-results/
+*.user
+*.suo
+*.DS_Store
+Thumbs.db
+logs/
+.idea/
+*.code-workspace
 # Ignore build outputs, logs, large generated artifacts
 
 # .NET / build

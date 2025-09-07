@@ -21,6 +21,10 @@ public class Usuario
 
     public int? UnidadGestionId { get; set; }
 
+    [MaxLength(200)]
+    [EmailAddress]
+    public string? Email { get; set; }
+
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 

@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.4.0</Version>
+    <PackageReleaseNotes>Mensajes no leídos, adjuntos, eliminación mensajes, cambios de estado con descripción y restricciones por rol, emails HTML, administración de usuarios, perfil, manual servido en /manual, corrección endpoint duplicado /api/unidades-gestion.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,8 +5,11 @@
  */
 
 // ===== CONFIGURACIÓN GLOBAL =====
+const __proto = (typeof window !== 'undefined' && window.location) ? window.location.protocol : 'http:';
+const __host = (typeof window !== 'undefined' && window.location) ? window.location.hostname : 'localhost';
+const __apiBase = (typeof window !== 'undefined' && window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL : `${__proto}//${__host}:5001/api`;
 const CONFIG = {
-                API_BASE_URL: 'http://localhost:5001/api',
+                API_BASE_URL: __apiBase,
                 DEBUG: true,
                 TIMEOUT: 30000
             };
@@ -403,48 +406,47 @@ async function cargarDominios() {
     }
 }
 
-// Cargar estados y poblar selector cabecera
+// Cargar estados (para uso interno del badge) - sin renderizar select
 async function cargarEstadosActividad() {
     try {
-        const sel = document.getElementById('estadoSelect');
-        if (!sel) return;
-        // Usar siempre la ruta de la API
-        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const estados = await response.json();
-        // Fallback si no hay dominio administrable: mapa fijo pedido
-        const fallback = [
-            { id: 1, nombre: 'Borrador', color: '#6c757d' },
-            { id: 2, nombre: 'Enviada', color: '#fd7e14' },
-            { id: 4, nombre: 'Subsanar', color: '#dc3545' },
-            { id: 3, nombre: 'Aceptada', color: '#2ecc71' }
-        ];
-        const items = Array.isArray(estados) && estados.length ? estados : fallback;
-        sel.innerHTML = '';
-        items.forEach(e => {
-            const opt = document.createElement('option');
-            opt.value = e.id;
-            opt.textContent = e.nombre;
-            opt.dataset.color = e.color || '';
-            sel.appendChild(opt);
-        });
-        // Seleccionar el actual si existe
-        const estadoActual = document.getElementById('actividadEstadoId')?.value;
-        if (estadoActual) sel.value = estadoActual;
-        sel.addEventListener('change', onCambioEstado);
-        actualizarBadgeEstadoDesdeSelect();
+        // Usar siempre la ruta de la API para leer estados (sin depender del select)
+        const headers = { 'Accept': 'application/json' };
+        try {
+            if (typeof Auth !== 'undefined' && Auth.getToken()) {
+                headers['Authorization'] = `Bearer ${Auth.getToken()}`;
+            }
+        } catch {}
+        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`, { headers });
+        if (response.ok) {
+            const estados = await response.json();
+            if (Array.isArray(estados) && estados.length) {
+                window.__estadosCache = estados;
+            }
+        }
+        // Actualizar siempre el badge aunque el select no exista
+        actualizarBadgeEstadoDesdeBD();
     } catch (e) {
         Utils.error('Error cargando estados', e);
     }
 }
 
-function actualizarBadgeEstadoDesdeSelect() {
-    const sel = document.getElementById('estadoSelect');
+function actualizarBadgeEstadoDesdeBD() {
     const badge = document.getElementById('estadoBadge');
-    if (!sel || !badge) return;
-    const opt = sel.selectedOptions[0];
-    const nombre = opt ? opt.textContent : '—';
-    const color = opt?.dataset?.color || (nombre === 'Borrador' ? '#6c757d' : nombre === 'Enviada' ? '#fd7e14' : nombre === 'Subsanar' ? '#dc3545' : '#2ecc71');
+    if (!badge) return;
+    const hiddenEstado = document.getElementById('actividadEstadoId')?.value;
+    let nombre = '—';
+    let color = '#6c757d';
+    if (hiddenEstado) {
+        const idNum = parseInt(hiddenEstado, 10);
+        const estados = Array.isArray(window.__estadosCache) ? window.__estadosCache : [];
+        const est = estados.find(e => Number(e.id) === idNum);
+        if (est) {
+            nombre = est.nombre ?? `Estado ${hiddenEstado}`;
+            color = est.color || color;
+        } else {
+            nombre = `Estado ${hiddenEstado}`;
+        }
+    }
     badge.style.background = color;
     badge.innerHTML = `<i class="bi bi-check-circle me-2"></i>${nombre}`;
 }
@@ -845,6 +847,8 @@ async function aplicarDatosReales(actividad) {
         'estadoId': 'actividadEstadoId',
         'fechaCreacion': 'fechaCreacion',
         'fechaModificacion': 'fechaUpdate',
+        // Estado: guardar el id en hidden para pintar el badge
+        'estadoId': 'actividadEstadoId',
         'responsablePropuesta': 'responsablePropuesta',
         
         // Campos adicionales que faltaban
@@ -880,7 +884,12 @@ async function aplicarDatosReales(actividad) {
                     } else if (valor === null || valor === undefined) {
                         valorComparar = ''; // Dejar en "Seleccionar..."
                     } else {
-                        valorComparar = valor.toString();
+                        // Caso especial: estadoId -> IDs 6..9
+                        if (campoFormulario === 'actividadEstadoId') {
+                            valorComparar = String(parseInt(valor, 10));
+                        } else {
+                            valorComparar = valor.toString();
+                        }
                     }
                     
                     Utils.log(`Buscando opción para select ${campoFormulario}: valor=${valor}, valorComparar=${valorComparar}`);
@@ -972,13 +981,33 @@ async function aplicarDatosReales(actividad) {
     // Mostrar información del usuario autor
     const responsableSpan = document.getElementById('responsablePropuesta');
     if (responsableSpan) {
-        if (actividad.usuarioAutorNombre) {
-            responsableSpan.textContent = actividad.usuarioAutorNombre;
-        } else if (actividad.usuarioAutorId) {
-            responsableSpan.textContent = `Usuario ID: ${actividad.usuarioAutorId}`;
-        } else {
-            responsableSpan.textContent = 'Usuario no registrado';
+        let usernameAutor = null;
+        // 1) Preferir username anidado en la navegación del autor
+        try {
+            const autorObj = actividad.usuarioAutor || actividad.UsuarioAutor;
+            if (autorObj) {
+                usernameAutor = autorObj.username || autorObj.Username || autorObj.nombre || autorObj.Nombre || null;
+            }
+        } catch {}
+        // 2) Username/Nombre plano si el backend lo envía
+        if (!usernameAutor) {
+            if (actividad.usuarioAutorUsername && String(actividad.usuarioAutorUsername).trim().length > 0) {
+                usernameAutor = actividad.usuarioAutorUsername;
+            } else if (actividad.usuarioAutorNombre && String(actividad.usuarioAutorNombre).trim().length > 0) {
+                usernameAutor = actividad.usuarioAutorNombre;
+            }
         }
+        // 3) Fallback: usuario autenticado si coincide con autorId
+        if (!usernameAutor) {
+            try {
+                const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+                const autorIdPlano = actividad.usuarioAutorId || actividad.UsuarioAutorId;
+                if (user && autorIdPlano && Number(user.id) === Number(autorIdPlano)) {
+                    usernameAutor = user.username || user.nombre || user.name || null;
+                }
+            } catch {}
+        }
+        responsableSpan.textContent = usernameAutor || 'Usuario';
     }
     
     // Aplicar campos de entidad organizadora si existen
@@ -1064,6 +1093,11 @@ async function aplicarDatosReales(actividad) {
     Utils.log(`centroTrabajoRequerido: ${actividad.centroTrabajoRequerido} (tipo: ${typeof actividad.centroTrabajoRequerido})`);
     
     Utils.log('Datos reales aplicados al formulario correctamente');
+
+    // Pintar el badge usando el caché de estados (si no está cargado aún, se cargará en paralelo)
+    try {
+        actualizarBadgeEstadoDesdeBD();
+    } catch {}
 }
 
 // NUEVA FUNCIÓN: Cargar entidades relacionadas reales
@@ -1778,7 +1812,7 @@ let usuarioActual = null;
 
 // Función para obtener el token de autenticación
 function getToken() {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('ub_token');
 }
 
 // Cargar resumen de mensajes para la actividad actual
@@ -1788,7 +1822,8 @@ async function cargarResumenMensajes() {
         
         const resp = await fetch(`${CONFIG.API_BASE_URL}/mensajes/actividad/${ACTIVIDAD_ID}/no-leidos`, {
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
             }
         });
         
@@ -1885,7 +1920,11 @@ async function cargarContenidoModalMensajes() {
         
         console.log('🔍 DEBUG: Respuesta HTTP =', resp.status, resp.statusText);
         
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        if (!resp.ok) {
+            let serverMsg = '';
+            try { serverMsg = await resp.text(); } catch {}
+            throw new Error(`HTTP ${resp.status}: ${resp.statusText}${serverMsg ? ' - ' + serverMsg : ''}`);
+        }
         
         const hilos = await resp.json();
         console.log('🔍 DEBUG: Hilos recibidos =', hilos);
@@ -1915,7 +1954,8 @@ async function marcarMensajesComoLeidos(hiloId) {
         const response = await fetch(`${CONFIG.API_BASE_URL}/mensajes/${hiloId}/marcar-leido`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
             }
         });
 
@@ -1990,7 +2030,7 @@ async function mostrarHiloEnModal(hilo) {
                                 <strong class="text-primary">${mensaje.usuarioNombre || 'Usuario'}</strong>
                                 <div class="d-flex align-items-center gap-2">
                                     <small class="text-muted">${mensaje.fechaCreacion ? new Date(mensaje.fechaCreacion).toLocaleString() : fechaCreacion}</small>
-                                    ${(mensaje.usuarioId === usuarioActual?.id || usuarioActual?.rol === 'Admin') ? `
+                                    ${(((mensaje.usuarioId ?? mensaje.UsuarioId ?? (mensaje.usuario && mensaje.usuario.id)) === usuarioActual?.id) || usuarioActual?.rol === 'Admin') ? `
                                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarMensaje(${mensaje.id})" title="Eliminar mensaje">
                                             <i class="bi bi-trash"></i>
                                         </button>

@@ -11,30 +11,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <!-- SheetJS para exportar a Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- Estilos comunes del proyecto (menú/header unificados) -->
+  <link href="css/styles.css" rel="stylesheet"/>
   <style>
     body { background-color: #f5f7fa; }
-    /* Unified sidebar + header */
-    .sidebar { background-color:#f2f2f2; min-height:100vh; transition: width .3s ease; overflow-x:hidden; }
-    .sidebar.collapsed { width: 72px !important; }
-    .sidebar:hover { width: 260px !important; }
-    .sidebar .nav-link { color:#333; display:flex; align-items:center; gap:10px; transition: background-color .2s; border-radius:.6rem; padding:.6rem .75rem; white-space:nowrap; }
-    .sidebar .nav-link:hover { background-color:#e6e6e6; }
-    .sidebar.collapsed .nav-link { justify-content:center; }
-    .sidebar.collapsed .nav-link i { margin-right:0 !important; }
-    .sidebar.collapsed .link-text { display:none !important; }
-    header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
-    /* UG user menu */
-    .usermenu.d-none,.usersubmenu.d-none{display:none}
-    .usermenu,.usersubmenu{
-      position:fixed; top:70px; right:20px; z-index:1200;
-      background:#fff; border:1px solid #e5e7eb; border-radius:12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.08); padding:8px; width:260px;
-    }
-    .userItem,.ugOption{ display:block; width:100%; text-align:left; border:0; background:transparent;
-      padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14px; }
-    .userItem:hover,.ugOption:hover{ background:#f2f4f7 }
-    .userItem.with-sub{ display:flex; justify-content:space-between; align-items:center }
-    .ugOption[disabled]{ opacity:.5; cursor:not-allowed }
     /* Contenedor para diferenciar secciones */
     .section-title {
       margin-bottom: 1rem;
@@ -260,7 +240,7 @@
     const cardBtn = document.getElementById('cardViewBtn');
     const proposalList = document.getElementById('proposalList');
     const BUSCADOR = document.getElementById('buscador');
-    const API_BASE_URL = 'http://localhost:5001/api';
+    const API_BASE_URL = (function(){ try{ const p=location.protocol, h=location.hostname; return `${p}//${h}:5001/api`; } catch{ return 'http://localhost:5001/api'; } })();
     let actividades = [];
     let paginaActual = 1;
     const pageSize = 50;

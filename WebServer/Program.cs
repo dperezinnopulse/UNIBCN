@@ -83,6 +83,30 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = ""
 });
 
+// Servir manual HTML desde docs/manual-usuario bajo /manual
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "..", "docs", "manual-usuario")),
+    RequestPath = "/manual"
+});
+
+// Servir imágenes del manual desde test-artifacts/manual bajo /manual/assets
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "..", "test-artifacts", "manual")),
+    RequestPath = "/manual/assets"
+});
+
+// Servir capturas generales (raíz de test-artifacts) bajo /manual/assets-root
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "..", "test-artifacts")),
+    RequestPath = "/manual/assets-root"
+});
+
 // Redirigir la raíz a index.html
 app.MapGet("/", () => Results.Redirect("/index.html"));
 

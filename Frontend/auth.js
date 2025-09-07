@@ -1,6 +1,16 @@
 // Auth helper: gestiona token y protege fetch
 (function(){
-  const API_BASE = 'http://localhost:5001';
+  const host = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : 'localhost';
+  const protocol = (typeof window !== 'undefined' && window.location && window.location.protocol) ? window.location.protocol : 'http:';
+  const apiPort = '5001';
+  const API_BASE = `${protocol}//${host}:${apiPort}`;
+  // Exponer CONFIG global con base unificada para el resto de scripts
+  try {
+    if (typeof window !== 'undefined') {
+      window.CONFIG = window.CONFIG || {};
+      if (!window.CONFIG.API_BASE_URL) window.CONFIG.API_BASE_URL = `${API_BASE}/api`;
+    }
+  } catch {}
   const TOKEN_KEY = 'ub_token';
   const REDIRECT_KEY = 'ub_post_login_redirect';
 

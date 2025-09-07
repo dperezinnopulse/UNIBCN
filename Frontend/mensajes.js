@@ -4,7 +4,7 @@
  */
 
 const Mensajeria = {
-    API_BASE_URL: 'http://localhost:5001/api',
+    API_BASE_URL: (function(){ try{ const p=location.protocol, h=location.hostname; return `${p}//${h}:5001/api`; } catch{ return 'http://localhost:5001/api'; } })(),
     usuarioActual: null,
     
     // Inicializar módulo de mensajería

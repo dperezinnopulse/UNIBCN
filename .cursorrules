@@ -151,8 +151,9 @@ netstat -an | findstr ":5001\|:8080"
 - **Solución**: Usar alternativas que retornen inmediatamente
 
 ### Comando Start-Sleep bloquea:
-- **Causa**: `Start-Sleep -Seconds 5` bloquea la ejecución
-- **Solución**: Usar `netstat` directamente sin sleep, o usar `&` para ejecutar en background
+- **Causa**: `Start-Sleep -Seconds 5` bloquea la ejecución esperando que termine el tiempo
+- **Solución**: NUNCA usar `Start-Sleep` - continuar con el siguiente paso sin esperar
+- **Alternativa**: Ejecutar comandos secuencialmente sin delays bloqueantes
 
 ### Comando dotnet build bloquea:
 - **Causa**: `dotnet build` puede bloquear si hay errores de compilación
@@ -162,6 +163,22 @@ netstat -an | findstr ":5001\|:8080"
 - **Causa**: `dotnet run` sin `&` bloquea la ejecución esperando que termine el servidor
 - **Solución**: SIEMPRE usar `dotnet run --urls="http://localhost:5001" &` para ejecutar en background
 - **Alternativa**: Usar `Start-Process dotnet -ArgumentList "run", "--urls=http://localhost:5001"` para ejecutar en proceso separado
+- **Recordatorio**: Nunca ejecutar `dotnet run` sin `&` o se quedará esperando indefinidamente
+
+### Comando sqlcmd bloquea:
+- **Causa**: `sqlcmd` sin opciones no interactivas espera entrada del usuario
+- **Solución**: Usar `sqlcmd -Q "query"` para ejecutar consultas directamente sin interacción
+- **Alternativa**: Usar `Invoke-Sqlcmd -Query "query"` de PowerShell con módulo SqlServer importado
+
+### Comando Start-Process bloquea:
+- **Causa**: `Start-Process` puede bloquearse si el proceso hijo requiere entrada del usuario o confirmaciones
+- **Solución**: Usar `&` al final para ejecutar completamente en background
+- **Alternativa**: Usar `Start-Job` con `-ScriptBlock` en lugar de `Start-Process`
+
+### Comando Invoke-WebRequest bloquea:
+- **Causa**: `Invoke-WebRequest` con `-TimeoutSec` puede bloquearse esperando la respuesta o el timeout
+- **Solución**: Usar `Start-Job` para ejecutar la petición en background
+- **Alternativa**: Usar `curl.exe` que es más rápido y no bloquea tanto
 
 ## 📝 NOTAS DE DESARROLLO
 
@@ -170,3 +187,13 @@ netstat -an | findstr ":5001\|:8080"
 - El token JWT se añade automáticamente por auth.js
 - Los usuarios no-Admin solo ven sus propias actividades
 - La unidad gestora se preselecciona según el usuario logueado
+
+## 🧪 Playwright / Generación de manual – Lecciones aprendidas
+
+- Node no disponible como `node` en PATH: usar ruta absoluta `"C:\\Program Files\\nodejs\\node.exe"` para ejecutar Playwright.
+- Evitar tuberías tipo `| cat` en PowerShell: provocan errores de `Get-Content`. Ejecutar sin pipe.
+- Rutas de tests: en Windows las barras invertidas pueden interpretarse como regex. Usar forward slashes y comillas: `test 'tests/playwright/generate-ug-captures.spec.ts'`.
+- Servicios deben estar levantados antes de las capturas: backend y frontend con `--urls='http://0.0.0.0:5001'` y `--urls='http://0.0.0.0:8080'` en background.
+- Si el login falla o bloquea, inyectar token antes de navegar: `page.addInitScript(() => localStorage.setItem('ub_token','E2E'); ...)` y navegar directo a `/index.html`.
+- Selectores UG: los elementos `[data-ug]` pueden estar ocultos; seleccionar la UG en `#actividadUnidadGestion` antes de capturar para asegurar visibilidad real.
+- Overlay rojo desalineado: evitar `boundingBox + scroll`. Usar `getBoundingClientRect()` y dibujar overlay `position: fixed` sin desplazar la página.

@@ -11,6 +11,9 @@
   // Plantilla HTML de la cabecera y los menús asociados
   const headerHTML = `
 <header class="d-flex justify-content-end align-items-center gap-3 p-3">
+  <a class="text-decoration-none" id="helpLink" title="Ayuda" href="#" target="_blank">
+    <i class="bi bi-question-circle fs-5 text-secondary"></i>
+  </a>
   <div class="dropdown">
     <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown">CAS</button>
     <ul class="dropdown-menu dropdown-menu-end">
@@ -61,6 +64,21 @@
     // Lógica de menús y selector de UG
     (function(){
       const $ = (s, r=document) => r.querySelector(s);
+      // Resolver URL de ayuda según la página
+      try {
+        const path = (location.pathname || '').toLowerCase();
+        const help = $('#helpLink');
+        if (help) {
+          let manual = '/manual/index.html';
+          if (path.endsWith('/index.html')) manual = '/manual/crear-actividad.html';
+          else if (path.endsWith('/historico.html')) manual = '/manual/historico.html';
+          else if (path.endsWith('/mensajes.html')) manual = '/manual/mensajes.html';
+          else if (path.endsWith('/admin-usuarios.html')) manual = '/manual/admin-usuarios.html';
+          else if (path.endsWith('/perfil.html')) manual = '/manual/perfil.html';
+          else if (path.endsWith('/editar-actividad.html')) manual = '/manual/crear-actividad.html';
+          help.setAttribute('href', manual);
+        }
+      } catch {}
       const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
       const menu = $('#userMenuOverlay');
       const sub = $('#ugSubmenu');
@@ -111,6 +129,14 @@
       userIcon?.addEventListener('click', (e) => {
         e.stopPropagation();
         openMenu();
+      });
+      // Navegación desde menú
+      menu?.querySelector('[data-action="editar"]')?.addEventListener('click', () => {
+        window.location.href = 'perfil.html';
+      });
+      adminSub?.addEventListener('click', (e) => e.stopPropagation());
+      adminSub?.querySelector('[data-admin="usuarios"]')?.addEventListener('click', () => {
+        window.location.href = 'admin-usuarios.html';
       });
       // Logout
       menu?.querySelector('[data-action="logout"]')?.addEventListener('click', () => {
