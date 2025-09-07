@@ -322,11 +322,11 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Plazas totales</label>
-                            <input class="form-control" id="plazasTotales" type="number" min="0"/>
+                            <input class="form-control" id="plazasTotales" type="number" min="0" step="1" inputmode="numeric"/>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Horas totales</label>
-                            <input class="form-control" id="horasTotales" type="number" min="0" step="0.5"/>
+                            <input class="form-control" id="horasTotales" type="number" min="0" step="0.5" inputmode="decimal"/>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Centro de trabajo requerido</label>
@@ -406,7 +406,7 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Crèdits totals</label>
-                                <input class="form-control" id="creditosTotalesCRAI" min="0" placeholder="0,0" step="0.5" type="text" data-mask="decimal" data-decimal-separator="," data-thousands-separator="." style="text-align: right; font-family: 'Courier New', monospace;"/>
+                                <input class="form-control" id="creditosTotalesCRAI" min="0" placeholder="0,0" step="0.5" type="text" data-mask="decimal" data-decimal-separator="," data-thousands-separator="." style="text-align: right; font-family: 'Courier New', monospace;" inputmode="decimal" pattern="^\d{1,3}(\.\d{3})*(,\d{1,2})?$" title="Formato 0,00 con coma decimal (ej. 1.234,50)"/>
                 <div class="form-text text-muted small">Formato: 0,00 (coma como separador decimal)</div>
                             </div>
 </div>
@@ -418,15 +418,15 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Crèdits totals</label>
-<input class="form-control" id="creditosTotalesSAE" min="0" placeholder="0" step="0.5" type="number"/>
+<input class="form-control" id="creditosTotalesSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
 </div>
                             <div class="col-md-4">
                                 <label class="form-label">Crèdits mínims</label>
-<input class="form-control" id="creditosMinimosSAE" min="0" placeholder="0" step="0.5" type="number"/>
+<input class="form-control" id="creditosMinimosSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
 </div>
                             <div class="col-md-4">
                                 <label class="form-label">Crèdits màxims</label>
-<input class="form-control" id="creditosMaximosSAE" min="0" placeholder="0" step="0.5" type="number"/>
+<input class="form-control" id="creditosMaximosSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
 </div>
                             <div class="col-md-4">
                                 <label class="form-label">Tipus d'estudi</label>
@@ -602,7 +602,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">NIF/CIF</label>
-                            <input class="form-control" id="org_nif" type="text"/>
+                            <input class="form-control" id="org_nif" type="text" pattern="^([0-9]{8}[A-Za-z]|[XYZxyz][0-9]{7}[A-Za-z]|[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J])$" title="Introduzca NIF, NIE o CIF válido (ej. 12345678Z, X1234567L, B12345678)" maxlength="9"/>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Web</label>
@@ -614,11 +614,11 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Email</label>
-                            <input class="form-control" id="org_email" type="email"/>
+                            <input class="form-control" id="org_email" type="email" autocomplete="email"/>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Teléfono</label>
-                            <input class="form-control" id="org_tel" type="tel"/>
+                            <input class="form-control" id="org_tel" type="tel" inputmode="tel" pattern="^[0-9+\s().-]{6,20}$" title="Formato de teléfono válido (números, +, espacios, guiones)" autocomplete="tel"/>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -856,5 +856,40 @@
             }, 1000);
         });
 </script>
+    <script>
+        // Feedback de validación bajo campos en editar-actividad
+        (function(){
+            function ensureFeedback(el){
+                var fb = el.nextElementSibling;
+                if(!fb || !fb.classList || !fb.classList.contains('invalid-feedback')){
+                    fb = document.createElement('div');
+                    fb.className = 'invalid-feedback';
+                    el.parentNode.insertBefore(fb, el.nextSibling);
+                }
+                return fb;
+            }
+            function updateFeedback(el){
+                var fb = ensureFeedback(el);
+                if(el.checkValidity()){
+                    fb.textContent = '';
+                    fb.classList.remove('d-block');
+                } else {
+                    var msg = el.validationMessage || el.getAttribute('title') || 'Valor no válido';
+                    fb.textContent = msg;
+                    fb.classList.add('d-block');
+                }
+            }
+            function attach(){
+                var fields = document.querySelectorAll('input, select, textarea');
+                fields.forEach(function(el){
+                    ensureFeedback(el);
+                    ['blur','input','change'].forEach(function(evt){
+                        el.addEventListener(evt, function(){ updateFeedback(el); });
+                    });
+                });
+            }
+            document.addEventListener('DOMContentLoaded', attach);
+        })();
+    </script>
 </body>
 </html>

@@ -94,8 +94,8 @@
 <div class="col-md-4"><label class="form-label">Departamento destinatario</label><input class="form-control" id="departamentoDestinatario" type="text"/></div>
 <div class="col-md-4"><label class="form-label">Centro/unidad UB destinataria</label><select class="form-select" id="centroUnidadUBDestinataria"><option>Seleccionar</option></select></div>
 <div class="col-md-4"><label class="form-label">Otros centros/instituciones</label><input class="form-control" id="otrosCentrosInstituciones" type="text"/></div>
-<div class="col-md-4"><label class="form-label">Plazas totales</label><input class="form-control" id="plazasTotales" type="number"/></div>
-<div class="col-md-4"><label class="form-label">Horas totales</label><input class="form-control" id="horasTotales" type="number"/></div>
+<div class="col-md-4"><label class="form-label">Plazas totales</label><input class="form-control" id="plazasTotales" type="number" min="0" step="1" inputmode="numeric"/></div>
+<div class="col-md-4"><label class="form-label">Horas totales</label><input class="form-control" id="horasTotales" type="number" min="0" step="0.5" inputmode="decimal"/></div>
 <div class="col-md-4"><label class="form-label">Centro de trabajo requerido en la matrícula</label><select class="form-select" id="centroTrabajoRequerido"><option>Sí</option><option>No</option></select></div>
 <div class="col-md-4"><label class="form-label">Modalidad de gestión</label><select class="form-select" id="modalidadGestion"><option>Acreditada UB</option></select></div>
 <div class="col-md-4"><label class="form-label">F. inicio de la imp.</label><input class="form-control" id="fechaInicioImparticion" type="date"/></div>
@@ -144,11 +144,11 @@
 <h2 class="h5 mb-3 border-bottom pb-2">Entidades organizadoras</h2>
 <div class="row g-3">
 <div class="col-md-6"><label class="form-label">Organizadora principal</label><input class="form-control" data-save="1" id="org_principal" placeholder="Nombre de la entidad" type="text"/></div>
-<div class="col-md-3"><label class="form-label">NIF/CIF</label><input class="form-control" data-save="1" id="org_nif" type="text"/></div>
+<div class="col-md-3"><label class="form-label">NIF/CIF</label><input class="form-control" data-save="1" id="org_nif" type="text" pattern="^([0-9]{8}[A-Za-z]|[XYZxyz][0-9]{7}[A-Za-z]|[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J])$" title="Introduzca NIF, NIE o CIF válido (ej. 12345678Z, X1234567L, B12345678)" maxlength="9"/></div>
 <div class="col-md-3"><label class="form-label">Web</label><input class="form-control" data-save="1" id="org_web" placeholder="https://..." type="url"/></div>
 <div class="col-md-4"><label class="form-label">Persona de contacto</label><input class="form-control" data-save="1" id="org_contacto" type="text"/></div>
-<div class="col-md-4"><label class="form-label">Email</label><input class="form-control" data-save="1" id="org_email" type="email"/></div>
-<div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" data-save="1" id="org_tel" type="tel"/></div>
+<div class="col-md-4"><label class="form-label">Email</label><input class="form-control" data-save="1" id="org_email" type="email" autocomplete="email"/></div>
+<div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" data-save="1" id="org_tel" type="tel" inputmode="tel" pattern="^[0-9+\s().-]{6,20}$" title="Formato de teléfono válido (números, +, espacios, guiones)" autocomplete="tel"/></div>
 </div>
 <div class="mt-4">
 <h3 class="h6">Entidades colaboradoras</h3>
@@ -161,7 +161,7 @@
 <div class="row g-3">
 <div class="col-md-3">
 <label class="form-label">Importe base (€)</label>
-<input class="form-control" data-save="1" id="imp_base" min="0" step="0.01" type="number"/>
+<input class="form-control" data-save="1" id="imp_base" min="0" step="0.01" type="number" inputmode="decimal"/>
 </div>
 <div class="col-md-3">
 <label class="form-label">Impuesto</label>
@@ -175,7 +175,7 @@
 </div>
 <div class="col-md-3">
 <label class="form-label">Descuento (%)</label>
-<input class="form-control" data-save="1" id="imp_descuento_pct" max="100" min="0" step="1" type="number"/>
+<input class="form-control" data-save="1" id="imp_descuento_pct" max="100" min="0" step="1" type="number" inputmode="numeric"/>
 </div>
 <div class="col-md-3">
 <label class="form-label">Código promocional</label>
@@ -207,7 +207,7 @@
 </div>
 <div class="col-md-3">
 <label class="form-label">Nº de plazas</label>
-<input class="form-control" data-save="1" id="insc_plazas" min="0" type="number"/>
+<input class="form-control" data-save="1" id="insc_plazas" min="0" step="1" type="number" inputmode="numeric"/>
 </div>
 <div class="col-md-3">
 <label class="form-label d-block">Lista de espera</label>
@@ -339,6 +339,42 @@
     loadSidebarMenu('sidebarContainer');
   });
 </script>
+<script>
+  // Feedback de validación bajo campos
+  (function(){
+    function ensureFeedback(el){
+      var fb = el.nextElementSibling;
+      if(!fb || !fb.classList || !fb.classList.contains('invalid-feedback')){
+        fb = document.createElement('div');
+        fb.className = 'invalid-feedback';
+        el.parentNode.insertBefore(fb, el.nextSibling);
+      }
+      return fb;
+    }
+    function updateFeedback(el){
+      var fb = ensureFeedback(el);
+      if(el.checkValidity()){
+        fb.textContent = '';
+        fb.classList.remove('d-block');
+      } else {
+        var msg = el.validationMessage || el.getAttribute('title') || 'Valor no válido';
+        fb.textContent = msg;
+        fb.classList.add('d-block');
+      }
+    }
+    function attach(){
+      var fields = document.querySelectorAll('input, select, textarea');
+      fields.forEach(function(el){
+        // Crear placeholder de feedback si procede
+        ensureFeedback(el);
+        ['blur','input','change'].forEach(function(evt){
+          el.addEventListener(evt, function(){ updateFeedback(el); });
+        });
+      });
+    }
+    document.addEventListener('DOMContentLoaded', attach);
+  })();
+  </script>
 <!-- Cabecera unificada -->
 <script src="header.js"></script>
 <script>
