@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UB.Actividad1.API.Data;
 
@@ -11,9 +12,11 @@ using UB.Actividad1.API.Data;
 namespace UB.Actividad1.API.Migrations
 {
     [DbContext(typeof(UbFormacionContext))]
-    partial class UbFormacionContextModelSnapshot : ModelSnapshot
+    [Migration("20250908163429_AddRobustRoleSystem")]
+    partial class AddRobustRoleSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -175,11 +175,21 @@ app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext ht
             .AsNoTracking()
             .AsQueryable();
 
-        // Filtrar por actividades del usuario si no es Admin
+        // Filtrar por actividades de la unidad de gestión del usuario si no es Admin
         if (currentUserRole != "Admin" && currentUserId.HasValue)
         {
-            Console.WriteLine($"🔒 DEBUG: Aplicando filtro para usuario no-Admin - Solo actividades del usuario {currentUserId}");
-            baseQuery = baseQuery.Where(a => a.UsuarioAutorId == currentUserId.Value);
+            // Obtener la unidad de gestión del usuario actual
+            var usuarioActual = await context.Usuarios.FindAsync(currentUserId.Value);
+            if (usuarioActual?.UnidadGestionId.HasValue == true)
+            {
+                Console.WriteLine($"🔒 DEBUG: Aplicando filtro para usuario no-Admin - Solo actividades de la unidad de gestión {usuarioActual.UnidadGestionId}");
+                baseQuery = baseQuery.Where(a => a.UnidadGestionId == usuarioActual.UnidadGestionId.Value);
+            }
+            else
+            {
+                Console.WriteLine($"🔒 DEBUG: Usuario sin unidad de gestión - Solo actividades del usuario {currentUserId}");
+                baseQuery = baseQuery.Where(a => a.UsuarioAutorId == currentUserId.Value);
+            }
         }
         else
         {
@@ -871,11 +881,21 @@ app.MapGet("/api/mensajes/hilos", async (UbFormacionContext context, HttpContext
         if (actividadId.HasValue)
             query = query.Where(h => h.ActividadId == actividadId.Value);
 
-        // Filtrar por actividades del usuario si no es Admin
+        // Filtrar por actividades de la unidad de gestión del usuario si no es Admin
         if (currentUserRole != "Admin" && currentUserId.HasValue)
         {
-            Console.WriteLine($"🔒 DEBUG MENSAJES: Aplicando filtro para usuario no-Admin - Solo mensajes de actividades del usuario {currentUserId}");
-            query = query.Where(h => h.Actividad.UsuarioAutorId == currentUserId.Value);
+            // Obtener la unidad de gestión del usuario actual
+            var usuarioActual = await context.Usuarios.FindAsync(currentUserId.Value);
+            if (usuarioActual?.UnidadGestionId.HasValue == true)
+            {
+                Console.WriteLine($"🔒 DEBUG MENSAJES: Aplicando filtro para usuario no-Admin - Solo mensajes de actividades de la unidad de gestión {usuarioActual.UnidadGestionId}");
+                query = query.Where(h => h.Actividad.UnidadGestionId == usuarioActual.UnidadGestionId.Value);
+            }
+            else
+            {
+                Console.WriteLine($"🔒 DEBUG MENSAJES: Usuario sin unidad de gestión - Solo mensajes de actividades del usuario {currentUserId}");
+                query = query.Where(h => h.Actividad.UsuarioAutorId == currentUserId.Value);
+            }
         }
         else
         {
@@ -1874,18 +1894,19 @@ app.MapPost("/api/actividades/cambiar-estado", async (SolicitudCambioEstadoDto s
         if (nuevoEstado == null)
             return Results.BadRequest("Estado no válido");
 
-        // Verificar permisos según el rol
-        if (userRole == "Gestor")
+        // Verificar permisos según matriz de transiciones y rol
+        var estadoAnteriorId = actividad.EstadoId;
+        var estadoAnterior = await context.EstadosActividad.FindAsync(estadoAnteriorId);
+        if (estadoAnterior == null) return Results.BadRequest("Estado actual no válido");
+        var fromCodigo = estadoAnterior.Codigo;
+        var toCodigo = nuevoEstado.Codigo;
+        var normalizedRole = NormalizeRole(userRole);
+        if (!await IsAllowedDb(context, fromCodigo, toCodigo, normalizedRole))
         {
-            // Los gestores no pueden cambiar a estados Aceptada (9) o Subsanar (8)
-            if (solicitud.EstadoNuevoId == 8 || solicitud.EstadoNuevoId == 9)
-            {
-                return Results.Forbid();
-            }
+            return Results.Forbid();
         }
 
-        // Obtener el estado anterior
-        var estadoAnteriorId = actividad.EstadoId;
+        // Obtener el estado anterior (ya disponible)
 
         // Crear el registro de cambio de estado
         var cambioEstado = new CambioEstadoActividad
@@ -1909,7 +1930,6 @@ app.MapPost("/api/actividades/cambiar-estado", async (SolicitudCambioEstadoDto s
 
         // Obtener el usuario para el DTO de respuesta
         var usuario = await context.Usuarios.FindAsync(usuarioId);
-        var estadoAnterior = await context.EstadosActividad.FindAsync(estadoAnteriorId);
 
         var cambioDto = new CambioEstadoDto
         {
@@ -1953,12 +1973,36 @@ app.MapPost("/api/actividades/cambiar-estado", async (SolicitudCambioEstadoDto s
                     Timeout = 15000
                 };
 
-                // Destinatarios: autor Gestor de la actividad (si tiene email); si no, override
+                // Destinatarios: siguiente rol implicado según workflow
                 var destinatarios = new List<string>();
                 var autor = actividad.UsuarioAutorId.HasValue ? await context.Usuarios.FindAsync(actividad.UsuarioAutorId.Value) : null;
-                if (!string.IsNullOrWhiteSpace(autor?.Email) && string.Equals(autor?.Rol, "Gestor", StringComparison.OrdinalIgnoreCase))
+                var usuarioCambio = await context.Usuarios.FindAsync(usuarioId);
+                
+                // Determinar siguiente rol implicado según estado destino
+                var siguienteRol = DeterminarSiguienteRolImplicado(nuevoEstado.Codigo, actividad.UnidadGestionId);
+                Console.WriteLine($"📧 Workflow: Estado {nuevoEstado.Codigo} -> Siguiente rol: {siguienteRol}");
+                
+                if (!string.IsNullOrEmpty(siguienteRol))
                 {
-                    destinatarios.Add(autor!.Email!);
+                    // Buscar usuarios del siguiente rol en la misma UG
+                    var usuariosSiguienteRol = await context.Usuarios
+                        .Where(u => u.UnidadGestionId == actividad.UnidadGestionId && 
+                                   u.Rol == siguienteRol && 
+                                   u.Activo && 
+                                   !string.IsNullOrEmpty(u.Email) &&
+                                   u.Id != usuarioId) // No notificar al que hizo el cambio
+                        .Select(u => u.Email!)
+                        .ToListAsync();
+                    
+                    destinatarios.AddRange(usuariosSiguienteRol);
+                    Console.WriteLine($"📧 Usuarios {siguienteRol} en UG {actividad.UnidadGestionId}: {string.Join(",", usuariosSiguienteRol)}");
+                }
+                
+                // Fallback: si no hay siguiente rol o no hay usuarios, notificar al autor original (si no es quien hizo el cambio)
+                if (destinatarios.Count == 0 && autor != null && autor.Id != usuarioId && !string.IsNullOrEmpty(autor.Email))
+                {
+                    destinatarios.Add(autor.Email);
+                    Console.WriteLine($"📧 Fallback: notificando al autor original {autor.Email}");
                 }
                 Console.WriteLine($"📧 Notificación estado: candidatos={string.Join(",", destinatarios)}");
                 var subject = $"[UB] Actividad #{actividad.Id} cambió a '{nuevoEstado.Nombre}'";
@@ -2062,5 +2106,145 @@ app.MapPost("/api/actividades/cambiar-estado", async (SolicitudCambioEstadoDto s
         return Results.Problem($"Error cambiando estado: {ex.Message}");
     }
 }).RequireAuthorization();
+
+// Endpoint: transiciones permitidas para una actividad y el usuario actual
+app.MapGet("/api/actividades/{id}/transiciones", async (int id, HttpContext httpContext, UbFormacionContext context) =>
+{
+    Console.WriteLine($"🔥🔥🔥 ENDPOINT LLAMADO: /api/actividades/{id}/transiciones 🔥🔥🔥");
+    Console.WriteLine($"🔍 DEBUG: Transiciones solicitadas para actividad {id}");
+    
+    var userIdClaim = httpContext.User.FindFirst("sub") ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+    if (userIdClaim == null) {
+        Console.WriteLine("🔍 DEBUG: No se encontró userIdClaim");
+        return Results.Unauthorized();
+    }
+    
+    var userRole = httpContext.User.FindFirst("rol")?.Value;
+    Console.WriteLine($"🔍 DEBUG: userRole: {userRole}");
+    
+    var normalizedRole = await NormalizeRoleAsync(userRole, context);
+    Console.WriteLine($"🔍 DEBUG: normalizedRole: {normalizedRole}");
+    
+    if (string.IsNullOrWhiteSpace(normalizedRole)) {
+        Console.WriteLine("🔍 DEBUG: normalizedRole está vacío");
+        return Results.Unauthorized();
+    }
+
+    var actividad = await context.Actividades.FindAsync(id);
+    if (actividad == null) {
+        Console.WriteLine($"🔍 DEBUG: Actividad {id} no encontrada");
+        return Results.NotFound("Actividad no encontrada");
+    }
+
+    var estadoActual = await context.EstadosActividad.FindAsync(actividad.EstadoId);
+    if (estadoActual == null) {
+        Console.WriteLine($"🔍 DEBUG: Estado {actividad.EstadoId} no encontrado");
+        return Results.BadRequest("Estado actual no válido");
+    }
+
+    var fromCodigo = estadoActual.Codigo;
+    Console.WriteLine($"🔍 DEBUG: Estado actual: {fromCodigo} (ID: {actividad.EstadoId})");
+    
+    // Buscar el rol normalizado por código
+    var rolNormalizado = await context.RolesNormalizados
+        .Where(r => r.Codigo == normalizedRole && r.Activo)
+        .FirstOrDefaultAsync();
+    
+    if (rolNormalizado == null) {
+        Console.WriteLine($"🔍 DEBUG: No se encontró rol normalizado para código: {normalizedRole}");
+        return Results.Ok(new List<object>());
+    }
+    
+    Console.WriteLine($"🔍 DEBUG: Rol normalizado encontrado: {rolNormalizado.Codigo} (ID: {rolNormalizado.Id})");
+    
+    var destinosCod = await context.TransicionesEstado
+        .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.RolPermitidoId == rolNormalizado.Id)
+        .Select(t => t.EstadoDestinoCodigo)
+        .Distinct()
+        .ToListAsync();
+    
+    Console.WriteLine($"🔍 DEBUG: Transiciones encontradas: {string.Join(", ", destinosCod)}");
+    
+    // Simplificar la consulta para evitar problemas con OPENJSON
+    var destinos = new List<object>();
+    foreach (var codigo in destinosCod)
+    {
+        var estado = await context.EstadosActividad
+            .Where(e => e.Codigo == codigo)
+            .Select(e => new { e.Id, e.Codigo, e.Nombre, e.Color })
+            .FirstOrDefaultAsync();
+        if (estado != null)
+        {
+            Console.WriteLine($"🔍 DEBUG: Estado encontrado: {estado.Codigo} - {estado.Nombre}");
+            destinos.Add(estado);
+        }
+    }
+    
+    Console.WriteLine($"🔍 DEBUG: Total destinos devueltos: {destinos.Count}");
+    return Results.Ok(destinos);
+}).RequireAuthorization();
+
+// Helpers de workflow (DB) - Sistema robusto con base de datos
+static async Task<string> NormalizeRoleAsync(string? rol, UbFormacionContext context)
+{
+    if (string.IsNullOrWhiteSpace(rol)) return string.Empty;
+    
+    Console.WriteLine($"🔍 DEBUG: Normalizando rol: '{rol}'");
+    
+    // Buscar en mapeo de roles
+    var mapeo = await context.MapeoRoles
+        .Include(m => m.RolNormalizado)
+        .Where(m => m.RolOriginal == rol && m.Activo)
+        .FirstOrDefaultAsync();
+    
+    if (mapeo?.RolNormalizado != null)
+    {
+        Console.WriteLine($"🔍 DEBUG: Rol '{rol}' normalizado a: '{mapeo.RolNormalizado.Codigo}'");
+        return mapeo.RolNormalizado.Codigo;
+    }
+    
+    Console.WriteLine($"🔍 DEBUG: No se encontró mapeo para rol: '{rol}'");
+    return string.Empty;
+}
+
+// Función de compatibilidad (mantener para otros endpoints que la usen)
+static string NormalizeRole(string? rol)
+{
+    if (string.IsNullOrWhiteSpace(rol)) return string.Empty;
+    return rol switch
+    {
+        "Admin" => "Admin",
+        "Gestor" => "Coordinador Tecnico",
+        "Usuario" => "Docente/Dinamizador",
+        "Coordinador/Técnico" => "Coordinador Tecnico",
+        "Coordinador Tecnico" => "Coordinador Tecnico",
+        _ => rol
+    };
+}
+
+static async Task<bool> IsAllowedDb(UbFormacionContext context, string fromCodigo, string toCodigo, string userRole)
+{
+    // Globales (CANCELADA/RECHAZADA) se insertaron para todos los orígenes en la tabla
+    return await context.TransicionesEstado
+        .AnyAsync(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.EstadoDestinoCodigo == toCodigo && t.RolPermitido == userRole);
+}
+
+// Función para determinar el siguiente rol implicado según el estado destino
+static string? DeterminarSiguienteRolImplicado(string estadoCodigo, int? unidadGestionId)
+{
+    return estadoCodigo switch
+    {
+        "BORRADOR" => null, // No hay siguiente rol, el autor puede seguir editando
+        "ENVIADA" => "Coordinador de Formación", // Coordinador debe revisar
+        "EN_REVISION" => "Coordinador de Formación", // Coordinador debe aprobar/rechazar
+        "VALIDACION_UNIDAD" => "Responsable de Unidad", // Responsable debe validar
+        "DEFINICION" => "Coordinador/Técnico", // Técnico debe completar definición
+        "REVISION_ADMINISTRATIVA" => "Soporte Administrativo", // Soporte debe revisar
+        "PUBLICADA" => null, // Estado final, no hay siguiente rol
+        "CANCELADA" => null, // Estado final
+        "RECHAZADA" => null, // Estado final
+        _ => null // Estado desconocido
+    };
+}
 
 app.Run();

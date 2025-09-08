@@ -758,6 +758,30 @@ async function cargarDatosReales(actividadId) {
         
         Utils.log('Datos reales aplicados correctamente');
         
+        // Cargar transiciones permitidas después de cargar los datos de la actividad
+        if (typeof cargarTransicionesPermitidas === 'function') {
+            // Esperar un poco para asegurar que todo esté cargado
+            await new Promise(resolve => setTimeout(resolve, 100));
+            await cargarTransicionesPermitidas();
+        }
+        
+        // Aplicar permisos de edición según estado/rol
+        try {
+            const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+            const userRole = user?.rol || user?.Rol || '';
+            const normalizedRole = normalizeRoleForWorkflow(userRole);
+            const estadoId = (actividad.estadoId ?? actividad.EstadoId ?? actividad.estado?.id ?? actividad.Estado?.Id);
+            let estadoCodigo = null;
+            try {
+                const cache = (window.__estadosCache || []);
+                if (cache && cache.length) {
+                    const found = cache.find(e => e.id === parseInt(estadoId, 10));
+                    estadoCodigo = found ? (found.codigo || found.Codigo) : null;
+                }
+            } catch {}
+            await aplicarPermisosEdicion(normalizedRole, estadoCodigo);
+        } catch (e) { Utils.log('Aplicación de permisos de edición omitida:', e); }
+        
     } catch (error) {
         Utils.error('Error cargando datos reales:', error);
         throw error; // Re-lanzar para que se maneje en el catch superior
@@ -1098,6 +1122,61 @@ async function aplicarDatosReales(actividad) {
     try {
         actualizarBadgeEstadoDesdeBD();
     } catch {}
+}
+
+// Normalización de roles a los del workflow
+function normalizeRoleForWorkflow(rol) {
+    if (!rol) return '';
+    switch (rol) {
+        case 'Admin': return 'Admin';
+        case 'Gestor': return 'Coordinador/Técnico';
+        case 'Usuario': return 'Docente/Dinamizador';
+        default: return rol;
+    }
+}
+
+function canEditByRoleAndState(normalizedRole, estadoCodigo) {
+    if (!normalizedRole) return false;
+    if (normalizedRole === 'Admin') return true;
+    if (!estadoCodigo) return false;
+    if (estadoCodigo === 'BORRADOR') {
+        return normalizedRole === 'Docente/Dinamizador' || normalizedRole === 'Coordinador/Técnico';
+    }
+    if (estadoCodigo === 'DEFINICION') {
+        return normalizedRole === 'Coordinador/Técnico';
+    }
+    return false;
+}
+
+async function aplicarPermisosEdicion(normalizedRole, estadoCodigo) {
+    const editable = canEditByRoleAndState(normalizedRole, estadoCodigo);
+    const container = document.querySelector('main');
+    if (!container) return;
+    const inputs = container.querySelectorAll('.form-section input, .form-section select, .form-section textarea');
+    inputs.forEach(el => {
+        const id = el.id || '';
+        const isStateControl = id === 'nuevoEstadoSelect' || id === 'descripcionMotivos' || id === 'actividadId' || id === 'actividadEstadoId';
+        if (isStateControl) return;
+        el.disabled = !editable;
+    });
+    const actionButtons = container.querySelectorAll('#btnSubirAdjuntos, [onclick^="addSubactividad"], [onclick^="addParticipante"]');
+    actionButtons.forEach(btn => btn.disabled = !editable);
+    const root = document.getElementById('statusHeader');
+    if (root) {
+        const noteId = 'permisoNota';
+        let note = document.getElementById(noteId);
+        if (!editable) {
+            if (!note) {
+                note = document.createElement('div');
+                note.id = noteId;
+                note.className = 'text-muted small';
+                note.innerHTML = '<i class="bi bi-lock"></i> Edición bloqueada para tu rol en este estado';
+                root.appendChild(note);
+            }
+        } else if (note) {
+            note.remove();
+        }
+    }
 }
 
 // NUEVA FUNCIÓN: Cargar entidades relacionadas reales

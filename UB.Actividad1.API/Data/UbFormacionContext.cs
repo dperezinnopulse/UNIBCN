@@ -27,6 +27,9 @@ public class UbFormacionContext : DbContext
     public DbSet<ActividadAdjunto> ActividadAdjuntos { get; set; }
     public DbSet<CambioEstadoActividad> CambiosEstadoActividad { get; set; }
     public DbSet<MensajeUsuario> MensajesUsuarios { get; set; }
+    public DbSet<TransicionEstado> TransicionesEstado { get; set; }
+    public DbSet<RolNormalizado> RolesNormalizados { get; set; }
+    public DbSet<MapeoRol> MapeoRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -238,6 +241,39 @@ public class UbFormacionContext : DbContext
                   .HasForeignKey(e => e.UsuarioId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.MensajeId, e.UsuarioId }).IsUnique();
+        });
+
+        // Transiciones
+        modelBuilder.Entity<TransicionEstado>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EstadoOrigenCodigo).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.EstadoDestinoCodigo).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Accion).HasMaxLength(100);
+            entity.Property(e => e.RolPermitido).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => new { e.EstadoOrigenCodigo, e.EstadoDestinoCodigo, e.RolPermitido }).IsUnique();
+        });
+
+        // Roles Normalizados
+        modelBuilder.Entity<RolNormalizado>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasMaxLength(255);
+            entity.HasIndex(e => e.Codigo).IsUnique();
+        });
+
+        // Mapeo de Roles
+        modelBuilder.Entity<MapeoRol>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RolOriginal).IsRequired().HasMaxLength(100);
+            entity.HasOne(e => e.RolNormalizado)
+                  .WithMany(r => r.MapeosRoles)
+                  .HasForeignKey(e => e.RolNormalizadoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.RolOriginal, e.RolNormalizadoId }).IsUnique();
         });
     }
 }

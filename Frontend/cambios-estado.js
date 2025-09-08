@@ -1,25 +1,45 @@
 // Funcionalidad de cambios de estado para actividades
 
 let cambiosEstadoActuales = [];
-let estadosDisponibles = [];
+let transicionesPermitidas = [];
 
-// Cargar estados disponibles según el rol del usuario
-async function cargarEstadosDisponibles() {
+// Cargar transiciones permitidas para la actividad y el rol actual
+async function cargarTransicionesPermitidas() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`, {
-            headers: {
-                'Accept': 'application/json',
-                ...(typeof Auth !== 'undefined' && Auth.getToken() ? { 'Authorization': `Bearer ${Auth.getToken()}` } : {})
-            }
+        const actividadId = obtenerActividadId();
+        if (!actividadId) {
+            console.log('🔍 DEBUG: No se pudo obtener el ID de la actividad');
+            return [];
+        }
+        
+        const token = typeof Auth !== 'undefined' ? Auth.getToken() : null;
+        console.log('🔍 DEBUG: Token disponible:', !!token);
+        console.log('🔍 DEBUG: Token (primeros 50 chars):', token ? token.substring(0, 50) + '...' : 'null');
+        console.log('🔍 DEBUG: URL de transiciones:', `${CONFIG.API_BASE_URL}/actividades/${actividadId}/transiciones`);
+        
+        const headers = {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        
+        console.log('🔍 DEBUG: Headers enviados:', headers);
+        
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/transiciones`, {
+            headers: headers
         });
+        
+        console.log('🔍 DEBUG: Respuesta del servidor:', response.status, response.statusText);
+        console.log('🔍 DEBUG: Headers de respuesta:', Object.fromEntries(response.headers.entries()));
+        
         if (response.ok) {
-            estadosDisponibles = await response.json();
-            console.log('Estados disponibles:', estadosDisponibles);
+            transicionesPermitidas = await response.json();
+            console.log('🔍 DEBUG: Transiciones permitidas recibidas:', transicionesPermitidas);
         } else {
-            console.error('Error cargando estados:', response.statusText);
+            const txt = await response.text().catch(()=> '');
+            console.error('🔍 DEBUG: Error cargando transiciones:', response.status, response.statusText, txt);
         }
     } catch (error) {
-        console.error('Error cargando estados:', error);
+        console.error('🔍 DEBUG: Error cargando transiciones:', error);
     }
 }
 
@@ -51,37 +71,47 @@ async function cargarCambiosEstado() {
 }
 
 // Mostrar modal para cambiar estado
-function mostrarModalCambioEstado() {
+async function mostrarModalCambioEstado() {
     const modal = document.getElementById('modalCambioEstado');
-    if (modal) {
-        // Limpiar formulario
-        document.getElementById('nuevoEstadoSelect').value = '';
-        document.getElementById('descripcionMotivos').value = '';
-        
-        // Cargar estados en el select
-        cargarEstadosEnSelect();
-        
-        // Mostrar modal
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
-    }
+    if (!modal) return;
+    // Limpiar formulario
+    const sel = document.getElementById('nuevoEstadoSelect');
+    if (sel) sel.value = '';
+    const txt = document.getElementById('descripcionMotivos');
+    if (txt) txt.value = '';
+    // Cargar transiciones y poblar select
+    await cargarTransicionesPermitidas();
+    cargarEstadosEnSelect();
+    // Mostrar modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
 }
 
 // Cargar estados en el select del modal
 function cargarEstadosEnSelect() {
     const select = document.getElementById('nuevoEstadoSelect');
-    if (!select) return;
+    if (!select) {
+        console.log('🔍 DEBUG: No se encontró el select nuevoEstadoSelect');
+        return;
+    }
+    
+    console.log('🔍 DEBUG: Transiciones permitidas para poblar select:', transicionesPermitidas);
     
     // Limpiar opciones existentes (excepto la primera)
     select.innerHTML = '<option value="">Selecciona un estado...</option>';
     
-    // Agregar estados disponibles
-    estadosDisponibles.forEach(estado => {
+    // Agregar solo destinos permitidos
+    (transicionesPermitidas || []).forEach(estado => {
+        console.log('🔍 DEBUG: Agregando estado al select:', estado);
         const option = document.createElement('option');
         option.value = estado.id;
         option.textContent = estado.nombre;
+        option.dataset.color = estado.color || '';
+        option.dataset.codigo = estado.codigo || '';
         select.appendChild(option);
     });
+    
+    console.log('🔍 DEBUG: Select poblado con', select.options.length - 1, 'opciones');
 }
 
 // Cambiar estado de la actividad
@@ -134,7 +164,13 @@ async function cambiarEstadoActividad() {
 
                 // Actualizar badge directamente si existe
                 const badge = document.getElementById('estadoBadge');
-                const estadoInfo = (estadosDisponibles || []).find(e => e.id === parseInt(nuevoEstadoId, 10));
+                let estadoInfo = (transicionesPermitidas || []).find(e => e.id === parseInt(nuevoEstadoId, 10));
+                if (!estadoInfo && sel) {
+                    const opt = sel.querySelector(`option[value="${parseInt(nuevoEstadoId,10)}"]`);
+                    if (opt) {
+                        estadoInfo = { nombre: opt.textContent, color: opt.dataset.color };
+                    }
+                }
                 if (badge && estadoInfo) {
                     const nombre = estadoInfo.nombre || '—';
                     const color = estadoInfo.color || (nombre === 'Borrador' ? '#6c757d' : nombre === 'Enviada' ? '#fd7e14' : nombre === 'Subsanar' ? '#dc3545' : '#2ecc71');
@@ -404,9 +440,9 @@ window.mostrarHistorialEstados = mostrarHistorialEstados;
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar estados disponibles
-    cargarEstadosDisponibles();
-    
+    // Las transiciones se cargan después de cargar los datos de la actividad
+    // para asegurar que se tenga el estado actual correcto
+
     // Cargar cambios de estado si estamos en una actividad existente
     if (obtenerActividadId()) {
         cargarCambiosEstado();
