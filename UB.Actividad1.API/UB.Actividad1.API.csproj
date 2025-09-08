@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.4.0</Version>
-    <PackageReleaseNotes>Mensajes no leídos, adjuntos, eliminación mensajes, cambios de estado con descripción y restricciones por rol, emails HTML, administración de usuarios, perfil, manual servido en /manual, corrección endpoint duplicado /api/unidades-gestion.</PackageReleaseNotes>
+    <Version>1.5.0</Version>
+    <PackageReleaseNotes>Sistema robusto de workflow con roles normalizados, eliminación de transiciones incorrectas, consolidación de estados duplicados, mapeo robusto de roles por ID en lugar de strings, debug logs extensivos, scripts SQL para mantenimiento del sistema.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
