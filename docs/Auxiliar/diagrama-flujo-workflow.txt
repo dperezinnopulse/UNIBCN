@@ -1,0 +1,159 @@
+# 🔄 DIAGRAMA DE FLUJO DEL WORKFLOW
+
+## FLUJO PRINCIPAL (Estados y Transiciones)
+
+```
+                    ┌─────────────────┐
+                    │   BOR (Borrador) │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │  ENV (Enviada)   │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ EN_REVISION     │
+                    │ (En revisión)   │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │VALIDACION_UNIDAD│
+                    │(Validación unidad)│
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ DEFINICION      │
+                    │ (Definición)    │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │REVISION_ADMIN   │
+                    │(Revisión admin) │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ PUBLICADA       │
+                    │ (Publicada)     │
+                    └─────────────────┘
+```
+
+## ROLES Y SUS CAPACIDADES
+
+### 🔵 DOCENTE_DINAMIZADOR
+```
+BOR ──────────────► ENV
+```
+
+### 🟡 COORD_TECNICO  
+```
+BOR ──────────────► ENV
+DEFINICION ───────► REVISION_ADMINISTRATIVA
+```
+
+### 🟠 COORD_FORMACION
+```
+ENV ──────────────► EN_REVISION
+EN_REVISION ──────► VALIDACION_UNIDAD
+[Puede rechazar desde cualquier estado]
+```
+
+### 🟢 RESPONSABLE_UNIDAD
+```
+VALIDACION_UNIDAD ─► DEFINICION
+VALIDACION_UNIDAD ─► EN_REVISION
+[Puede rechazar desde cualquier estado]
+```
+
+### 🔴 ADMIN
+```
+[Acceso completo a todas las transiciones]
+```
+
+### ⚪ SOPORTE_ADMIN
+```
+[Puede cancelar y publicar]
+```
+
+## ESTADOS FINALES
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  ACEPTADA   │    │  RECHAZADA  │    │ CANCELADA   │    │  PUBLICADA  │
+│             │    │             │    │             │    │             │
+│ Estado: 9   │    │ Estado: 20  │    │ Estado: 15  │    │ Estado: 19  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+## TRANSICIONES DE CONTROL
+
+### Cancelación (desde cualquier estado)
+```
+CUALQUIER_ESTADO ──► CANCELADA
+Roles: ADMIN, SOPORTE_ADMIN
+```
+
+### Rechazo (desde cualquier estado)
+```
+CUALQUIER_ESTADO ──► RECHAZADA  
+Roles: ADMIN, COORD_FORMACION, RESPONSABLE_UNIDAD
+```
+
+### Subsanación
+```
+CUALQUIER_ESTADO ──► SUB
+[Estado especial para correcciones]
+```
+
+## FLUJO COMPLETO CON ROLES
+
+```
+1. DOCENTE_DINAMIZADOR crea actividad
+   BOR ──────────────► ENV
+
+2. COORD_FORMACION revisa
+   ENV ──────────────► EN_REVISION
+
+3. COORD_FORMACION valida
+   EN_REVISION ──────► VALIDACION_UNIDAD
+
+4. RESPONSABLE_UNIDAD define
+   VALIDACION_UNIDAD ─► DEFINICION
+
+5. COORD_TECNICO prepara
+   DEFINICION ───────► REVISION_ADMINISTRATIVA
+
+6. ADMIN/SOPORTE_ADMIN publica
+   REVISION_ADMINISTRATIVA ─► PUBLICADA
+```
+
+## CASOS ESPECIALES
+
+### Retroceso
+```
+EN_REVISION ──────► BOR
+Roles: ADMIN, COORD_FORMACION
+```
+
+### Rechazo en cualquier punto
+```
+CUALQUIER_ESTADO ──► RECHAZADA
+Roles: ADMIN, COORD_FORMACION, RESPONSABLE_UNIDAD
+```
+
+### Cancelación administrativa
+```
+CUALQUIER_ESTADO ──► CANCELADA
+Roles: ADMIN, SOPORTE_ADMIN
+```
+
+## RESTRICCIONES IMPORTANTES
+
+❌ **ELIMINADA**: ENV → DEFINICION (para COORD_FORMACION)
+✅ **MANTENIDA**: ENV → EN_REVISION (para COORD_FORMACION)
+
+🔒 **DOCENTE_DINAMIZADOR**: Solo puede enviar (BOR → ENV)
+🔓 **ADMIN**: Acceso completo a todas las transiciones
+🔧 **COORD_TECNICO**: Puede enviar y pasar a revisión administrativa
+📋 **COORD_FORMACION**: Puede revisar, validar y rechazar
+👑 **RESPONSABLE_UNIDAD**: Puede validar, definir y rechazar
+⚙️ **SOPORTE_ADMIN**: Puede cancelar y publicar
