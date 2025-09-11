@@ -37,3 +37,4 @@ WHERE t.Activo = 1 AND t.EstadoOrigenCodigo = 'BOR'
 ORDER BY rn.Codigo, t.EstadoDestinoCodigo
 
 PRINT '=== TRANSICIONES AGREGADAS ==='
+

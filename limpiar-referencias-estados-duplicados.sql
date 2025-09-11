@@ -74,3 +74,4 @@ PRINT '7. Estados finales:'
 SELECT Id, Codigo, Nombre FROM EstadosActividad WHERE Activo = 1 ORDER BY Id
 
 PRINT '=== LIMPIEZA COMPLETADA ==='
+

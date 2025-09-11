@@ -17,9 +17,30 @@ namespace UB.Actividad1.API.DTOs
         
         public string? Lugar { get; set; }
         public int UnidadGestionId { get; set; }
+        public bool? ActividadPago { get; set; }
         
         // Campos adicionales para actividades formativas
         public string? TipoActividad { get; set; }
+        public string? LineaEstrategica { get; set; }
+        public string? ObjetivoEstrategico { get; set; }
+        public string? CodigoRelacionado { get; set; }
+        public DateTime? FechaActividad { get; set; }
+        public string? MotivoCierre { get; set; }
+        public string? PersonaSolicitante { get; set; }
+        public string? Coordinador { get; set; }
+        public string? JefeUnidadGestora { get; set; }
+        public string? GestorActividad { get; set; }
+        public string? FacultadDestinataria { get; set; }
+        public string? DepartamentoDestinatario { get; set; }
+        public string? CentroUnidadUBDestinataria { get; set; }
+        public string? OtrosCentrosInstituciones { get; set; }
+        public int? PlazasTotales { get; set; }
+        public decimal? HorasTotales { get; set; }
+        public string? CentroTrabajoRequerido { get; set; }
+        public string? ModalidadGestion { get; set; }
+        public DateTime? FechaInicioImparticion { get; set; }
+        public DateTime? FechaFinImparticion { get; set; }
+        public string? CondicionesEconomicas { get; set; }
         public string? AreaTematica { get; set; }
         public string? NivelFormacion { get; set; }
         public string? IdiomaImparticion { get; set; }

@@ -1,3 +1,35 @@
+# Política de ejecución en Windows (no bloqueo) – Proyecto UB Formación
+
+Objetivo: evitar bloqueos del agente. Todos los servicios/comandos de larga duración deben ejecutarse en background, con logging y verificación de salud.
+
+Reglas operativas
+- Ejecutar procesos de larga duración SIEMPRE en background (Start-Process o Start-Job) y sin -Wait.
+- Redirigir SIEMPRE stdout/stderr a ficheros de log y, si es útil, leerlos en streaming (Get-Content -Wait) desde jobs aparte.
+- Aplicar timeouts: matar procesos colgados (Stop-Process -Force) si no responden en el tiempo esperado.
+- Usar rutas absolutas y establecer WorkingDirectory correcto antes de lanzar procesos.
+- Deshabilitar interactividad/paginadores: GIT_PAGER=cat, PAGER=cat, $ProgressPreference='SilentlyContinue'.
+- Forzar UTF-8: chcp 65001; $OutputEncoding = [System.Text.UTF8Encoding]::new($false).
+- Servicios HTTP: verificar salud con Invoke-WebRequest -TimeoutSec en bucle hasta éxito o timeout.
+- Antes de relanzar dotnet: matar procesos previos (Stop-ByName 'dotnet') y dormir 2-3 s.
+
+Snippets/Funciones reutilizables (PowerShell)
+- scripts/ps-utils.ps1 define:
+  - Start-BackgroundCommand: lanza procesos en background con logs y timeout de arranque.
+  - Tail-Logs: tail -Wait en jobs separados para stdout/stderr.
+  - Stop-ByName: termina procesos por nombre.
+  - Wait-HttpReady: health-check HTTP con reintentos/timeout.
+  - Invoke-Short: ejecutar comandos “cortos” no interactivos con timeout.
+
+Convenciones del proyecto
+- Backend (.NET): UB.Actividad1.API en http://localhost:5001
+- Frontend (WebServer .NET): http://localhost:8080
+- Scripts recomendados: start-app-robusto.ps1 (arranca ambos en background, health-check + tail logs)
+
+Ejemplo de uso rápido
+```
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\start-app-robusto.ps1
+```
+
 # Cursor Rules - Proyecto UB Formación
 
 ## 🚫 COMANDOS QUE BLOQUEAN AL ASISTENTE
@@ -197,3 +229,6 @@ netstat -an | findstr ":5001\|:8080"
 - Si el login falla o bloquea, inyectar token antes de navegar: `page.addInitScript(() => localStorage.setItem('ub_token','E2E'); ...)` y navegar directo a `/index.html`.
 - Selectores UG: los elementos `[data-ug]` pueden estar ocultos; seleccionar la UG en `#actividadUnidadGestion` antes de capturar para asegurar visibilidad real.
 - Overlay rojo desalineado: evitar `boundingBox + scroll`. Usar `getBoundingClientRect()` y dibujar overlay `position: fixed` sin desplazar la página.
+ - PowerShell: ejecutar binarios con rutas con espacios usando SIEMPRE el operador de invocación `&` y comillas.
+   - Correcto: `& "C:\\Program Files\\nodejs\\node.exe" ".\\scripts\\capture-mensajes.js"`
+   - Incorrecto: `"C:\\Program Files\\nodejs\\node.exe" .\\scripts\\capture-mensajes.js &` (ParserError)

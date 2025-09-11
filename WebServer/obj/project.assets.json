@@ -11,7 +11,7 @@
     "C:\\Users\\USER\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.0.0",
+    "version": "1.4.0",
     "restore": {
       "projectUniqueName": "C:\\DEV\\UNI BCN\\WebServer\\WebServer.csproj",
       "projectName": "WebServer",
@@ -67,7 +67,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.413/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.414/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

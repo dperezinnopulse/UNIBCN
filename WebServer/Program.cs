@@ -5,8 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Agregar servicios al contenedor
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddCors();
 
 var app = builder.Build();
+var contentRoot = builder.Environment.ContentRootPath;
 
 // Configurar el pipeline de solicitudes HTTP
 if (app.Environment.IsDevelopment())
@@ -79,7 +81,7 @@ app.Map("/api/{**path}", async (HttpContext context, IHttpClientFactory httpClie
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "Frontend")),
+        Path.Combine(contentRoot, "..", "Frontend")),
     RequestPath = ""
 });
 
@@ -87,7 +89,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "docs", "manual-usuario")),
+        Path.Combine(contentRoot, "..", "docs", "manual-usuario")),
     RequestPath = "/manual"
 });
 
@@ -95,7 +97,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "test-artifacts", "manual")),
+        Path.Combine(contentRoot, "..", "test-artifacts", "manual")),
     RequestPath = "/manual/assets"
 });
 
@@ -103,7 +105,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "test-artifacts")),
+        Path.Combine(contentRoot, "..", "test-artifacts")),
     RequestPath = "/manual/assets-root"
 });
 

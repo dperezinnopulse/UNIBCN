@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,18 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+// Servir archivos estáticos del frontend integrado (wwwroot)
+var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+if (!Directory.Exists(webRootPath))
+{
+    try { Directory.CreateDirectory(webRootPath); } catch {}
+}
+app.UseDefaultFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(webRootPath)
+});
 
 // Endpoints de la API
 
@@ -144,6 +157,82 @@ app.MapPost("/api/auth/set-password", async (CreateUserDto dto, UbFormacionConte
     await context.SaveChangesAsync();
     return Results.Ok(new { message = "Password actualizado" });
 });
+
+// ==========================
+// DEBUG: detectar columnas nulas problemáticas
+// ==========================
+app.MapGet("/api/debug/nulls", async (UbFormacionContext context) =>
+{
+    try
+    {
+        var actividadCodigoNullIds = await context.Actividades
+            .Where(a => a.Codigo == null)
+            .Select(a => a.Id)
+            .Take(50)
+            .ToListAsync();
+
+        var actividadTituloNullIds = await context.Actividades
+            .Where(a => a.Titulo == null)
+            .Select(a => a.Id)
+            .Take(50)
+            .ToListAsync();
+
+        var actividadAnioNullIds = await context.Actividades
+            .Where(a => a.AnioAcademico == null)
+            .Select(a => a.Id)
+            .Take(50)
+            .ToListAsync();
+
+        var estadoNombreNull = await context.Actividades
+            .Join(context.EstadosActividad, a => a.EstadoId, e => e.Id, (a, e) => new { a, e })
+            .Where(x => x.e.Nombre == null)
+            .Select(x => new { actividadId = x.a.Id, estadoId = x.e.Id })
+            .Take(50)
+            .ToListAsync();
+
+        var ugNombreNull = await context.Actividades
+            .Where(a => a.UnidadGestionId != null)
+            .Join(context.UnidadesGestion, a => a.UnidadGestionId, ug => ug.Id, (a, ug) => new { a, ug })
+            .Where(x => x.ug.Nombre == null)
+            .Select(x => new { actividadId = x.a.Id, unidadGestionId = x.ug.Id })
+            .Take(50)
+            .ToListAsync();
+
+        var usuarioUsernameNull = await context.Actividades
+            .Where(a => a.UsuarioAutorId != null)
+            .Join(context.Usuarios, a => a.UsuarioAutorId, u => u.Id, (a, u) => new { a, u })
+            .Where(x => x.u.Username == null)
+            .Select(x => new { actividadId = x.a.Id, usuarioId = x.u.Id })
+            .Take(50)
+            .ToListAsync();
+
+        return Results.Ok(new
+        {
+            counts = new
+            {
+                actividadesCodigoNull = actividadCodigoNullIds.Count,
+                actividadesTituloNull = actividadTituloNullIds.Count,
+                actividadesAnioNull = actividadAnioNullIds.Count,
+                estadosNombreNull = estadoNombreNull.Count,
+                ugNombreNull = ugNombreNull.Count,
+                usuariosUsernameNull = usuarioUsernameNull.Count
+            },
+            samples = new
+            {
+                actividadesCodigoNull = actividadCodigoNullIds,
+                actividadesTituloNull = actividadTituloNullIds,
+                actividadesAnioNull = actividadAnioNullIds,
+                estadosNombreNull = estadoNombreNull,
+                ugNombreNull = ugNombreNull,
+                usuariosUsernameNull = usuarioUsernameNull
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error generando informe de nulos: {ex.Message}");
+    }
+}).RequireAuthorization();
 app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext httpContext,
     string? ug = null, 
     string? estado = null, 
@@ -171,89 +260,46 @@ app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext ht
 
         Console.WriteLine($"🔍 DEBUG: Usuario autenticado - ID: {currentUserId}, Rol: {currentUserRole}");
 
-        var baseQuery = context.Actividades
+        // Consulta con manejo correcto de valores nulos
+        var actividades = await context.Actividades
             .AsNoTracking()
-            .AsQueryable();
-
-        // Filtrar por actividades de la unidad de gestión del usuario si no es Admin
-        if (currentUserRole != "Admin" && currentUserId.HasValue)
-        {
-            // Obtener la unidad de gestión del usuario actual
-            var usuarioActual = await context.Usuarios.FindAsync(currentUserId.Value);
-            if (usuarioActual?.UnidadGestionId.HasValue == true)
-            {
-                Console.WriteLine($"🔒 DEBUG: Aplicando filtro para usuario no-Admin - Solo actividades de la unidad de gestión {usuarioActual.UnidadGestionId}");
-                baseQuery = baseQuery.Where(a => a.UnidadGestionId == usuarioActual.UnidadGestionId.Value);
-            }
-            else
-            {
-                Console.WriteLine($"🔒 DEBUG: Usuario sin unidad de gestión - Solo actividades del usuario {currentUserId}");
-                baseQuery = baseQuery.Where(a => a.UsuarioAutorId == currentUserId.Value);
-            }
-        }
-        else
-        {
-            Console.WriteLine($"👑 DEBUG: Usuario Admin o sin autenticación - Mostrando todas las actividades");
-        }
-
-        // Filtros
-        if (!string.IsNullOrWhiteSpace(ug))
-            baseQuery = baseQuery.Where(a => a.UnidadGestionId.ToString() == ug);
-
-        if (!string.IsNullOrWhiteSpace(estado))
-            baseQuery = baseQuery.Where(a => a.EstadoId.ToString() == estado);
-
-        if (!string.IsNullOrWhiteSpace(search))
-            baseQuery = baseQuery.Where(a => a.Titulo.Contains(search) || a.Codigo.Contains(search));
-
-        if (!string.IsNullOrWhiteSpace(tipoActividad))
-            baseQuery = baseQuery.Where(a => a.TipoActividad == tipoActividad);
-
-        if (!string.IsNullOrWhiteSpace(fechaDesde) && DateTime.TryParse(fechaDesde, out var fechaDesdeParsed))
-            baseQuery = baseQuery.Where(a => a.FechaModificacion >= fechaDesdeParsed);
-
-        if (!string.IsNullOrWhiteSpace(fechaHasta) && DateTime.TryParse(fechaHasta, out var fechaHastaParsed))
-            baseQuery = baseQuery.Where(a => a.FechaModificacion <= fechaHastaParsed);
-
-        if (!string.IsNullOrWhiteSpace(autor))
-            baseQuery = baseQuery.Where(a => a.PersonaSolicitante.Contains(autor));
-
-        var total = await baseQuery.CountAsync();
-
-        // Ordenación
-        var ordenadoQuery = ordenarPor?.ToLower() switch
-        {
-            "fechacreacion" => orden == "asc" ? baseQuery.OrderBy(a => a.FechaCreacion) : baseQuery.OrderByDescending(a => a.FechaCreacion),
-            "titulo" => orden == "asc" ? baseQuery.OrderBy(a => a.Titulo) : baseQuery.OrderByDescending(a => a.Titulo),
-            "estado" => orden == "asc" ? baseQuery.OrderBy(a => a.Estado.Nombre) : baseQuery.OrderByDescending(a => a.Estado.Nombre),
-            "unidadgestion" => orden == "asc" ? baseQuery.OrderBy(a => a.UnidadGestion.Nombre) : baseQuery.OrderByDescending(a => a.UnidadGestion.Nombre),
-            _ => orden == "asc" ? baseQuery.OrderBy(a => a.FechaModificacion) : baseQuery.OrderByDescending(a => a.FechaModificacion)
-        };
-
-        var actividades = await ordenadoQuery
+            .OrderByDescending(a => a.FechaCreacion)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(a => new
             {
                 id = a.Id,
-                codigo = a.Codigo,
-                titulo = a.Titulo,
-                descripcion = a.Descripcion,
+                codigo = (EF.Property<string?>(a, nameof(a.Codigo)) ?? ""),
+                titulo = (EF.Property<string?>(a, nameof(a.Titulo)) ?? ""),
+                estadoId = a.EstadoId,
+                unidadGestionId = a.UnidadGestionId,
                 fechaInicio = a.FechaInicio,
                 fechaFin = a.FechaFin,
                 fechaModificacion = a.FechaModificacion,
                 fechaCreacion = a.FechaCreacion,
-                tipoActividad = a.TipoActividad,
-                anioAcademico = a.AnioAcademico,
                 plazasTotales = a.PlazasTotales,
                 horasTotales = a.HorasTotales,
-                personaSolicitante = a.PersonaSolicitante,
+                tipoActividad = a.TipoActividad ?? "",
+                descripcion = a.Descripcion ?? "",
                 usuarioAutorId = a.UsuarioAutorId,
-                usuarioAutorNombre = a.UsuarioAutor != null ? a.UsuarioAutor.Username : null,
-                estado = new { id = a.EstadoId, nombre = a.Estado != null ? a.Estado.Nombre : null },
-                unidadGestion = new { id = a.UnidadGestionId, nombre = a.UnidadGestion != null ? a.UnidadGestion.Nombre : null }
+                estado = new {
+                    id = a.EstadoId,
+                    nombre = context.EstadosActividad
+                        .Where(e => e.Id == a.EstadoId)
+                        .Select(e => (string?)e.Nombre)
+                        .FirstOrDefault() ?? "Sin estado"
+                },
+                unidadGestion = new {
+                    id = a.UnidadGestionId ?? 0,
+                    nombre = context.UnidadesGestion
+                        .Where(ug => ug.Id == a.UnidadGestionId)
+                        .Select(ug => (string?)ug.Nombre)
+                        .FirstOrDefault() ?? "Sin unidad"
+                }
             })
             .ToListAsync();
+
+        var total = await context.Actividades.CountAsync();
 
         return Results.Ok(new
         {
@@ -263,12 +309,79 @@ app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext ht
             pageSize,
             totalPages = (int)Math.Ceiling((double)total / pageSize)
         });
+
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Error interno: {ex.Message}");
+        Console.WriteLine($"❌ ERROR EN /api/actividades: {ex.Message}");
+        Console.WriteLine($"❌ STACK TRACE: {ex.StackTrace}");
+        if (ex.InnerException != null)
+        {
+            Console.WriteLine($"❌ INNER EXCEPTION: {ex.InnerException.Message}");
+        }
+        // En modo debug, devolver el error completo en lugar de 500
+        return Results.Problem(
+            title: "Error en /api/actividades",
+            detail: $"Error: {ex.Message}\nStack: {ex.StackTrace}\nInner: {ex.InnerException?.Message}",
+            statusCode: 500
+        );
     }
 }).RequireAuthorization();
+
+// ==========================
+// Endpoint público para actividades
+// ==========================
+app.MapGet("/api/actividades/publicas", async (UbFormacionContext context, [AsParameters] PublicActividadesQuery query) =>
+{
+    try
+    {
+        Console.WriteLine($"🔍 DEBUG: Consultando actividades públicas para UG: {query.UnidadGestionId}");
+        // Resolver id del estado PUBLICADA por código
+        var estadoPublicadaId = await context.EstadosActividad
+            .Where(e => e.Codigo == "PUBLICADA" && e.Activo)
+            .Select(e => e.Id)
+            .FirstOrDefaultAsync();
+        if (estadoPublicadaId == 0)
+        {
+            Console.WriteLine("❌ No se encontró el estado PUBLICADA");
+            return Results.Ok(new List<object>());
+        }
+
+        // Solo actividades en estado "PUBLICADA"
+        var actividades = await context.Actividades
+            .AsNoTracking()
+            .Include(a => a.UnidadGestion)
+            .Where(a => a.EstadoId == estadoPublicadaId)
+            .Select(a => new
+            {
+                id = a.Id,
+                titulo = a.Titulo ?? "",
+                descripcion = a.Descripcion ?? "",
+                programaDescripcion = a.ProgramaDescripcionES ?? "",
+                fechaInicio = a.FechaInicio,
+                fechaFin = a.FechaFin,
+                tipoActividad = a.TipoActividad ?? "",
+                anioAcademico = a.AnioAcademico ?? "",
+                plazasTotales = a.PlazasTotales,
+                horasTotales = a.HorasTotales,
+                cursoGratuito = !a.ActividadPago,
+                unidadGestion = new { 
+                    id = a.UnidadGestionId ?? 0, 
+                    nombre = a.UnidadGestion != null ? a.UnidadGestion.Nombre : "Sin unidad" 
+                }
+            })
+            .ToListAsync();
+        
+        Console.WriteLine($"✅ DEBUG: Encontradas {actividades.Count} actividades públicas");
+        
+        return Results.Ok(actividades);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR EN /api/actividades/publicas: {ex.Message}");
+        return Results.Problem($"Error interno: {ex.Message}");
+    }
+});
 
 // ==========================
 // Gestión de usuarios (Admin) y perfil propio
@@ -395,6 +508,9 @@ app.MapGet("/api/unidades-gestion", async (UbFormacionContext context) =>
     return Results.Ok(ugs);
 }).RequireAuthorization();
 
+// Endpoint público para obtener actividades publicadas por Unidad Gestora
+// Eliminado duplicado de /api/actividades/publicas
+
 app.MapGet("/api/actividades/{id}", async (int id, UbFormacionContext context) =>
 {
     var actividad = await context.Actividades
@@ -423,8 +539,13 @@ app.MapPut("/api/actividades/{id}/borrador", async (int id, UpdateActividadDto d
     if (dto.Descripcion != null) actividad.Descripcion = dto.Descripcion;
     if (dto.Codigo != null) actividad.Codigo = dto.Codigo;
     
-    // Cambiar estado a borrador
-    actividad.EstadoId = 1; // Estado borrador
+    // Cambiar estado a borrador por código
+    var estadoBorradorId_Save = await context.EstadosActividad
+        .Where(e => e.Codigo == "BORRADOR" && e.Activo)
+        .Select(e => e.Id)
+        .FirstOrDefaultAsync();
+    if (estadoBorradorId_Save == 0) estadoBorradorId_Save = 1;
+    actividad.EstadoId = estadoBorradorId_Save;
     actividad.FechaModificacion = DateTime.UtcNow;
 
     await context.SaveChangesAsync();
@@ -450,6 +571,13 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         usuarioAutorId = userId;
     }
 
+    // Resolver id de estado BORRADOR por código
+    var estadoBorradorId_Create = await context.EstadosActividad
+        .Where(e => e.Codigo == "BORRADOR" && e.Activo)
+        .Select(e => e.Id)
+        .FirstOrDefaultAsync();
+    if (estadoBorradorId_Create == 0) estadoBorradorId_Create = 1;
+
     var actividad = new Actividad
     {
         Codigo = dto.Codigo ?? $"ACT-{DateTime.Now:yyyyMMddHHmmss}",
@@ -460,10 +588,70 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         FechaFin = dto.FechaFin,
         Lugar = dto.Lugar,
         UnidadGestionId = dto.UnidadGestionId,
-        EstadoId = 6, // Borrador por defecto
+
+        // Información general adicional
+        TipoActividad = dto.TipoActividad,
+        LineaEstrategica = dto.LineaEstrategica,
+        ObjetivoEstrategico = dto.ObjetivoEstrategico,
+        CodigoRelacionado = dto.CodigoRelacionado,
+        FechaActividad = dto.FechaActividad,
+        MotivoCierre = dto.MotivoCierre,
+        PersonaSolicitante = dto.PersonaSolicitante,
+        Coordinador = dto.Coordinador,
+        JefeUnidadGestora = dto.JefeUnidadGestora,
+        GestorActividad = dto.GestorActividad,
+        FacultadDestinataria = dto.FacultadDestinataria,
+        DepartamentoDestinatario = dto.DepartamentoDestinatario,
+        CentroUnidadUBDestinataria = dto.CentroUnidadUBDestinataria,
+        OtrosCentrosInstituciones = dto.OtrosCentrosInstituciones,
+        PlazasTotales = dto.PlazasTotales,
+        HorasTotales = dto.HorasTotales,
+        CentroTrabajoRequerido = dto.CentroTrabajoRequerido,
+        ModalidadGestion = dto.ModalidadGestion,
+        FechaInicioImparticion = dto.FechaInicioImparticion,
+        FechaFinImparticion = dto.FechaFinImparticion,
+        CondicionesEconomicas = dto.CondicionesEconomicas,
+
+        // Inscripción
+        InscripcionInicio = dto.InscripcionInicio,
+        InscripcionFin = dto.InscripcionFin,
+        InscripcionPlazas = dto.InscripcionPlazas,
+        InscripcionListaEspera = dto.InscripcionListaEspera,
+        InscripcionModalidad = dto.InscripcionModalidad,
+        InscripcionRequisitosES = dto.InscripcionRequisitosES,
+        InscripcionRequisitosCA = dto.InscripcionRequisitosCA,
+        InscripcionRequisitosEN = dto.InscripcionRequisitosEN,
+
+        // Programa
+        ProgramaDescripcionES = dto.ProgramaDescripcionES,
+        ProgramaDescripcionCA = dto.ProgramaDescripcionCA,
+        ProgramaDescripcionEN = dto.ProgramaDescripcionEN,
+        ProgramaContenidosES = dto.ProgramaContenidosES,
+        ProgramaContenidosCA = dto.ProgramaContenidosCA,
+        ProgramaContenidosEN = dto.ProgramaContenidosEN,
+        ProgramaObjetivosES = dto.ProgramaObjetivosES,
+        ProgramaObjetivosCA = dto.ProgramaObjetivosCA,
+        ProgramaObjetivosEN = dto.ProgramaObjetivosEN,
+        ProgramaDuracion = dto.ProgramaDuracion,
+        ProgramaInicio = dto.ProgramaInicio,
+        ProgramaFin = dto.ProgramaFin,
+
+        // UG específicas
+        CoordinadorCentreUnitat = dto.CoordinadorCentreUnitat,
+        CentreTreballeAlumne = dto.CentreTreballeAlumne,
+        CreditosTotalesCRAI = dto.CreditosTotalesCRAI,
+        CreditosTotalesSAE = dto.CreditosTotalesSAE,
+        CreditosMinimosSAE = dto.CreditosMinimosSAE,
+        CreditosMaximosSAE = dto.CreditosMaximosSAE,
+        TipusEstudiSAE = dto.TipusEstudiSAE,
+        CategoriaSAE = dto.CategoriaSAE,
+        CompetenciesSAE = dto.CompetenciesSAE,
+
+        EstadoId = estadoBorradorId_Create,
         UsuarioAutorId = usuarioAutorId,
         FechaCreacion = DateTime.UtcNow,
-        FechaModificacion = DateTime.UtcNow
+        FechaModificacion = DateTime.UtcNow,
+        ActividadPago = dto.ActividadPago ?? false
     };
 
     context.Actividades.Add(actividad);
@@ -565,7 +753,12 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
     // Actualizar estado si es borrador
     if (dto.EsBorrador == true)
     {
-        actividad.EstadoId = 1; // Estado borrador
+        var estadoBorradorId_Update = await context.EstadosActividad
+            .Where(e => e.Codigo == "BORRADOR" && e.Activo)
+            .Select(e => e.Id)
+            .FirstOrDefaultAsync();
+        if (estadoBorradorId_Update == 0) estadoBorradorId_Update = 1;
+        actividad.EstadoId = estadoBorradorId_Update;
     }
     
     actividad.FechaModificacion = DateTime.UtcNow;
@@ -714,6 +907,42 @@ app.MapGet("/api/estados", async (UbFormacionContext context, HttpContext httpCo
         .ToListAsync();
     
     return Results.Ok(estados);
+}).RequireAuthorization();
+
+// Workflow: estados (dinámico, sin lógica ad-hoc por rol)
+app.MapGet("/api/workflow/estados", async (UbFormacionContext context) =>
+{
+    var estados = await context.EstadosActividad
+        .AsNoTracking()
+        .Where(e => e.Activo)
+        .OrderBy(e => e.Orden)
+        .Select(e => new { e.Id, e.Codigo, e.Nombre, e.Color, e.Orden })
+        .ToListAsync();
+    return Results.Ok(estados);
+}).RequireAuthorization();
+
+// Workflow: transiciones (opcionalmente filtradas por origen y por rol)
+app.MapGet("/api/workflow/transiciones", async (string? origen, string? rol, UbFormacionContext context, HttpContext http) =>
+{
+    var userRol = string.IsNullOrWhiteSpace(rol) ? (http.User.FindFirst("rol")?.Value ?? string.Empty) : rol!;
+
+    var q = context.TransicionesEstado
+        .AsNoTracking()
+        .Where(t => t.Activo);
+
+    if (!string.IsNullOrWhiteSpace(origen))
+        q = q.Where(t => t.EstadoOrigenCodigo == origen);
+
+    if (!string.IsNullOrWhiteSpace(userRol))
+        q = q.Where(t => t.RolPermitido == userRol);
+
+    var trans = await q
+        .OrderBy(t => t.EstadoOrigenCodigo)
+        .ThenBy(t => t.EstadoDestinoCodigo)
+        .Select(t => new { t.EstadoOrigenCodigo, t.EstadoDestinoCodigo, t.RolPermitido, t.Accion })
+        .ToListAsync();
+
+    return Results.Ok(trans);
 }).RequireAuthorization();
 
 // Último cambio de estado de una actividad
@@ -2157,11 +2386,23 @@ app.MapGet("/api/actividades/{id}/transiciones", async (int id, HttpContext http
     
     Console.WriteLine($"🔍 DEBUG: Rol normalizado encontrado: {rolNormalizado.Codigo} (ID: {rolNormalizado.Id})");
     
-    var destinosCod = await context.TransicionesEstado
-        .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.RolPermitidoId == rolNormalizado.Id)
-        .Select(t => t.EstadoDestinoCodigo)
-        .Distinct()
-        .ToListAsync();
+    List<string> destinosCod;
+    if (string.Equals(rolNormalizado.Codigo, "ADMIN", StringComparison.OrdinalIgnoreCase))
+    {
+        // Admin: puede ir a cualquier estado distinto del actual
+        destinosCod = await context.EstadosActividad
+            .Where(e => e.Activo && e.Codigo != fromCodigo)
+            .Select(e => e.Codigo)
+            .ToListAsync();
+    }
+    else
+    {
+        destinosCod = await context.TransicionesEstado
+            .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.RolPermitidoId == rolNormalizado.Id)
+            .Select(t => t.EstadoDestinoCodigo)
+            .Distinct()
+            .ToListAsync();
+    }
     
     Console.WriteLine($"🔍 DEBUG: Transiciones encontradas: {string.Join(", ", destinosCod)}");
     
@@ -2224,6 +2465,11 @@ static string NormalizeRole(string? rol)
 
 static async Task<bool> IsAllowedDb(UbFormacionContext context, string fromCodigo, string toCodigo, string userRole)
 {
+    // Admin tiene permiso para todas las transiciones
+    if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase) || string.Equals(userRole, "ADMIN", StringComparison.OrdinalIgnoreCase))
+    {
+        return true;
+    }
     // Globales (CANCELADA/RECHAZADA) se insertaron para todos los orígenes en la tabla
     return await context.TransicionesEstado
         .AnyAsync(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.EstadoDestinoCodigo == toCodigo && t.RolPermitido == userRole);
@@ -2247,4 +2493,106 @@ static string? DeterminarSiguienteRolImplicado(string estadoCodigo, int? unidadG
     };
 }
 
+// Endpoint público para obtener actividades publicadas por Unidad Gestora
+app.MapGet("/api/actividades/publicas", async (int? unidadGestionId, UbFormacionContext context) =>
+{
+    Console.WriteLine($"🌐 ENDPOINT PÚBLICO: /api/actividades/publicas - unidadGestionId: {unidadGestionId}");
+
+    try
+    {
+        // Obtener el estado "PUBLICADA"
+        var estadoPublicada = await context.EstadosActividad
+            .Where(e => e.Codigo == "PUBLICADA" && e.Activo)
+            .FirstOrDefaultAsync();
+
+        if (estadoPublicada == null)
+        {
+            Console.WriteLine("❌ No se encontró el estado PUBLICADA");
+            return Results.Ok(new List<object>());
+        }
+
+        Console.WriteLine($"✅ Estado PUBLICADA encontrado: ID {estadoPublicada.Id}");
+
+        // Query base para actividades publicadas
+        var query = context.Actividades
+            .Where(a => a.EstadoId == estadoPublicada.Id);
+
+        // Filtrar por Unidad Gestora si se especifica
+        if (unidadGestionId.HasValue)
+        {
+            query = query.Where(a => a.UnidadGestionId == unidadGestionId.Value);
+            Console.WriteLine($"🔍 Filtrando por UnidadGestionId: {unidadGestionId.Value}");
+        }
+
+        // Obtener actividades con información relacionada
+        var actividades = await query
+            .Select(a => new
+            {
+                a.Id,
+                a.Titulo,
+                a.Descripcion,
+                a.ProgramaDescripcionES,
+                a.FechaInicio,
+                a.FechaFin,
+                a.HorasTotales,
+                a.ActividadPago,
+                a.LineaEstrategica,
+                a.ObjetivoEstrategico,
+                a.TipoActividad,
+                a.CentroUnidadUBDestinataria,
+                a.FechaCreacion,
+                UnidadGestion = a.UnidadGestion != null ? new
+                {
+                    a.UnidadGestion.Id,
+                    a.UnidadGestion.Nombre
+                } : null
+            })
+            .OrderByDescending(a => a.FechaCreacion)
+            .ToListAsync();
+
+        Console.WriteLine($"📊 Actividades publicadas encontradas: {actividades.Count}");
+        
+        return Results.Ok(actividades);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error en endpoint público: {ex.Message}");
+        return Results.Problem("Error interno del servidor");
+    }
+});
+
+// Fallback al index.html para rutas no-API
+app.MapFallback(async context =>
+{
+    // Ignorar rutas de API
+    if (context.Request.Path.HasValue && context.Request.Path.Value.StartsWith("/api/"))
+    {
+        context.Response.StatusCode = 404;
+        await context.Response.WriteAsync("Not Found");
+        return;
+    }
+    var fallbackFile = Path.Combine(webRootPath, "index.html");
+    if (File.Exists(fallbackFile))
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(fallbackFile);
+    }
+});
+
 app.Run();
+
+// ==========================
+// Clases para parámetros de endpoints
+// ==========================
+public class PublicActividadesQuery
+{
+    public int? UnidadGestionId { get; set; }
+    public string? Search { get; set; }
+    public DateTime? FechaInicio { get; set; }
+    public DateTime? FechaFin { get; set; }
+    public string? TipoActividad { get; set; }
+    public bool? CursoGratuito { get; set; }
+}
+
+
+

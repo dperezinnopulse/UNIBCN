@@ -12,11 +12,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("WebServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38870f7b33d4c3ef148e729de989bd2b2ca3d36d")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.4.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.4.0+efa67023d4aac050af22f614c39b972474d1d6b9")]
 [assembly: System.Reflection.AssemblyProductAttribute("WebServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WebServer")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.4.0.0")]
 
 // Generado por la clase WriteCodeFragment de MSBuild.
 

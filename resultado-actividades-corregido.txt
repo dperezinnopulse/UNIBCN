@@ -1,0 +1,13 @@
+Id          Codigo                         Nombre                                            
+----------- ------------------------------ --------------------------------------------------
+         19 PUBLICADA                      Publicada                                         
+
+(1 filas afectadas)
+
+(2 filas afectadas)
+
+(2 filas afectadas)
+
+(2 filas afectadas)
+Mensaje 208, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 85
+El nombre de objeto 'UnidadGestion' no es válido.

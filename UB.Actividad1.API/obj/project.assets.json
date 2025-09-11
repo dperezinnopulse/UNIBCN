@@ -4916,7 +4916,7 @@
     "C:\\Users\\USER\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.0.0",
+    "version": "1.5.0",
     "restore": {
       "projectUniqueName": "C:\\DEV\\UNI BCN\\UB.Actividad1.API\\UB.Actividad1.API.csproj",
       "projectName": "UB.Actividad1.API",
@@ -5002,7 +5002,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.413/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.414/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

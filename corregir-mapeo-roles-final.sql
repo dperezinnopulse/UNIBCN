@@ -51,3 +51,4 @@ WHERE t.Activo = 1 AND t.EstadoOrigenCodigo = 'BOR' AND rn.Codigo = 'COORD_TECNI
 ORDER BY t.EstadoDestinoCodigo
 
 PRINT '=== CORRECCIÓN COMPLETADA ==='
+

@@ -1,7 +1,14 @@
 // UB Actividad 1 - Scripts de Integración Frontend-Backend
 // Versión: scripts.js?v=1.0.21
 // Configuración de la API
-const API_BASE_URL = (function(){ try{ const p=location.protocol, h=location.hostname; return `${p}//${h}:5001`; } catch{ return 'http://localhost:5001'; } })();
+// Usar same-origin para app integrada (y compatible con proxy del WebServer)
+const API_BASE_URL = (function(){
+  try {
+    return window.location.origin;
+  } catch {
+    return 'http://localhost:5001';
+  }
+})();
 
 // Clase principal para manejar las operaciones de la API
 class UBActividadAPI {
@@ -604,19 +611,40 @@ async function guardarActividad() {
     
     try {
         // Recopilar datos del formulario - Formato PascalCase para CreateActividadDto
+        const ugRaw = (document.getElementById('actividadUnidadGestion')?.value || '').toString().toUpperCase();
+        const ugMap = { 'IDP': 1, 'CRAI': 2, 'SAE': 3 };
         const formData = {
-            // Campos básicos requeridos por el backend (PascalCase)
-            Titulo: limpiarCaracteresEspeciales(document.getElementById('actividadTitulo')?.value) || '',
-            Descripcion: limpiarCaracteresEspeciales(document.getElementById('actividadDescripcion')?.value) || '',
-            FechaInicio: document.getElementById('actividadFechaInicio')?.value ? new Date(document.getElementById('actividadFechaInicio').value).toISOString() : null,
-            FechaFin: document.getElementById('actividadFechaFin')?.value ? new Date(document.getElementById('actividadFechaFin').value).toISOString() : null,
-            Lugar: document.getElementById('actividadLugar')?.value || '',
+            // Básicos
             Codigo: document.getElementById('actividadCodigo')?.value || '',
+            Titulo: limpiarCaracteresEspeciales(document.getElementById('actividadTitulo')?.value) || '',
+            Descripcion: limpiarCaracteresEspeciales(document.getElementById('descripcion')?.value) || '',
             AnioAcademico: document.getElementById('actividadAnioAcademico')?.value || '',
-            UnidadGestionId: parseInt(document.getElementById('actividadUnidadGestion')?.value) || 1,
-            
-            // Campos adicionales que el backend puede manejar (PascalCase)
+            UnidadGestionId: ugMap[ugRaw] || null,
+
+            // Información general
             TipoActividad: limpiarCaracteresEspeciales(document.getElementById('tipoActividad')?.value) || '',
+            LineaEstrategica: document.getElementById('lineaEstrategica')?.value || '',
+            ObjetivoEstrategico: document.getElementById('objetivoEstrategico')?.value || '',
+            CodigoRelacionado: document.getElementById('codigoRelacionado')?.value || '',
+            FechaActividad: document.getElementById('fechaActividad')?.value ? new Date(document.getElementById('fechaActividad').value).toISOString() : null,
+            MotivoCierre: document.getElementById('motivoCierre')?.value || '',
+            PersonaSolicitante: document.getElementById('personaSolicitante')?.value || '',
+            Coordinador: document.getElementById('coordinador')?.value || '',
+            JefeUnidadGestora: document.getElementById('jefeUnidadGestora')?.value || '',
+            GestorActividad: document.getElementById('gestorActividad')?.value || '',
+            FacultadDestinataria: document.getElementById('facultadDestinataria')?.value || '',
+            DepartamentoDestinatario: document.getElementById('departamentoDestinatario')?.value || '',
+            CentroUnidadUBDestinataria: document.getElementById('centroUnidadUBDestinataria')?.value || '',
+            OtrosCentrosInstituciones: document.getElementById('otrosCentrosInstituciones')?.value || '',
+            PlazasTotales: parseInt(document.getElementById('plazasTotales')?.value) || null,
+            HorasTotales: parseFloat(document.getElementById('horasTotales')?.value) || null,
+            CentroTrabajoRequerido: document.getElementById('centroTrabajoRequerido')?.value || '',
+            ModalidadGestion: document.getElementById('modalidadGestion')?.value || '',
+            FechaInicioImparticion: document.getElementById('fechaInicioImparticion')?.value ? new Date(document.getElementById('fechaInicioImparticion').value).toISOString() : null,
+            FechaFinImparticion: document.getElementById('fechaFinImparticion')?.value ? new Date(document.getElementById('fechaFinImparticion').value).toISOString() : null,
+            CondicionesEconomicas: document.getElementById('condicionesEconomicas')?.value || '',
+
+            // Campos UG específicos
             CoordinadorCentreUnitat: limpiarCaracteresEspeciales(document.getElementById('coordinadorCentreUnitat')?.value) || '',
             CentreTreballeAlumne: limpiarCaracteresEspeciales(document.getElementById('centreTreballeAlumne')?.value) || '',
             CreditosTotalesCRAI: parseFloat(document.getElementById('creditosTotalesCRAI')?.value) || null,
@@ -626,6 +654,8 @@ async function guardarActividad() {
             TipusEstudiSAE: limpiarCaracteresEspeciales(document.getElementById('tipusEstudiSAE')?.value) || '',
             CategoriaSAE: limpiarCaracteresEspeciales(document.getElementById('categoriaSAE')?.value) || '',
             CompetenciesSAE: limpiarCaracteresEspeciales(document.getElementById('competenciesSAE')?.value) || '',
+
+            // Inscripción
             InscripcionInicio: document.getElementById('insc_inicio')?.value ? new Date(document.getElementById('insc_inicio').value).toISOString() : null,
             InscripcionFin: document.getElementById('insc_fin')?.value ? new Date(document.getElementById('insc_fin').value).toISOString() : null,
             InscripcionPlazas: parseInt(document.getElementById('insc_plazas')?.value) || null,
@@ -634,6 +664,8 @@ async function guardarActividad() {
             InscripcionRequisitosES: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_es')?.value) || '',
             InscripcionRequisitosCA: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_ca')?.value) || '',
             InscripcionRequisitosEN: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_en')?.value) || '',
+
+            // Programa
             ProgramaDescripcionES: limpiarCaracteresEspeciales(document.getElementById('programa_descripcion_es')?.value) || '',
             ProgramaDescripcionCA: limpiarCaracteresEspeciales(document.getElementById('programa_descripcion_ca')?.value) || '',
             ProgramaDescripcionEN: limpiarCaracteresEspeciales(document.getElementById('programa_descripcion_en')?.value) || '',
@@ -665,6 +697,32 @@ async function guardarActividad() {
             resultado = await api.createActividad(formData);
             mostrarMensajeExito('¡Actividad creada correctamente!');
             
+            // Encadenar guardado de colecciones relacionadas (si existen)
+            try {
+                const newId = resultado.id || resultado.Id;
+                const subacts = obtenerSubactividadesFormulario();
+                const parts = obtenerParticipantesFormulario();
+                const cols = obtenerEntidadesFormulario();
+                const imps = obtenerImportesFormulario();
+                const hasRelated = (subacts && subacts.length) || (parts && parts.length) || (cols && cols.length) || (imps && imps.length);
+                if (hasRelated) {
+                    const payloadUpdate = {
+                        Titulo: formData.Titulo,
+                        Subactividades: subacts,
+                        Participantes: parts,
+                        Colaboradoras: cols,
+                        Importes: imps
+                    };
+                    console.log('🔗 DEBUG: Encadenando PUT con colecciones relacionadas:', payloadUpdate);
+                    await api.updateActividad(newId, payloadUpdate);
+                    console.log('✅ DEBUG: Colecciones relacionadas guardadas');
+                } else {
+                    console.log('ℹ️ DEBUG: No hay colecciones relacionadas que guardar');
+                }
+            } catch (e) {
+                console.error('⚠️ DEBUG: Error guardando colecciones relacionadas:', e);
+            }
+            
             // Redirigir a la página de edición con el ID de la actividad
             setTimeout(() => {
                 window.location.href = `editar-actividad.html?id=${resultado.id}`;
@@ -683,6 +741,76 @@ async function guardarActividad() {
         mostrarMensajeError(`Error guardando actividad: ${error.message}`);
         throw error;
     }
+}
+
+// Helpers: serializar colecciones del formulario para guardado encadenado
+function obtenerParticipantesFormulario() {
+    const cont = document.getElementById('participantesContainer');
+    if (!cont) return [];
+    const participantes = [];
+    const nombreInputs = cont.querySelectorAll('input[id$="_nombre"]');
+    nombreInputs.forEach(input => {
+        const baseId = input.id.replace(/_nombre$/, '');
+        const nombre = (input.value || '').trim();
+        const rol = (document.getElementById(baseId + '_rol')?.value || '').trim();
+        const email = (document.getElementById(baseId + '_email')?.value || '').trim();
+        if (nombre) {
+            participantes.push({ Nombre: nombre, Rol: rol || null, Email: email || null });
+        }
+    });
+    return participantes;
+}
+
+function obtenerSubactividadesFormulario() {
+    const cont = document.getElementById('subactividadesContainer');
+    if (!cont) return [];
+    const subacts = [];
+    const tituloInputs = cont.querySelectorAll('input[id^="subactividad_"][id$="_titulo"]');
+    tituloInputs.forEach(input => {
+        const baseId = input.id.replace(/_titulo$/, '');
+        const titulo = (input.value || '').trim();
+        const modalidad = (document.getElementById(baseId + '_modalidad')?.value || '').trim();
+        const docente = (document.getElementById(baseId + '_docente')?.value || '').trim();
+        const descripcion = (document.getElementById(baseId + '_descripcion')?.value || '').trim();
+        if (titulo) {
+            subacts.push({ Titulo: titulo, Modalidad: modalidad || null, Docente: docente || null, Descripcion: descripcion || null });
+        }
+    });
+    return subacts;
+}
+
+function obtenerEntidadesFormulario() {
+    const nombre = (document.getElementById('org_principal')?.value || '').trim();
+    const nif = (document.getElementById('org_nif')?.value || '').trim();
+    const web = (document.getElementById('org_web')?.value || '').trim();
+    const contacto = (document.getElementById('org_contacto')?.value || '').trim();
+    const email = (document.getElementById('org_email')?.value || '').trim();
+    const tel = (document.getElementById('org_tel')?.value || '').trim();
+    if (!nombre && !nif && !web && !contacto && !email && !tel) return [];
+    return [{ Nombre: nombre || 'Entidad', NifCif: nif || null, Web: web || null, PersonaContacto: contacto || null, Email: email || null, Telefono: tel || null }];
+}
+
+function obtenerImportesFormulario() {
+    const pago = !!document.getElementById('actividadPago')?.checked;
+    const base = document.getElementById('imp_base')?.value;
+    const tipo = document.getElementById('imp_tipo')?.value;
+    const pct = document.getElementById('imp_descuento_pct')?.value;
+    const codigo = document.getElementById('imp_codigo')?.value;
+    const condES = document.getElementById('imp_condiciones_es')?.value;
+    const condCA = document.getElementById('imp_condiciones_ca')?.value;
+    const condEN = document.getElementById('imp_condiciones_en')?.value;
+    const anyValue = base || tipo || pct || codigo || condES || condCA || condEN;
+    if (!pago && !anyValue) return [];
+    const importe = {
+        ImporteBase: base ? parseFloat(base) : null,
+        TipoImpuesto: (tipo || '').trim() || null,
+        PorcentajeDescuento: pct ? parseFloat(pct) : null,
+        CodigoPromocional: (codigo || '').trim() || null,
+        CondicionesES: (condES || '').trim() || null,
+        CondicionesCA: (condCA || '').trim() || null,
+        CondicionesEN: (condEN || '').trim() || null
+    };
+    return [importe];
 }
 
 // Función para cargar actividad en el formulario

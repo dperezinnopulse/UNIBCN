@@ -11,3 +11,4 @@ public class RolNormalizado
     // Navigation properties
     public virtual ICollection<MapeoRol> MapeosRoles { get; set; } = new List<MapeoRol>();
 }
+

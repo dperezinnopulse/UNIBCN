@@ -277,12 +277,24 @@
     // Cargar dominios para filtros
     async function cargarDominios() {
       try {
-        // Cargar estados
-        const respEstados = await fetch(`${API_BASE_URL}/estados`, { 
-          headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-        });
-        if (respEstados.ok) {
-          const estados = await respEstados.json();
+        // Cargar estados (workflow preferente)
+        let estados = [];
+        try {
+          const respEstadosWF = await fetch(`${API_BASE_URL}/workflow/estados`, { 
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+          });
+          if (respEstadosWF.ok) {
+            estados = await respEstadosWF.json();
+          }
+        } catch {}
+        if (!Array.isArray(estados) || !estados.length) {
+          const respEstados = await fetch(`${API_BASE_URL}/estados`, { 
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+          });
+          if (respEstados.ok) estados = await respEstados.json();
+        }
+        if (Array.isArray(estados) && estados.length) {
+          window.__workflowEstados = estados;
           const selectEstado = document.getElementById('filtroEstado');
           estados.forEach(estado => {
             const option = document.createElement('option');
@@ -355,15 +367,30 @@
             'Authorization': `Bearer ${Auth.getToken()}`
           } 
         });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (!resp.ok) {
+          let detailMsg = '';
+          try {
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const errJson = await resp.json();
+              detailMsg = errJson.detail || errJson.title || JSON.stringify(errJson);
+            } else {
+              detailMsg = await resp.text();
+            }
+          } catch (_) {
+            // Ignorar errores al parsear el cuerpo
+          }
+          console.error('❌ Detalle API /actividades:', detailMsg || `(sin cuerpo, status ${resp.status})`);
+          throw new Error(`HTTP ${resp.status}${detailMsg ? ` - ${detailMsg}` : ''}`);
+        }
         const data = await resp.json();
         actividades = Array.isArray(data) ? data : (data.items || []);
         totalPaginas = Array.isArray(data) ? 1 : (data.totalPages || 1);
         renderActividades();
         renderPaginacion();
       } catch (e) {
-        renderError('Error cargando actividades');
-        console.error(e);
+        renderError(e?.message || 'Error cargando actividades');
+        console.error('❌ Error cargando actividades:', e);
       }
     }
 
@@ -472,14 +499,35 @@
       }
     }
 
-    function getEstadoBadgeClass(estadoId) {
-      switch (estadoId) {
-        case 6: return 'bg-secondary'; // Borrador
-        case 7: return 'bg-warning text-dark'; // Enviada
-        case 8: return 'bg-danger'; // Subsanar
-        case 9: return 'bg-success'; // Aceptada
-        default: return 'bg-secondary';
-      }
+    const ESTADO_BADGE = {
+      6: 'bg-secondary',            // Borrador
+      7: 'bg-warning text-dark',    // Enviada
+      8: 'bg-danger',               // Subsanar
+      9: 'bg-success',              // Aceptada
+      19: 'bg-primary'              // Publicada
+    };
+
+    function getEstadoColorByNombre(nombre) {
+      try {
+        const arr = Array.isArray(window.__workflowEstados) ? window.__workflowEstados : [];
+        const n = (nombre || '').trim().toLowerCase();
+        const found = arr.find(e => (e.nombre || '').trim().toLowerCase() === n);
+        return found?.color || '#6c757d';
+      } catch { return '#6c757d'; }
+    }
+
+    function getTipoIconClass(tipo) {
+      const n = (tipo || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      if (n.includes('curso')) return 'bi-book';
+      if (n.includes('taller')) return 'bi-gear';
+      if (n.includes('seminario')) return 'bi-easel';
+      if (n.includes('jornada')) return 'bi-people';
+      if (n.includes('confer') || n.includes('charla')) return 'bi-mic';
+      if (n.includes('webin') || n.includes('online')) return 'bi-camera-video';
+      if (n.includes('presencial')) return 'bi-geo-alt';
+      if (n.includes('mixto') || n.includes('hibrid')) return 'bi-layers';
+      if (n.includes('certif') || n.includes('acredit')) return 'bi-award';
+      return 'bi-tag';
     }
 
     function renderLoading() {
@@ -508,18 +556,13 @@
           <div class="proposal-content">
             <div class="fw-semibold">#${a.id} · ${escapeHtml(a.titulo || 'Sin título')}</div>
             <div class="small text-muted">
-              ${a.fechaInicio ? `Inicio: ${new Date(a.fechaInicio).toLocaleDateString()}` : 'Sin fecha'}
-              ${a.fechaFin ? ` · Fin: ${new Date(a.fechaFin).toLocaleDateString()}` : ''}
+              <i class="bi ${getTipoIconClass(a.tipoActividad)}"></i> ${escapeHtml(a.tipoActividad || 'Sin tipo')}
             </div>
-            <div class="small text-muted">
-              <i class="bi bi-clock"></i> Modificado: ${a.fechaModificacion ? new Date(a.fechaModificacion).toLocaleDateString() : 'N/A'}
-              ${a.fechaCreacion ? ` · Creado: ${new Date(a.fechaCreacion).toLocaleDateString()}` : ''}
-            </div>
+            <div class="text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(a.descripcion || '')}</div>
           </div>
           <div class="proposal-meta d-flex align-items-center gap-2">
-            <span class="badge ${getEstadoBadgeClass(a.estadoId)}">${a.estado?.nombre || 'Estado'}</span>
+            <span class="badge" style="background-color: ${getEstadoColorByNombre(a.estado?.nombre)};">${a.estado?.nombre || 'Estado'}</span>
             <span class="badge bg-info">${a.unidadGestion?.nombre || 'Unidad'}</span>
-            ${a.tipoActividad ? `<span class="badge bg-secondary">${a.tipoActividad}</span>` : ''}
           </div>
         </a>
       `).join('');

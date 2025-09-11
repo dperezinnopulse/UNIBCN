@@ -94,3 +94,4 @@ AND NOT EXISTS (SELECT 1 FROM Usuarios u WHERE u.Rol = mr.RolOriginal AND u.Acti
 ORDER BY mr.RolOriginal
 
 PRINT '=== VERIFICACIÓN COMPLETADA ==='
+

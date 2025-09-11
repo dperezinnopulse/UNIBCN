@@ -187,26 +187,47 @@
         currentUserUG = getUserUnidadGestora();
         const user = (typeof Auth !== 'undefined') ? Auth.getUser() : {};
         const userRole = user?.rol;
+        const isAdmin = (userRole ?? '').toString().toUpperCase() === 'ADMIN';
         
         if (!currentUserUG) {
             console.warn('⚠️ No se pudo determinar la unidad gestora del usuario');
-            return;
+            if (isAdmin) {
+                // Admin: mostrar todo siempre
+                showAllUGFields();
+                console.log('👑 Admin sin UG detectada: mostrando todos los campos de UG');
+                return;
+            } else {
+                // Fallback: usar selección actual del desplegable si existe
+                const ugCodeFromSelect = getUGCodeFromSelect();
+                if (ugCodeFromSelect) {
+                    showUGSpecificFields(ugCodeFromSelect);
+                    applyUGStyles(ugCodeFromSelect);
+                    bindUGSelect();
+                    console.log(`✅ Campos inicializados por selección de UG: ${ugCodeFromSelect}`);
+                    return;
+                }
+                // En cualquier caso, enlazar el change para cuando el usuario seleccione una UG
+                bindUGSelect();
+                return;
+            }
         }
 
         console.log(`👤 Usuario pertenece a: ${currentUserUG} (Rol: ${userRole})`);
 
-        // Aplicar funcionalidades
-        showUGSpecificFields(currentUserUG);
-        applyUGStyles(currentUserUG);
-        
-        // Solo preseleccionar y bloquear para usuarios no-Admin
-        if (userRole !== 'Admin') {
+        if (isAdmin) {
+            // Admin: ver todos los campos de todas las UG simultáneamente
+            showAllUGFields();
+            forceShowUGFields('SAE');
+            console.log('👑 Usuario Admin: mostrando todos los campos de UG (sin ocultar por selección)');
+        } else {
+            // No-Admin: mostrar solo su UG, aplicar estilos y bloquear selección
+            showUGSpecificFields(currentUserUG);
+            applyUGStyles(currentUserUG);
             console.log(`🔒 Usuario no-Admin: bloqueando unidad gestora a ${currentUserUG}`);
             preselectUserUG(currentUserUG);
-        } else {
-            console.log(`👑 Usuario Admin: permitiendo selección libre de unidad gestora`);
+            // Enlazar cambios por si varía (ej. cambio de sesión)
+            bindUGSelect();
         }
-
         console.log('✅ Campos específicos por unidad gestora inicializados');
     }
 
@@ -228,6 +249,62 @@
     window.getCurrentUserUG = function() {
         return currentUserUG;
     };
+
+    function getUGCodeFromSelect() {
+        const ugSelect = document.getElementById('actividadUnidadGestion');
+        if (!ugSelect) { return null; }
+        const val = ugSelect.value;
+        if (!val) { return null; }
+        // Si es un id numérico mapeable
+        if (UG_ID_TO_CODE[val] || UG_ID_TO_CODE[parseInt(val)]) {
+            return UG_ID_TO_CODE[val] || UG_ID_TO_CODE[parseInt(val)];
+        }
+        // Si ya es código
+        const txt = (ugSelect.options[ugSelect.selectedIndex]?.text || '').toUpperCase();
+        if (['IDP','CRAI','SAE'].some(c => txt.includes(c))) {
+            return ['IDP','CRAI','SAE'].find(c => txt.includes(c));
+        }
+        return null;
+    }
+
+    function showAllUGFields() {
+        const allUGFields = document.querySelectorAll('[data-ug]');
+        allUGFields.forEach(field => {
+            field.style.display = 'block';
+            // Reset estilos específicos si se hubieran aplicado
+            field.style.backgroundColor = '';
+            field.style.border = '';
+            field.style.borderLeft = '';
+            field.classList.remove('d-none');
+        });
+    }
+
+    function forceShowUGFields(code) {
+        const targets = document.querySelectorAll(`[data-ug="${code}"]`);
+        targets.forEach(t => { t.style.display = 'block'; t.classList.remove('d-none'); });
+        // Asegurar campos concretos de SAE
+        ['tipusEstudiSAE','categoriaSAE','competenciesSAE'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                let p = el.closest('[data-ug]');
+                if (p) { p.style.display = 'block'; p.classList.remove('d-none'); }
+            }
+        });
+    }
+
+    function bindUGSelect() {
+        const ugSelect = document.getElementById('actividadUnidadGestion');
+        if (!ugSelect) { return; }
+        if (ugSelect.__ugBound) { return; }
+        ugSelect.addEventListener('change', () => {
+            const code = getUGCodeFromSelect();
+            if (code) {
+                showUGSpecificFields(code);
+                applyUGStyles(code);
+            }
+        });
+        ugSelect.__ugBound = true;
+    }
 
     // Inicializar cuando el DOM esté listo
     if (document.readyState === 'loading') {

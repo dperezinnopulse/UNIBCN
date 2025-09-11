@@ -20,7 +20,12 @@
     .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
   </style>
 </head>
-<body>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
   <header>
     <div class="brand">
       <img src="/img/logo_ub.png" alt="UB"/>
@@ -79,6 +84,7 @@
       </figure>
     </section>
   </main>
+  </div>
   <div class="lightbox" id="lb">
     <img alt="Ampliación"/>
     <div class="hint">Click o ESC para cerrar</div>

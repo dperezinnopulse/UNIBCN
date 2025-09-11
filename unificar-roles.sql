@@ -103,3 +103,4 @@ WHERE mr.Activo = 1
 ORDER BY mr.RolOriginal
 
 PRINT '=== UNIFICACIÓN COMPLETADA ==='
+

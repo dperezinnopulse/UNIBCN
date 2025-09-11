@@ -167,3 +167,5 @@ C:\DEV\UNI BCN\UB.Actividad1.API\obj\Release\net8.0\refint\UB.Actividad1.API.dll
 C:\DEV\UNI BCN\UB.Actividad1.API\obj\Release\net8.0\UB.Actividad1.API.pdb
 C:\DEV\UNI BCN\UB.Actividad1.API\obj\Release\net8.0\UB.Actividad1.API.genruntimeconfig.cache
 C:\DEV\UNI BCN\UB.Actividad1.API\obj\Release\net8.0\ref\UB.Actividad1.API.dll
+C:\DEV\UNI BCN\UB.Actividad1.API\bin\Release\net8.0\BCrypt.Net-Next.dll
+C:\DEV\UNI BCN\UB.Actividad1.API\bin\Release\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

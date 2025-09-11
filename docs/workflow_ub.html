@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Workflow UB – Especificación para Cursor (roles, estados, transiciones, restricciones)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;line-height:1.4;margin:24px;color:#0f172a}
+    h1,h2,h3{color:#0b1220}
+    h1{font-size:1.8rem;margin:.2rem 0 1rem}
+    h2{font-size:1.3rem;margin:1.2rem 0 .6rem}
+    h3{font-size:1.1rem;margin:1rem 0 .4rem}
+    p{margin:.4rem 0}
+    ul{margin:.2rem 0 .6rem 1.2rem}
+    code, .pill{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:0 .35rem}
+    .note{background:#f8fafc;border-left:4px solid #0ea5e9;padding:.7rem .9rem;margin:.9rem 0;border-radius:6px}
+    .warn{background:#fff7ed;border-left:4px solid #f97316}
+    .ok{background:#f0fdf4;border-left:4px solid #22c55e}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.7rem}
+    .card{border:1px solid #e2e8f0;border-radius:10px;padding:.9rem;background:#fff}
+    .small{font-size:.95rem;color:#334155}
+    a{color:#0ea5e9;text-decoration:none}
+    a:hover{text-decoration:underline}
+    hr{border:none;border-top:1px solid #e2e8f0;margin:1rem 0}
+    .toc a{display:block;padding:.15rem 0}
+  </style>
+</head>
+<body>
+
+<h1>Workflow UB – Especificación para Cursor</h1>
+<p class="small">Documento operativo para unificar <span class="pill">roles</span>, <span class="pill">estados</span>, <span class="pill">transiciones</span> y <span class="pill">restricciones</span> en la app de propuestas/actividades.
+Sin ejemplos de programación ni scripts de BBDD.</p>
+
+<div class="card">
+  <h2>Índice</h2>
+  <div class="toc">
+    <a href="#proposito">1. Propósito y alcance</a>
+    <a href="#roles">2. Roles del sistema</a>
+    <a href="#estados">3. Estados del ciclo de vida (únicos)</a>
+    <a href="#transiciones">4. Transiciones permitidas</a>
+    <a href="#permisos">5. Permisos por rol y estado (resumen)</a>
+    <a href="#reapertura">6. Reapertura desde estados finales</a>
+    <a href="#limpieza">7. Limpieza e inicialización de BBDD (desde cero)</a>
+    <a href="#revision-ui">8. Revisión de UI y comparaciones por estado/rol</a>
+    <a href="#pruebas">9. Pruebas mínimas (anti-bucle y de flujo)</a>
+  </div>
+</div>
+
+<hr />
+
+<h2 id="proposito">1) Propósito y alcance</h2>
+<ul>
+  <li>Unificar el flujo con un <strong>único set</strong> de estados para todas las unidades, diferenciando el comportamiento por <strong>rol</strong> (no por unidad).</li>
+  <li>Actualizar la app para reflejar <strong>transiciones claras</strong>, <strong>sin ciclos absurdos</strong>, y con devoluciones controladas.</li>
+  <li>Incluir capacidad de <strong>reabrir</strong> propuestas <span class="pill">Cancelada</span> o <span class="pill">Rechazada</span> a <span class="pill">Borrador</span> bajo condiciones.</li>
+</ul>
+
+<h2 id="roles">2) Roles del sistema</h2>
+<ul>
+  <li><strong>Docente/Dinamizador</strong>: crea, edita y envía propuestas; responde devoluciones.</li>
+  <li><strong>Coordinador/Técnico de Formación</strong>: puede proponer; completa definición académico-docente, subactividades y logística.</li>
+  <li><strong>Coordinador de Formación</strong>: primer validador; aprueba o devuelve con comentarios.</li>
+  <li><strong>Responsable de Unidad</strong>: validador final previo a definición; aprueba o devuelve con motivo.</li>
+  <li><strong>Soporte Administrativo</strong>: revisión administrativa y publicación; puede devolver a definición.</li>
+  <li><strong>Administrador</strong> (opcional): poderes globales (cancelar, rechazar, reabrir; mantenimiento del workflow).</li>
+</ul>
+
+<h2 id="estados">3) Estados del ciclo de vida (únicos)</h2>
+<div class="grid">
+  <div class="card"><strong>1. BORRADOR</strong><br/><span class="small">Edición por proponente; no enviado.</span></div>
+  <div class="card"><strong>2. ENVIADA</strong><br/><span class="small">Registrada y notificada para revisión inicial.</span></div>
+  <div class="card"><strong>3. EN_REVISIÓN</strong><br/><span class="small">Revisión por Coordinador de Formación.</span></div>
+  <div class="card"><strong>4. VALIDACIÓN_UNIDAD</strong><br/><span class="small">Revisión por Responsable de Unidad.</span></div>
+  <div class="card"><strong>5. DEFINICIÓN</strong><br/><span class="small">Definición académico-docente y subactividades.</span></div>
+  <div class="card"><strong>6. REVISIÓN_ADMINISTRATIVA</strong><br/><span class="small">Control final por Soporte Administrativo.</span></div>
+  <div class="card"><strong>7. PUBLICADA</strong><br/><span class="small">Visible en catálogo.</span></div>
+  <div class="card"><strong>8. CANCELADA</strong><br/><span class="small">Cierre anticipado con motivo.</span></div>
+  <div class="card"><strong>9. RECHAZADA</strong><br/><span class="small">Denegada, con comentario.</span></div>
+</div>
+
+<div class="note ok">
+  <strong>Estados “únicos”</strong>: no existen estados por unidad (CRAI, SAE, etc.). La unidad afecta campos y vistas, no el ciclo de vida.
+</div>
+
+<h2 id="transiciones">4) Transiciones permitidas</h2>
+<ul>
+  <li><span class="pill">BORRADOR → ENVIADA</span> (enviar)</li>
+  <li><span class="pill">ENVIADA → EN_REVISIÓN</span> (entrada a bandeja de revisor)</li>
+  <li><span class="pill">EN_REVISIÓN → VALIDACIÓN_UNIDAD</span> (aprobar)</li>
+  <li><span class="pill">EN_REVISIÓN → BORRADOR</span> (devolver con comentarios)</li>
+  <li><span class="pill">VALIDACIÓN_UNIDAD → DEFINICIÓN</span> (aprobar)</li>
+  <li><span class="pill">VALIDACIÓN_UNIDAD → EN_REVISIÓN</span> (devolver con motivo)</li>
+  <li><span class="pill">DEFINICIÓN → REVISIÓN_ADMINISTRATIVA</span> (enviar a revisión)</li>
+  <li><span class="pill">REVISIÓN_ADMINISTRATIVA → PUBLICADA</span> (publicar)</li>
+  <li><span class="pill">REVISIÓN_ADMINISTRATIVA → DEFINICIÓN</span> (devolver)</li>
+  <li><span class="pill">Cualquier estado → CANCELADA</span> (cancelar, con motivo)</li>
+  <li><span class="pill">Cualquier estado → RECHAZADA</span> (rechazar, con comentarios)</li>
+  <li><span class="pill">CANCELADA → BORRADOR</span> (reabrir; ver reglas)</li>
+  <li><span class="pill">RECHAZADA → BORRADOR</span> (reabrir; ver reglas)</li>
+</ul>
+
+<div class="note">
+  <strong>Retornos permitidos</strong>: <em>EN_REVISIÓN → BORRADOR</em>, <em>VALIDACIÓN_UNIDAD → EN_REVISIÓN</em>, <em>REVISIÓN_ADMINISTRATIVA → DEFINICIÓN</em>, y las <em>reaperturas</em> desde finales a <em>BORRADOR</em>. No hay otros “back loops”.
+</div>
+
+<h2 id="permisos">5) Permisos por rol y estado (resumen)</h2>
+<p class="small">La granularidad de edición se controla por categorías (académico, operativo/publicación, etc.).</p>
+<div class="grid">
+  <div class="card"><strong>BORRADOR</strong><br/><span class="small">Docente/Dinamizador y Coord./Técnico: ver/editar/adjuntar; resto: ver; Admin: todo.</span></div>
+  <div class="card"><strong>ENVIADA</strong><br/><span class="small">Proponente: ver/responder; Coord. Formación: revisar/aprobar/devolver; Admin: todo.</span></div>
+  <div class="card"><strong>EN_REVISIÓN</strong><br/><span class="small">Similar a ENVIADA; solo revisor decide.</span></div>
+  <div class="card"><strong>VALIDACIÓN_UNIDAD</strong><br/><span class="small">Resp. Unidad: aprobar/devolver; demás: ver; Admin: todo.</span></div>
+  <div class="card"><strong>DEFINICIÓN</strong><br/><span class="small">Coord./Técnico edita; demás: ver; Admin: todo.</span></div>
+  <div class="card"><strong>REVISIÓN_ADMINISTRATIVA</strong><br/><span class="small">Soporte Adm. publica/deuelve; demás: ver; Admin: todo.</span></div>
+  <div class="card"><strong>PUBLICADA</strong><br/><span class="small">Soporte Adm. gestiona publicación mínima; demás: ver; Admin: todo.</span></div>
+  <div class="card"><strong>CANCELADA/RECHAZADA</strong><br/><span class="small">Todos: ver; Creador/Admin: reabrir (si procede).</span></div>
+</div>
+
+<h2 id="reapertura">6) Reapertura desde estados finales (reglas)</h2>
+<ul>
+  <li><strong>Quién puede reabrir</strong>: Creador de la propuesta y/o Administrador.</li>
+  <li><strong>Requisitos</strong>: motivo de reapertura; resumen de cambios; registro de usuario/fecha/rol; incremento de <em>versión</em> (v1 → v2…).</li>
+  <li><strong>Limitaciones anti-bucle</strong>: máximo de reaperturas (p. ej., 2); ventana temporal (p. ej., 30 días); bloqueo si no hay diferencias respecto a la versión rechazada/cancelada.</li>
+  <li><strong>Efecto</strong>: pasa a <span class="pill">BORRADOR</span>; se reinician los pendientes; se mantiene el historial íntegro.</li>
+</ul>
+
+<h2 id="limpieza">7) Limpieza e inicialización de BBDD (desde cero)</h2>
+<div class="note warn">
+  <strong>Importante</strong>: realizar <em>backup</em> antes de limpiar. En PRE/DEV se permite reset completo; en PROD, evaluar mapeos/equivalencias si se mantiene histórico.
+</div>
+<ul>
+  <li>Vaciar catálogos: <em>Roles</em>, <em>Estados</em>, <em>Acciones/Transiciones</em>, <em>Permisos por Estado/Rol</em>.</li>
+  <li><strong>Reinsertar</strong> los nuevos <em>Roles</em> y <em>Estados</em> definidos aquí, <strong>reseteando IDs</strong> para que empiecen en <strong>1</strong>.</li>
+  <li>Recrear matriz de <em>Transiciones</em> y <em>Permisos</em> conforme a este documento.</li>
+  <li>Revisar llaves foráneas entre catálogos y tablas de historial para evitar referencias huérfanas.</li>
+</ul>
+
+<h2 id="revision-ui">8) Revisión de UI y comparaciones por estado/rol</h2>
+<ul>
+  <li>Actualizar <strong>botoneras</strong> de acción según estado/rol.</li>
+  <li>Revisar visibilidad/edición por estado/rol en las <strong>fichas</strong>.</li>
+  <li>Actualizar <strong>listados/bandejas</strong>, filtros y contadores por estado.</li>
+  <li><strong>Buscar y reemplazar</strong> todas las comparaciones de estado/rol: sustituir nombres antiguos por los nuevos códigos de estado y los roles vigentes.</li>
+  <li>Confirmar que aparecen las acciones de <strong>devolver</strong> (con comentario), <strong>publicar</strong>, <strong>cancelar</strong>, <strong>rechazar</strong> y <strong>reabrir</strong> donde corresponda.</li>
+  <li>Verificar <strong>notificaciones</strong> y <strong>historial</strong> en cada transición.</li>
+</ul>
+
+<h2 id="pruebas">9) Pruebas mínimas</h2>
+<ul>
+  <li>Rechazo en <span class="pill">EN_REVISIÓN</span> → <span class="pill">BORRADOR</span>; no permite reenviar sin cambios.</li>
+  <li>Devolución en <span class="pill">VALIDACIÓN_UNIDAD</span> → <span class="pill">EN_REVISIÓN</span>; exige motivo.</li>
+  <li>Devolución en <span class="pill">REVISIÓN_ADMINISTRATIVA</span> → <span class="pill">DEFINICIÓN</span>; exige motivo.</li>
+  <li>Reapertura <span class="pill">RECHAZADA → BORRADOR</span>; crea versión v+1; motivo y cambios obligatorios.</li>
+  <li>Reapertura <span class="pill">CANCELADA → BORRADOR</span>; respetar límites anti-bucle.</li>
+  <li>Intento de <span class="pill">PUBLICADA → DEFINICIÓN</span> directo: denegado (salvo proceso extraordinario de despublicación, si se contempla).</li>
+  <li>Notificaciones emitidas al destinatario correcto en cada transición.</li>
+</ul>
+
+<hr />
+<p class="small">Versión del documento: 1.0 • Responsable: Equipo UB • Ámbito: Propuestas/Actividades (Fase de preparación, definición y publicación)</p>
+
+</body>
+</html>

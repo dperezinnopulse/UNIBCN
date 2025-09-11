@@ -102,3 +102,4 @@ WHERE t.Activo = 1 AND t.EstadoOrigenCodigo = 'ENV'
 ORDER BY rn.Codigo, t.EstadoDestinoCodigo
 
 PRINT '=== CORRECCIÓN COMPLETADA ==='
+

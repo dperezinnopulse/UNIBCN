@@ -10,3 +10,4 @@ public class MapeoRol
     // Navigation properties
     public virtual RolNormalizado RolNormalizado { get; set; } = null!;
 }
+

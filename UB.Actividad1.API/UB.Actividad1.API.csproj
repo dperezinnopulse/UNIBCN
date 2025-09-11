@@ -23,4 +23,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
+  <!-- Incluir frontend en wwwroot al publicar -->
+  <ItemGroup>
+    <None Include="..\Frontend\**\*" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest">
+      <Link>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="..\docs\manual-usuario\**\*" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest">
+      <Link>wwwroot\manual\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
 </Project>
