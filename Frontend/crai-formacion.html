@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Centre de Recursos per a l'Aprenentatge i la Investigació - Universidad de Barcelona</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        /* PERSONALIZACIÓN CRAI - Colores corporativos */
+        .header-section {
+            background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); /* Verde CRAI */
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo-ub {
+            height: 60px;
+        }
+        
+        .logo-ug {
+            height: 80px; /* Más grande para CRAI */
+            max-width: 250px;
+            object-fit: contain;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-top: 4px solid #1abc9c; /* Borde CRAI */
+        }
+        
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #16a085; /* Color CRAI */
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #1abc9c; /* Color CRAI */
+            box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
+        }
+        
+        .btn-search {
+            background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); /* Gradiente CRAI */
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);
+            color: white;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .ug-filter {
+            display: none; /* Ocultar filtro UG en páginas específicas */
+        }
+        
+        .activity-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #1abc9c; /* Borde CRAI */
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .activity-title {
+            color: #16a085; /* Color CRAI */
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+        
+        .activity-type-icon {
+            color: #1abc9c; /* Color CRAI */
+            margin-right: 0.5rem;
+        }
+        
+        .activity-ug-logo {
+            height: 40px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+        
+        .activity-description {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .activity-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        .meta-item i {
+            color: #1abc9c; /* Color CRAI */
+            margin-right: 0.5rem;
+            width: 16px;
+        }
+        
+        .activity-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tag {
+            background: #e8f8f5; /* Color CRAI suave */
+            color: #16a085;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .activity-price {
+            background: #1abc9c; /* Color CRAI */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .activity-price.gratuito {
+            background: #d1edff;
+            color: #0c63e4;
+        }
+        
+        .pagination .page-link {
+            color: #16a085; /* Color CRAI */
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #1abc9c; /* Color CRAI */
+            border-color: #1abc9c;
+        }
+        
+        .pagination .page-link:hover {
+            color: #16a085;
+            background-color: #e8f8f5; /* Color CRAI suave */
+        }
+        
+        .help-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1abc9c; /* Color CRAI */
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .help-icon:hover {
+            background: #16a085;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* CRAI ESPECÍFICO - Sección hero personalizada */
+        .crai-hero {
+            background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .crai-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .crai-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* CRAI ESPECÍFICO - Campos adicionales */
+        .crai-specific-filters {
+            background: #e8f8f5;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .crai-specific-filters h5 {
+            color: #16a085;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .resource-card {
+            background: #f0fffe;
+            border: 1px solid #1abc9c;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .resource-card h6 {
+            color: #16a085;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .logo-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .activity-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .activity-tags {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header con logos -->
+    <div class="header-section">
+        <div class="logo-container">
+            <img src="img/logo_ub.png" alt="Universidad de Barcelona" class="logo-ub">
+            <div class="text-center">
+                <h1 class="h3 mb-0">Centre de Recursos per a l'Aprenentatge i la Investigació</h1>
+                <p class="mb-0 opacity-75">Recursos de Aprendizaje e Investigación</p>
+            </div>
+            <img src="img/CRAI.png" alt="Centre de Recursos per a l'Aprenentatge i la Investigació" class="logo-ug">
+        </div>
+    </div>
+
+    <!-- Hero Section CRAI -->
+    <div class="crai-hero">
+        <div class="main-container">
+            <h1><i class="fas fa-book me-3"></i>Recursos para el Aprendizaje</h1>
+            <p>Explora nuestra formación especializada en recursos de aprendizaje, investigación y gestión del conocimiento</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Filtros de búsqueda -->
+        <div class="filters-section">
+            <h4 class="mb-4"><i class="fas fa-filter me-2"></i>Buscar Actividades CRAI</h4>
+            
+            <!-- CRAI - Filtros específicos -->
+            <div class="crai-specific-filters">
+                <h5><i class="fas fa-book-open me-2"></i>Filtros Especializados CRAI</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">Tipo de Recurso</label>
+                            <select class="form-select" id="tipoRecurso">
+                                <option value="">Todos los recursos</option>
+                                <option value="biblioteca">Gestión Bibliotecaria</option>
+                                <option value="investigacion">Metodología de Investigación</option>
+                                <option value="digital">Recursos Digitales</option>
+                                <option value="informacion">Alfabetización Informacional</option>
+                                <option value="datos">Gestión de Datos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">Nivel de Competencia</label>
+                            <select class="form-select" id="nivelCompetencia">
+                                <option value="">Todos los niveles</option>
+                                <option value="basico">Básico</option>
+                                <option value="intermedio">Intermedio</option>
+                                <option value="avanzado">Avanzado</option>
+                                <option value="especializado">Especializado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección de recursos destacados -->
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="resource-card">
+                            <h6><i class="fas fa-search me-1"></i>Búsqueda Avanzada</h6>
+                            <small>Técnicas de búsqueda especializada</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="resource-card">
+                            <h6><i class="fas fa-database me-1"></i>Bases de Datos</h6>
+                            <small>Acceso a recursos académicos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="resource-card">
+                            <h6><i class="fas fa-chart-bar me-1"></i>Análisis Bibliométrico</h6>
+                            <small>Herramientas de medición</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Buscar por nombre o contenido</label>
+                        <input type="text" class="form-control" id="searchText" placeholder="Ej: bibliografía, investigación, bases de datos...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">Tipo de actividad</label>
+                        <select class="form-select" id="tipoActividad">
+                            <option value="">Todos los tipos</option>
+                            <option value="Curso">Curso</option>
+                            <option value="Seminario">Seminario</option>
+                            <option value="Jornada">Jornada</option>
+                            <option value="Conferencia">Conferencia</option>
+                            <option value="Taller">Taller</option>
+                            <option value="Master">Master</option>
+                            <option value="Posgrado">Posgrado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <input type="checkbox" id="cursoGratuito" class="form-check-input me-2">
+                            <span id="gratuito-label">Mostrar todos</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha desde</label>
+                        <input type="date" class="form-control" id="fechaDesde">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha hasta</label>
+                        <input type="date" class="form-control" id="fechaHasta">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <button type="button" class="btn btn-search me-3" onclick="aplicarFiltros()">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                    <button type="button" class="btn btn-clear" onclick="limpiarFiltros()">
+                        <i class="fas fa-eraser me-2"></i>Limpiar filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados -->
+        <div id="results-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">Recursos y Actividades CRAI</h5>
+                    <small class="text-muted" id="results-count">Cargando...</small>
+                </div>
+            </div>
+            
+            <div id="activitiesList">
+                <!-- Las actividades se cargarán aquí -->
+            </div>
+            
+            <!-- Paginación -->
+            <nav aria-label="Paginación de actividades" class="mt-4">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- La paginación se generará aquí -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Icono de ayuda -->
+    <a href="manual-alumnos/index.html" class="help-icon" title="Manual de usuario">
+        <i class="fas fa-question"></i>
+    </a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script de autenticación para monkey patch automático -->
+    <script src="auth.js"></script>
+    
+    <script>
+        // Configuración específica para CRAI
+        const UG_CONFIG = {
+            id: 2,
+            nombre: 'Centre de Recursos per a l\'Aprenentatge i la Investigació',
+            codigo: 'CRAI',
+            logo: 'img/CRAI.png',
+            color: '#1abc9c',
+            colorSecundario: '#16a085',
+            descripcion: 'Recursos de Aprendizaje e Investigación'
+        };
+
+        // Variables globales
+        let allActivities = [];
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = 1;
+
+        // Cargar actividades específicas de CRAI
+        async function cargarActividadesCRAI() {
+            console.log('📚 Cargando actividades específicas de CRAI...');
+            
+            try {
+                // Intentar login automático para obtener datos completos
+                const token = sessionStorage.getItem('ub_token');
+                if (!token) {
+                    try {
+                        const loginResp = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: 'Admin', password: 'Admin' })
+                        });
+                        if (loginResp.ok) {
+                            const loginData = await loginResp.json();
+                            sessionStorage.setItem('ub_token', loginData.token);
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Login automático falló:', e.message);
+                    }
+                }
+
+                // Cargar actividades de CRAI
+                const url = new URL('/api/actividades', window.location.origin);
+                url.searchParams.set('ug', UG_CONFIG.id);
+                url.searchParams.set('pageSize', 100);
+
+                const response = await fetch(url.toString());
+                if (response.ok) {
+                    const data = await response.json();
+                    let actividades = data.items || [];
+                    
+                    // Filtrar solo actividades publicadas
+                    actividades = actividades.filter(act => act.estadoId === 7);
+                    
+                    allActivities = actividades;
+                    console.log(`✅ Actividades CRAI cargadas: ${allActivities.length}`);
+                } else {
+                    console.log('⚠️ Fallback a endpoint público');
+                    const publicUrl = new URL('/api/actividades/buscar', window.location.origin);
+                    publicUrl.searchParams.set('ug', UG_CONFIG.id);
+                    publicUrl.searchParams.set('pageSize', 100);
+                    
+                    const publicResponse = await fetch(publicUrl.toString());
+                    if (publicResponse.ok) {
+                        const publicData = await publicResponse.json();
+                        allActivities = publicData.items || [];
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando actividades CRAI:', error);
+                allActivities = [];
+            }
+
+            return allActivities;
+        }
+
+        // Aplicar filtros locales
+        function aplicarFiltrosLocales() {
+            const searchText = document.getElementById('searchText').value.toLowerCase().trim();
+            const tipoActividad = document.getElementById('tipoActividad').value;
+            const fechaDesde = document.getElementById('fechaDesde').value;
+            const fechaHasta = document.getElementById('fechaHasta').value;
+            const cursoGratuito = document.getElementById('cursoGratuito').checked;
+            const tipoRecurso = document.getElementById('tipoRecurso').value;
+            const nivelCompetencia = document.getElementById('nivelCompetencia').value;
+
+            let filtered = [...allActivities];
+
+            // Filtro de texto
+            if (searchText) {
+                filtered = filtered.filter(act => 
+                    (act.titulo || '').toLowerCase().includes(searchText) ||
+                    (act.descripcion || '').toLowerCase().includes(searchText) ||
+                    (act.codigo || '').toLowerCase().includes(searchText)
+                );
+            }
+
+            // Filtro de tipo
+            if (tipoActividad) {
+                filtered = filtered.filter(act => act.tipoActividad === tipoActividad);
+            }
+
+            // Filtro de fechas
+            if (fechaDesde) {
+                const desde = new Date(fechaDesde);
+                filtered = filtered.filter(act => {
+                    if (!act.fechaInicio) return false;
+                    const fechaAct = new Date(act.fechaInicio);
+                    return fechaAct >= desde;
+                });
+            }
+
+            if (fechaHasta) {
+                const hasta = new Date(fechaHasta);
+                filtered = filtered.filter(act => {
+                    if (!act.fechaInicio) return false;
+                    const fechaAct = new Date(act.fechaInicio);
+                    return fechaAct <= hasta;
+                });
+            }
+
+            // Filtro gratuito
+            if (cursoGratuito) {
+                filtered = filtered.filter(act => act.actividadPago === false);
+            }
+
+            // Filtros específicos CRAI (simulados por ahora)
+            if (tipoRecurso) {
+                filtered = filtered.filter(act => 
+                    (act.lineaEstrategica || '').toLowerCase().includes(tipoRecurso) ||
+                    (act.descripcion || '').toLowerCase().includes(tipoRecurso)
+                );
+            }
+
+            if (nivelCompetencia) {
+                filtered = filtered.filter(act => 
+                    (act.descripcion || '').toLowerCase().includes(nivelCompetencia)
+                );
+            }
+
+            return filtered;
+        }
+
+        // Renderizar actividades
+        function renderActividades(actividades) {
+            const container = document.getElementById('activitiesList');
+            
+            if (!actividades || actividades.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No se encontraron recursos</h5>
+                        <p class="text-muted">Prueba ajustando los filtros de búsqueda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const actividadesHtml = actividades.map(actividad => {
+                const fechaInicio = actividad.fechaInicio ? 
+                    new Date(actividad.fechaInicio).toLocaleDateString('es-ES', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    }) : '';
+
+                const tipoIcon = getTipoIcon(actividad.tipoActividad);
+                const esGratuito = actividad.actividadPago === false;
+                
+                return `
+                    <div class="activity-card" onclick="location.href='detalle-publico.html?id=${actividad.id}'" style="cursor:pointer">
+                        <div class="activity-content">
+                            <div class="d-flex align-items-start justify-content-between mb-2">
+                                <h4 class="activity-title flex-grow-1">
+                                    <i class="${tipoIcon} activity-type-icon"></i>
+                                    ${actividad.titulo || 'Sin título'}
+                                    ${actividad.tipoActividad ? `<span class="text-muted small ms-2">(${actividad.tipoActividad})</span>` : ''}
+                                </h4>
+                                <img src="${UG_CONFIG.logo}" alt="${UG_CONFIG.nombre}" class="activity-ug-logo">
+                            </div>
+                            <div class="activity-description">
+                                ${truncateText(actividad.descripcion || '', 150)}
+                            </div>
+                            <div class="activity-meta">
+                                ${actividad.plazasTotales ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-users"></i>
+                                        <span>${actividad.plazasTotales} plazas</span>
+                                    </div>
+                                ` : ''}
+                                ${actividad.horasTotales ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>${actividad.horasTotales} horas</span>
+                                    </div>
+                                ` : ''}
+                                ${fechaInicio ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>${fechaInicio}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="activity-tags">
+                                ${actividad.lineaEstrategica ? `<span class="tag">${actividad.lineaEstrategica}</span>` : ''}
+                                ${actividad.objetivoEstrategico ? `<span class="tag">${actividad.objetivoEstrategico}</span>` : ''}
+                            </div>
+                            <div class="mt-2">
+                                ${esGratuito ? 
+                                    `<span class="activity-price gratuito"><i class="fas fa-gift me-1"></i>Gratuito</span>` :
+                                    `<span class="activity-price"><i class="fas fa-euro-sign me-1"></i>Consultar precio</span>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = actividadesHtml;
+        }
+
+        // Funciones auxiliares
+        function getTipoIcon(tipo) {
+            const icons = {
+                'Curso': 'fas fa-book',
+                'Seminario': 'fas fa-users',
+                'Jornada': 'fas fa-calendar-day',
+                'Conferencia': 'fas fa-microphone',
+                'Taller': 'fas fa-tools',
+                'Congreso': 'fas fa-globe',
+                'Master': 'fas fa-award',
+                'Posgrado': 'fas fa-certificate'
+            };
+            return icons[tipo] || 'fas fa-bookmark';
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        // Event listeners
+        function aplicarFiltros() {
+            const filtered = aplicarFiltrosLocales();
+            renderActividades(filtered);
+            document.getElementById('results-count').textContent = `${filtered.length} recursos encontrados`;
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchText').value = '';
+            document.getElementById('tipoActividad').value = '';
+            document.getElementById('fechaDesde').value = '';
+            document.getElementById('fechaHasta').value = '';
+            document.getElementById('cursoGratuito').checked = false;
+            document.getElementById('tipoRecurso').value = '';
+            document.getElementById('nivelCompetencia').value = '';
+            document.getElementById('gratuito-label').textContent = 'Mostrar todos';
+            
+            renderActividades(allActivities);
+            document.getElementById('results-count').textContent = `${allActivities.length} recursos encontrados`;
+        }
+
+        // Checkbox gratuito
+        document.getElementById('cursoGratuito').addEventListener('change', function() {
+            const label = document.getElementById('gratuito-label');
+            label.textContent = this.checked ? 'Solo gratuitos' : 'Mostrar todos';
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📚 Inicializando página CRAI...');
+            await cargarActividadesCRAI();
+            renderActividades(allActivities);
+            document.getElementById('results-count').textContent = `${allActivities.length} recursos encontrados`;
+        });
+    </script>
+</body>
+</html>
+
+
+

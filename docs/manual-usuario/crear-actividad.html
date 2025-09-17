@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Crear Actividad</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif; line-height: 1.5; color:#111; margin:0; }
+    header { background:#ffffff; color:#111; padding:18px 24px; border-bottom:1px solid #e5e7eb; }
+    .brand { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .brand img { height:40px; width:auto; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px; }
+    h1, h2, h3 { color:#0b5ed7; margin-top: 1.2em; }
+    .tip { background:#f5f9ff; border-left:4px solid #0d6efd; padding:12px 16px; border-radius:6px; margin:12px 0; }
+    .note { background:#fff8e6; border-left:4px solid #f0ad4e; padding:12px 16px; border-radius:6px; margin:12px 0; }
+    figure { margin: 16px 0; }
+    figure img { max-width: 100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in; }
+    figcaption { font-size: .9rem; color:#555; margin-top:8px; }
+    ol li { margin-bottom: .5rem; }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600; }
+    nav span { color:#666; }
+    .small { font-size: .9rem; color:#666; }
+    .meta { display:none; }
+    .nav-more { margin-top:8px; }
+    .nav-more a { color:#555; font-weight:500; margin-right:12px; }
+    /* Lightbox */
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width: 92vw; max-height: 92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out; }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem; }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
+  <header>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Crear una nueva actividad</h1>
+    <div class="small">Guía paso a paso para iniciar una propuesta, añadir subactividades y participantes.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Objetivo</h2>
+      <p>Dar de alta una nueva actividad formativa de forma correcta, asegurando que los datos mínimos estén completos y que las secciones específicas por Unidad Gestora se gestionen adecuadamente.</p>
+    </section>
+
+    <section>
+      <h2>Antes de empezar</h2>
+      <ul>
+        <li>Inicie sesión con su usuario y contraseña.</li>
+        <li>Asegúrese de tener el <strong>título</strong> de la actividad (obligatorio) y, si es posible, la información básica (fechas, descripción, unidad gestora).</li>
+      </ul>
+      <div class="tip"><strong>Consejo:</strong> Puede guardar la actividad como borrador y completar detalles más tarde.</div>
+    </section>
+
+    <section>
+      <h2>Vista general</h2>
+      <figure data-route="/index.html" data-selector="main">
+        <a href="/manual/assets/crear-index-overview.png" data-lightbox>
+          <img src="/manual/assets/crear-index-overview.png" alt="Vista general del formulario de creación"/>
+        </a>
+        <figcaption>Formulario principal para crear una nueva actividad.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>main</code></div>
+      </figure>
+      <div class="tip"><strong>Cómo llegar:</strong> en el menú lateral pulsa <span style="background:#e7effb;color:#0d6efd;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-plus-square"></i> Crear nuevo</span>. Te llevará a la pantalla de creación.</div>
+      <figure data-route="/historico.html" data-selector="a[href='index.html']">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Menú: Crear nuevo"/>
+        </a>
+        <figcaption>Elemento de menú <em>Crear nuevo</em> resaltado.</figcaption>
+        <div class="meta">Ruta: <code>/historico.html</code> · Selector: <code>a[href='index.html']</code></div>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Paso a paso</h2>
+      <h3>1) Completar los datos principales</h3>
+      <ol>
+        <li>Introduzca el <strong>Título</strong> de la actividad (campo obligatorio).</li>
+        <li>Opcionalmente, indique <em>Código</em> y <em>Año académico</em>.</li>
+        <li>Seleccione la <strong>Unidad Gestora</strong> responsable.</li>
+      </ol>
+      <figure data-route="/index.html" data-selector="#actividadTitulo">
+        <a href="/manual/assets/context/crear-actividad-titulo-context.png" data-lightbox>
+          <img src="/manual/assets/crear-actividad-titulo.png" alt="Campo título de la actividad"/>
+        </a>
+        <figcaption>Campo <em>Título</em> de la actividad.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>#actividadTitulo</code></div>
+      </figure>
+      <figure data-route="/index.html" data-selector="#actividadUnidadGestion">
+        <a href="/manual/assets/context/crear-actividad-ug-context.png" data-lightbox>
+          <img src="/manual/assets/crear-actividad-ug.png" alt="Selector de Unidad Gestora"/>
+        </a>
+        <figcaption>Selector de <em>Unidad Gestora</em>.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>#actividadUnidadGestion</code></div>
+      </figure>
+      <div class="note"><strong>Importante:</strong> El título es obligatorio. Si falta, el sistema no permitirá guardar y mostrará un aviso.</div>
+
+      <h3>2) Información general y temporalidad</h3>
+      <ol>
+        <li>Complete, si dispone de ellos, <em>Descripción</em>, <em>Tipo de actividad</em>, <em>Fechas</em> y otros campos informativos.</li>
+        <li>Puede avanzar con lo mínimo y volver para completar más tarde.</li>
+      </ol>
+
+      <h3>3) Añadir subactividades (opcional)</h3>
+      <p>Las subactividades son bloques o sesiones dentro de la actividad (por ejemplo, módulo 1, módulo 2, etc.). Puede crear tantas como necesite.</p>
+      <ol>
+        <li>Pulse <strong>Añadir Subactividad</strong>.</li>
+        <li>Complete los campos (título, modalidad, docente/s, fechas y horas, etc.).</li>
+        <li>Repita el proceso para añadir más subactividades.</li>
+      </ol>
+      <figure data-route="/index.html" data-selector="text=Añadir Subactividad">
+        <a href="/manual/assets/context/subactividades-boton-add-context.png" data-lightbox>
+          <img src="/manual/assets/subactividades-boton-add.png" alt="Botón Añadir Subactividad"/>
+        </a>
+        <figcaption>Botón para añadir una subactividad.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>text=Añadir Subactividad</code></div>
+      </figure>
+      <figure data-route="/index.html" data-selector="#subactividadesContainer .card">
+        <a href="/manual/assets/context/subactividad-card-context.png" data-lightbox>
+          <img src="/manual/assets/subactividad-card.png" alt="Tarjeta de subactividad"/>
+        </a>
+        <figcaption>Tarjeta de subactividad con sus campos principales.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>#subactividadesContainer .card</code></div>
+      </figure>
+      <div class="tip"><strong>Consejo:</strong> Para actividades largas, estructurar en subactividades facilita la comunicación y el registro.</div>
+
+      <h3>4) Añadir participantes (opcional)</h3>
+      <p>Incorpore ponentes, coordinadores u otros roles necesarios.</p>
+      <ol>
+        <li>Pulse <strong>Añadir Participante</strong>.</li>
+        <li>Complete <em>Nombre</em>, <em>Rol</em> y <em>Email</em>.</li>
+        <li>Repita para añadir todos los participantes.</li>
+      </ol>
+      <figure data-route="/index.html" data-selector="text=Añadir Participante">
+        <a href="/manual/assets/context/participantes-boton-add-context.png" data-lightbox>
+          <img src="/manual/assets/participantes-boton-add.png" alt="Botón Añadir Participante"/>
+        </a>
+        <figcaption>Botón para añadir participantes.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>text=Añadir Participante</code></div>
+      </figure>
+      <figure data-route="/index.html" data-selector="#participantesContainer .row">
+        <a href="/manual/assets/context/participante-row-context.png" data-lightbox>
+          <img src="/manual/assets/participante-row.png" alt="Fila de participante"/>
+        </a>
+        <figcaption>Fila de participante con sus campos.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>#participantesContainer .row</code></div>
+      </figure>
+
+      <h3>5) Secciones específicas por Unidad Gestora</h3>
+      <p>Según la UG, el formulario puede mostrar secciones específicas. Esto permite que cada UG aporte la información relevante a su proceso. Es normal que algunos usuarios vean secciones que otros no.</p>
+      <figure data-route="/index.html" data-selector='[data-ug="IDP"]'>
+        <a href="/manual/assets/context/ug-idp-seccion-context.png" data-lightbox>
+          <img src="/manual/assets/context/ug-idp-seccion-context.png" alt="Sección específica IDP"/>
+        </a>
+        <figcaption>Ejemplo de sección específica para UG IDP (si aplica).</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>[data-ug="IDP"]</code></div>
+      </figure>
+      <figure data-route="/index.html" data-selector='[data-ug="CRAI"]'>
+        <a href="/manual/assets/context/ug-crai-seccion-context.png" data-lightbox>
+          <img src="/manual/assets/context/ug-crai-seccion-context.png" alt="Sección específica CRAI"/>
+        </a>
+        <figcaption>Ejemplo de sección específica para UG CRAI (si aplica).</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>[data-ug="CRAI"]</code></div>
+      </figure>
+      <figure data-route="/index.html" data-selector='[data-ug="SAE"]'>
+        <a href="/manual/assets/context/ug-sae-seccion-context.png" data-lightbox>
+          <img src="/manual/assets/context/ug-sae-seccion-context.png" alt="Sección específica SAE"/>
+        </a>
+        <figcaption>Ejemplo de sección específica para UG SAE (si aplica).</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>[data-ug="SAE"]</code></div>
+      </figure>
+
+      <h3>6) Guardar</h3>
+      <p>Cuando esté conforme con la información, pulse <strong>Guardar</strong>. La actividad se registrará con estado <em>Borrador</em> si es nueva.</p>
+      <figure data-route="/index.html" data-selector="#btnGuardarActividad">
+        <a href="/manual/assets/context/crear-actividad-guardar-context.png" data-lightbox>
+          <img src="/manual/assets/crear-actividad-guardar.png" alt="Botón Guardar actividad"/>
+        </a>
+        <figcaption>Botón <em>Guardar</em> para registrar la actividad.</figcaption>
+        <div class="meta">Ruta: <code>/index.html</code> · Selector: <code>#btnGuardarActividad</code></div>
+      </figure>
+      <div class="note"><strong>Recuerde:</strong> Puede volver más tarde para completar datos adicionales o añadir subactividades/participantes.</div>
+    </section>
+
+    <section>
+      <h2>Preguntas frecuentes</h2>
+      <p><strong>¿Por qué no veo ciertas secciones?</strong><br/>Es posible que esas secciones correspondan a otra Unidad Gestora. La visibilidad se ajusta según su perfil y la UG seleccionada.</p>
+      <p><strong>¿Puedo crear la actividad sin todos los campos?</strong><br/>Sí, con el título es suficiente para un borrador. Puede completar el resto después.</p>
+      <p><strong>¿Qué pasa si olvido guardar?</strong><br/>Los cambios no se registran hasta pulsar “Guardar”.</p>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var target = e.target;
+        // Subir hasta que sea un elemento o null
+        while (target && target.nodeType !== 1) { target = target.parentNode; }
+        if (!target) return;
+        var anchor = target.closest ? target.closest('a[data-lightbox]') : null;
+        if (!anchor) return;
+        e.preventDefault();
+        if (lb && lbImg) {
+          lbImg.setAttribute('src', anchor.getAttribute('href') || '');
+          lb.classList.add('open');
+        }
+      });
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && lb) lb.classList.remove('open'); });
+      if (lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

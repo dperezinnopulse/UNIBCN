@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dominios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test de Dominios</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Tipos de Actividad</h3>
+                <select id="tipoActividad" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h3>Unidades de Gestión</h3>
+                <select id="actividadUnidadGestion" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h3>Líneas Estratégicas</h3>
+                <select id="lineaEstrategica" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h3>Actividades Reservadas</h3>
+                <select id="actividadReservada" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h3>Facultades</h3>
+                <select id="facultadDestinataria" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h3>Centros UB</h3>
+                <select id="centroUnidadUBDestinataria" class="form-select">
+                    <option>Cargando...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button id="btnTest" class="btn btn-primary">Probar Carga de Dominios</button>
+            <button id="btnClear" class="btn btn-secondary ms-2">Limpiar Logs</button>
+        </div>
+        
+        <div class="mt-4">
+            <h4>Logs</h4>
+            <div id="logs" class="bg-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5001';
+        
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        async function makeRequest(endpoint) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            log(`🌐 Haciendo request a: ${url}`);
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                log(`✅ Respuesta exitosa: ${JSON.stringify(data).substring(0, 100)}...`);
+                return data;
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                throw error;
+            }
+        }
+        
+        async function getValoresDominio(nombreDominio) {
+            log(`🔍 Obteniendo valores para dominio: ${nombreDominio}`);
+            return await makeRequest(`/api/dominios/${nombreDominio}/valores`);
+        }
+        
+        async function loadValoresDominio(selectElement, nombreDominio) {
+            try {
+                log(`📋 Cargando ${nombreDominio} en elemento: ${selectElement.id}`);
+                const valores = await getValoresDominio(nombreDominio);
+                
+                if (!valores || valores.length === 0) {
+                    log(`⚠️ No se encontraron valores para ${nombreDominio}`);
+                    return;
+                }
+                
+                selectElement.innerHTML = '<option value="">Seleccionar...</option>';
+                let opcionesAgregadas = 0;
+                valores.forEach(valor => {
+                    const option = document.createElement('option');
+                    option.value = valor.valor;
+                    option.textContent = valor.valor;
+                    selectElement.appendChild(option);
+                    opcionesAgregadas++;
+                });
+                log(`✅ ${opcionesAgregadas} opciones agregadas para ${nombreDominio}`);
+            } catch (error) {
+                log(`❌ Error cargando dominio ${nombreDominio}: ${error.message}`);
+            }
+        }
+        
+        async function cargarTodosLosDominios() {
+            log('🚀 Iniciando carga de todos los dominios...');
+            
+            const dominios = [
+                { element: 'tipoActividad', nombre: 'TIPOS_ACTIVIDAD' },
+                { element: 'actividadUnidadGestion', nombre: 'UNIDADES_GESTION' },
+                { element: 'lineaEstrategica', nombre: 'LINEAS_ESTRATEGICAS' },
+                { element: 'actividadReservada', nombre: 'ACTIVIDADES_RESERVADAS' },
+                { element: 'facultadDestinataria', nombre: 'FACULTADES' },
+                { element: 'centroUnidadUBDestinataria', nombre: 'CENTROS_UB' }
+            ];
+            
+            for (const dominio of dominios) {
+                const element = document.getElementById(dominio.element);
+                if (element) {
+                    await loadValoresDominio(element, dominio.nombre);
+                } else {
+                    log(`❌ Elemento no encontrado: ${dominio.element}`);
+                }
+            }
+            
+            log('✅ Carga de dominios completada');
+        }
+        
+        document.getElementById('btnTest').addEventListener('click', cargarTodosLosDominios);
+        document.getElementById('btnClear').addEventListener('click', () => {
+            document.getElementById('logs').innerHTML = '';
+        });
+        
+        // Cargar dominios al cargar la página
+        window.addEventListener('load', () => {
+            log('📄 Página cargada, iniciando carga de dominios...');
+            cargarTodosLosDominios();
+        });
+    </script>
+</body>
+</html>

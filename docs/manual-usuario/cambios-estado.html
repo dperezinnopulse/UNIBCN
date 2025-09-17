@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Cambios de estado</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
+  <header>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Cambios de estado de la actividad</h1>
+    <div class="small" style="color:#666">Badge, modal de cambio y consulta de historial.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Cómo llegar</h2>
+      <p>Abra una actividad (pantalla de <strong>Editar actividad</strong>). El estado aparece en el encabezado.</p>
+      <figure data-route="/editar-actividad.html" data-selector="#estadoBadge">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Acceso a editar actividad"/>
+        </a>
+        <figcaption>Estado visible en la cabecera de la actividad.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Objetivo y estado actual</h2>
+      <p>Consultar el <strong>estado</strong> y su <strong>descripción</strong> (si existe).</p>
+      <figure data-route="/editar-actividad.html" data-selector="#estadoBadge">
+        <a href="/manual/assets/context/cambios-badge-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-badge-context.png" alt="Badge de estado"/>
+        </a>
+        <figcaption>Badge que muestra el estado actual y descripción resumida.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>#estadoBadge</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Cambiar estado</h2>
+      <ol>
+        <li>Pulse el botón <strong>Cambiar estado</strong> (icono de recarga).</li>
+        <li>Elija el nuevo estado del desplegable.</li>
+        <li>Opcionalmente, añada <em>Descripción/Motivos</em>.</li>
+        <li>Confirme con <strong>Cambiar Estado</strong>.</li>
+      </ol>
+      <figure data-route="/editar-actividad.html" data-selector="#modalCambioEstado">
+        <a href="/manual/assets/context/cambios-modal-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-modal-context.png" alt="Modal de cambio de estado"/>
+        </a>
+        <figcaption>Modal para seleccionar el nuevo estado y añadir motivos (opcional).</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>#modalCambioEstado</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Estados y roles</h2>
+      <p>A continuación se describen los estados disponibles y quién puede asignarlos:</p>
+      <ul>
+        <li><strong>Borrador (BOR, id=6)</strong>: estado inicial de una actividad. Permite completar información antes de enviarla.</li>
+        <li><strong>Enviada (ENV, id=7)</strong>: la actividad se remite para revisión/aprobación.</li>
+        <li><strong>Subsanar (SUB, id=8)</strong>: se requieren correcciones. El autor podrá editar y volver a enviar.</li>
+        <li><strong>Aceptada (ACE, id=9)</strong>: revisión favorable. Fin del flujo básico.</li>
+        <li><strong>Publicada (PUB, id=19)</strong>: visible en la oferta formativa pública.</li>
+      </ul>
+      <h3>Flujo por rol</h3>
+      <ul>
+        <li><strong>Gestor</strong>: puede cambiar estados salvo <em>Aceptada</em> y <em>Subsanar</em> (no aparecen en su desplegable).</li>
+        <li><strong>Admin</strong>: puede cambiar a cualquier estado.</li>
+      </ul>
+      <h3>Consideraciones</h3>
+      <ul>
+        <li>El campo <em>Descripción/Motivos</em> es opcional, se muestra resumido junto al badge y en tooltip completo.</li>
+        <li>El autor de la descripción puede <strong>editarla o borrarla</strong> desde el historial.</li>
+        <li>Se envían correos a usuarios Gestor ante cambios de estado relevantes o nuevos mensajes (no escritos por ellos).</li>
+        <li>El sistema es extensible para añadir nuevos estados y reglas por rol.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Historial</h2>
+      <p>Consulte los cambios previos. Si usted creó la descripción, podrá <strong>editarla</strong> o <strong>borrarla</strong>.</p>
+      <figure data-route="/editar-actividad.html" data-selector=".modal.show .modal-content">
+        <a href="/manual/assets/context/cambios-historial-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-historial-context.png" alt="Historial de cambios"/>
+        </a>
+        <figcaption>Listado de cambios previos con posibilidad de editar la descripción propia.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>.modal.show .modal-content</code></div>
+      </figure>
+    </section>
+  </main>
+  <!-- Meta-información para agentes (no visible) -->
+  <script type="application/json" id="manual-meta" style="display:none">{
+    "section": "cambios-estado",
+    "ui_routes": ["/editar-actividad.html"],
+    "api_endpoints": [
+      "/api/estados",
+      "/api/actividades/cambiar-estado",
+      "/api/actividades/{id}/cambios-estado",
+      "/api/actividades/{id}/historial-estados"
+    ],
+    "frontend_scripts": [
+      "Frontend/cambios-estado.js",
+      "Frontend/editar-actividad.js"
+    ],
+    "backend_models": [
+      "ActividadEstadoHistorial",
+      "Usuario",
+      "EstadoActividad"
+    ],
+    "states": [
+      {"id":6, "code":"BOR", "name":"Borrador"},
+      {"id":7, "code":"ENV", "name":"Enviada"},
+      {"id":8, "code":"SUB", "name":"Subsanar"},
+      {"id":9, "code":"ACE", "name":"Aceptada"}
+    ],
+    "role_rules": {
+      "Gestor": {"allowed": [6,7], "denied": [8,9]},
+      "Admin": {"allowed": [6,7,8,9], "denied": []}
+    },
+    "considerations": [
+      "Descripción/Motivos opcional, editable por su autor",
+      "Emails a Gestor al cambiar estado o recibir mensajes (no propios)",
+      "JWT requerido; cabecera Authorization en llamadas"
+    ]
+  }</script>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

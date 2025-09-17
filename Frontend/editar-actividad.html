@@ -1,0 +1,899 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+
+<title>Editar Actividad - UB</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <link href="css/styles.css" rel="stylesheet"/>
+    
+    <style>
+      .sidebar {
+        background-color: #f7f7f7;
+        width: 260px;
+        min-height: 100vh;
+        transition: width 0.25s ease;
+        overflow-x: hidden;
+      }
+        .sidebar.collapsed { width: 72px !important; }
+      .sidebar .nav-link {
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.6rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .sidebar .nav-link.active {
+        background-color: #e7effb;
+        color: #0366d6;
+        font-weight: 600;
+      }
+      .sidebar .nav-link:hover {
+        background-color: #e6e6e6;
+        color: #0366d6;
+      }
+        .sidebar.collapsed .nav-link { justify-content: center; }
+        .sidebar.collapsed .link-text { display: none !important; }
+        
+        .form-section { 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            padding: 1.5rem; 
+            margin-bottom: 1.5rem; 
+        }
+        
+        .form-section h3 { 
+            color: #2c3e50; 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 0.5rem; 
+            margin-bottom: 1.5rem; 
+        }
+        
+        .ug-specific { 
+            border-left: 4px solid #3498db; 
+            padding-left: 1rem; 
+            background: #f8f9fa; 
+        }
+        
+        .ug-idp { border-left-color: #f39c12; }
+        .ug-crai { border-left-color: #3498db; }
+        .ug-sae { border-left-color: #27ae60; }
+        
+        .traduccion { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 6px; 
+            padding: 1rem; 
+            margin-top: 0.5rem; 
+        }
+        
+        .btn-traduccion { 
+            cursor: pointer; 
+            background: #e3f2fd; 
+            border: 1px solid #2196f3; 
+            color: #1976d2; 
+            border-radius: 4px; 
+            padding: 0.25rem 0.5rem; 
+        }
+        
+        .btn-traduccion:hover { 
+            background: #bbdefb; 
+        }
+        
+        .card-dynamic { 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            margin-bottom: 1rem; 
+            background: #fff; 
+        }
+        
+        .card-dynamic .card-header { 
+            background: #f8f9fa; 
+            border-bottom: 1px solid #dee2e6; 
+            padding: 0.75rem 1rem; 
+        }
+        
+        .status-badge { 
+            font-size: 0.875rem; 
+            font-weight: 600; 
+            padding: 0.5rem 1rem; 
+            border-radius: 20px; 
+        }
+        
+        .loading { 
+            opacity: 0.6; 
+            pointer-events: none; 
+        }
+        
+        .alert-fixed { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 9999; 
+            min-width: 300px; 
+      }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+        <!-- Sidebar -->
+<div id="sidebarContainer"></div>
+        
+        <!-- Main Content -->
+<div class="flex-grow-1">
+            <!-- Header -->
+<div id="headerContainer"></div>
+            
+            <!-- Main Form -->
+            <main class="p-4">
+                <!-- Status Header -->
+                <div class="form-section" id="statusHeader">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+<div class="d-flex align-items-center gap-3 flex-wrap">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="status-badge" id="estadoBadge" style="background: #2ecc71; color: white;">
+                                    <i class="bi bi-check-circle me-2"></i>Cargando...
+                                </span>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="mostrarModalCambioEstado()" title="Cambiar estado">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="mostrarHistorialEstados()" title="Ver historial de cambios">
+                    <i class="bi bi-clock-history"></i>
+                </button>
+                            </div>
+                            <div class="text-muted small" id="descripcionEstado" style="display: none;">
+                                <i class="bi bi-chat-quote me-1"></i><span></span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                <span id="fechaCreacion">Cargando...</span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-clock-history me-1"></i>
+                                Actualizado <span id="fechaUpdate">Cargando...</span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-person me-1"></i>
+                                <span id="responsablePropuesta">Cargando...</span>
+                            </div>
+</div>
+<div class="d-flex align-items-center gap-2">
+                            <!-- Selector de estado eliminado: el estado se muestra solo en el badge -->
+                            <!-- Mensajes: contador e indicador de no leídos -->
+                                    <button type="button" class="btn btn-outline-secondary btn-sm position-relative" id="mensajesBtn" title="Mensajes" onclick="abrirMensajes()">
+          <i class="bi bi-chat-dots"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="mensajesBadge">0</span>
+        </button>
+                            <a class="btn btn-outline-secondary btn-sm" href="historico.html">
+                                <i class="bi bi-arrow-left me-2"></i>Volver
+                            </a>
+</div>
+</div>
+</div>
+
+                <!-- Hidden Fields -->
+<input type="hidden" id="actividadId" />
+                <input type="hidden" id="actividadEstadoId" />
+
+                <!-- Information General -->
+                <div class="form-section">
+                    <h3><i class="bi bi-info-circle me-2"></i>Información General</h3>
+<div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Código de la actividad *</label>
+                            <input class="form-control" id="actividadCodigo" type="text" required/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Título de la actividad *</label>
+<div class="input-group">
+                                <input class="form-control" id="actividadTitulo" type="text" required/>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('titulo')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionTitulo">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Català</label>
+                                        <input class="form-control form-control-sm" id="actividadTituloCA" type="text"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Castellano</label>
+                                        <input class="form-control form-control-sm" id="actividadTituloES" type="text"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">English</label>
+                                        <input class="form-control form-control-sm" id="actividadTituloEN" type="text"/>
+                                    </div>
+</div>
+</div>
+</div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de actividad</label>
+                            <select class="form-select" id="tipoActividad">
+                                <option value="">Seleccionar...</option>
+                                <option value="Jornada">Jornada</option>
+                                <option value="Curso">Curso</option>
+                                <option value="Seminario">Seminario</option>
+                                <option value="Conferencia">Conferencia</option>
+                                <option value="Taller">Taller</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Unidad gestora *</label>
+                            <select class="form-select" id="actividadUnidadGestion" required>
+                                <option value="">Cargando...</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" rows="3" placeholder="Descripción de la actividad"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Condiciones económicas</label>
+                            <input class="form-control" id="condicionesEconomicas" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Año académico *</label>
+                            <input class="form-control" id="actividadAnioAcademico" placeholder="2025-2026" type="text" required/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Línea estratégica</label>
+                            <select class="form-select" id="lineaEstrategica">
+                                <option value="">Seleccionar...</option>
+                                <option value="Línea 1">Línea 1</option>
+                                <option value="Línea 2">Línea 2</option>
+                                <option value="Línea 3">Línea 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Objetivo estratégico</label>
+                            <select class="form-select" id="objetivoEstrategico">
+                                <option value="">Seleccionar...</option>
+                                <option value="Objetivo 1">Objetivo 1</option>
+                                <option value="Objetivo 2">Objetivo 2</option>
+                                <option value="Objetivo 3">Objetivo 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Código relacionado</label>
+                            <input class="form-control" id="codigoRelacionado" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Actividad reservada</label>
+                            <select class="form-select" id="actividadReservada">
+                                <option value="">Seleccionar...</option>
+                                <option value="PDI">PDI</option>
+                                <option value="PAS">PAS</option>
+                                <option value="Estudiante">Estudiante</option>
+                                <option value="Externo">Externo</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de actividad</label>
+                            <input class="form-control" id="fechaActividad" type="date"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Motivo de cierre</label>
+                            <input class="form-control" id="motivoCierre" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Persona solicitante</label>
+                            <input class="form-control" id="personaSolicitante" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Coordinador/a</label>
+                            <input class="form-control" id="coordinador" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Jefe/a unidad gestora</label>
+                            <input class="form-control" id="jefeUnidadGestora" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gestor/a de la actividad</label>
+                            <input class="form-control" id="gestorActividad" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Facultad destinataria</label>
+                            <input class="form-control" id="facultadDestinataria" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Departamento destinatario</label>
+                            <input class="form-control" id="departamentoDestinatario" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Centro/unidad UB destinataria</label>
+                            <select class="form-select" id="centroUnidadUBDestinataria">
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Otros centros/instituciones</label>
+                            <input class="form-control" id="otrosCentrosInstituciones" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Plazas totales</label>
+                            <input class="form-control" id="plazasTotales" type="number" min="0" step="1" inputmode="numeric"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Horas totales</label>
+                            <input class="form-control" id="horasTotales" type="number" min="0" step="0.5" inputmode="decimal"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Centro de trabajo requerido</label>
+                            <select class="form-select" id="centroTrabajoRequerido">
+                                <option value="">Seleccionar...</option>
+                                <option value="Sí">Sí</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Modalidad de gestión</label>
+                            <select class="form-select" id="modalidadGestion">
+                                <option value="">Seleccionar...</option>
+                                <option value="Acreditada UB">Acreditada UB</option>
+                                <option value="No acreditada">No acreditada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">F. inicio de la impartición</label>
+                            <input class="form-control" id="fechaInicioImparticion" type="date"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">F. final de la impartición</label>
+                            <input class="form-control" id="fechaFinImparticion" type="date"/>
+                        </div>
+                        <div class="col-md-4">
+<label class="form-label d-block">Actividad de pago</label>
+<div class="form-check form-switch">
+                                <input class="form-check-input" id="actividadPago" type="checkbox"/>
+<label class="form-check-label" for="actividadPago">Sí</label>
+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fechas -->
+                <div class="form-section">
+                    <h3><i class="bi bi-calendar-range me-2"></i>Fechas</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de inicio *</label>
+                            <input class="form-control" id="fechaInicio" type="date" required/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de fin *</label>
+                            <input class="form-control" id="fechaFin" type="date" required/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Lugar</label>
+                            <input class="form-control" id="lugar" type="text"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos específicos por UG -->
+                <div class="form-section ug-specific" id="ugSpecificFields">
+                    <h3><i class="bi bi-gear me-2"></i>Campos específicos por Unidad de Gestión</h3>
+                    
+                    <!-- IDP -->
+                    <div class="ug-idp mb-3" data-ug="IDP">
+                        <h5 class="text-warning">IDP - Institut de Desenvolupament Professional</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Coordinador/a de centre/unitat</label>
+<input class="form-control" id="coordinadorCentreUnitat" placeholder="Nombre y apellidos"/>
+</div>
+                            <div class="col-md-6">
+                                <label class="form-label">Centre de treball de l'alumne</label>
+<input class="form-control" id="centreTreballeAlumne" placeholder="Centro de trabajo"/>
+</div>
+</div>
+</div>
+                    
+                    <!-- CRAI -->
+                    <div class="ug-crai mb-3" data-ug="CRAI">
+                        <h5 class="text-primary">CRAI - Centre de Recursos per a l'Aprenentatge i la Investigació</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Crèdits totals</label>
+                                <input class="form-control" id="creditosTotalesCRAI" min="0" placeholder="0,0" step="0.5" type="text" data-mask="decimal" data-decimal-separator="," data-thousands-separator="." style="text-align: right; font-family: 'Courier New', monospace;" inputmode="decimal" pattern="^\d{1,3}(\.\d{3})*(,\d{1,2})?$" title="Formato 0,00 con coma decimal (ej. 1.234,50)"/>
+                <div class="form-text text-muted small">Formato: 0,00 (coma como separador decimal)</div>
+</div>
+</div>
+</div>
+                    
+                    <!-- SAE -->
+                    <div class="ug-sae mb-3" data-ug="SAE">
+                        <h5 class="text-success">SAE - Servei d'Activitats Extraordinàries</h5>
+<div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Crèdits totals</label>
+<input class="form-control" id="creditosTotalesSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
+</div>
+                            <div class="col-md-4">
+                                <label class="form-label">Crèdits mínims</label>
+<input class="form-control" id="creditosMinimosSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
+</div>
+                            <div class="col-md-4">
+                                <label class="form-label">Crèdits màxims</label>
+<input class="form-control" id="creditosMaximosSAE" min="0" placeholder="0" step="0.5" type="number" inputmode="decimal"/>
+</div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tipus d'estudi</label>
+                                <select class="form-select" id="tipusEstudiSAE">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Grau">Grau</option>
+                                    <option value="Màster">Màster</option>
+                                    <option value="Doctorat">Doctorat</option>
+</select>
+</div>
+                            <div class="col-md-4">
+                                <label class="form-label">Categoria</label>
+                                <select class="form-select" id="categoriaSAE">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Bàsic">Bàsic</option>
+                                    <option value="Avançat">Avançat</option>
+                                    <option value="Especialització">Especialització</option>
+</select>
+</div>
+                            <div class="col-md-4">
+                                <label class="form-label">Competències</label>
+                                <input class="form-control" id="competenciesSAE" placeholder="Especifica competències"/>
+</div>
+</div>
+</div>
+</div>
+
+                <!-- Inscripción -->
+                <div class="form-section">
+                    <h3><i class="bi bi-person-plus me-2"></i>Inscripción</h3>
+<div class="row g-3">
+<div class="col-md-3">
+<label class="form-label">Inicio inscripción</label>
+                            <input class="form-control" id="inscripcionInicio" type="date"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Fin inscripción</label>
+                            <input class="form-control" id="inscripcionFin" type="date"/>
+</div>
+<div class="col-md-3">
+<label class="form-label">Nº de plazas</label>
+                            <input class="form-control" id="inscripcionPlazas" min="0" type="number"/>
+</div>
+<div class="col-md-3">
+<label class="form-label d-block">Lista de espera</label>
+<div class="form-check form-switch">
+                                <input class="form-check-input" id="inscripcionListaEspera" type="checkbox"/>
+                                <label class="form-check-label" for="inscripcionListaEspera">Activar</label>
+</div>
+</div>
+<div class="col-md-4">
+<label class="form-label">Modalidad</label>
+                            <select class="form-select" id="inscripcionModalidad">
+                                <option value="">Seleccionar...</option>
+                                <option value="Presencial">Presencial</option>
+                                <option value="Online">Online</option>
+                                <option value="Mixta">Mixta</option>
+</select>
+</div>
+                        <div class="col-12">
+<label class="form-label">Requisitos</label>
+<div class="input-group">
+                                <textarea class="form-control" id="inscripcionRequisitosES" placeholder="Requisitos (ES)" rows="2"></textarea>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('requisitos')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionRequisitos">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Català</label>
+                                        <textarea class="form-control form-control-sm" id="inscripcionRequisitosCA" placeholder="Requisits (CA)" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">English</label>
+                                        <textarea class="form-control form-control-sm" id="inscripcionRequisitosEN" placeholder="Requirements (EN)" rows="2"></textarea>
+                                    </div>
+                                </div>
+</div>
+</div>
+</div>
+</div>
+
+                <!-- Programa -->
+                <div class="form-section">
+                    <h3><i class="bi bi-journal-text me-2"></i>Programa</h3>
+<div class="row g-3">
+                        <div class="col-12">
+<label class="form-label">Descripción</label>
+<div class="input-group">
+                                <textarea class="form-control" id="programaDescripcionES" placeholder="Descripción (ES)" rows="3"></textarea>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('descripcion')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionDescripcion">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Català</label>
+                                        <textarea class="form-control form-control-sm" id="programaDescripcionCA" placeholder="Descripció (CA)" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">English</label>
+                                        <textarea class="form-control form-control-sm" id="programaDescripcionEN" placeholder="Description (EN)" rows="2"></textarea>
+                                    </div>
+</div>
+</div>
+</div>
+                        <div class="col-12">
+<label class="form-label">Contenidos</label>
+<div class="input-group">
+                                <textarea class="form-control" id="programaContenidosES" placeholder="Contenidos (ES)" rows="3"></textarea>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('contenidos')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionContenidos">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Català</label>
+                                        <textarea class="form-control form-control-sm" id="programaContenidosCA" placeholder="Continguts (CA)" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">English</label>
+                                        <textarea class="form-control form-control-sm" id="programaContenidosEN" placeholder="Contents (EN)" rows="2"></textarea>
+                                    </div>
+</div>
+</div>
+</div>
+                        <div class="col-12">
+<label class="form-label">Objetivos</label>
+<div class="input-group">
+                                <textarea class="form-control" id="programaObjetivosES" placeholder="Objetivos (ES)" rows="3"></textarea>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('objetivos')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionObjetivos">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Català</label>
+                                        <textarea class="form-control form-control-sm" id="programaObjetivosCA" placeholder="Objectius (CA)" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">English</label>
+                                        <textarea class="form-control form-control-sm" id="programaObjetivosEN" placeholder="Objectives (EN)" rows="2"></textarea>
+                                    </div>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+<label class="form-label">Duración (horas)</label>
+                            <input class="form-control" id="programaDuracion" min="0" step="0.5" type="number"/>
+</div>
+<div class="col-md-4">
+<label class="form-label">Fecha de inicio</label>
+                            <input class="form-control" id="programaInicio" type="date"/>
+</div>
+<div class="col-md-4">
+<label class="form-label">Fecha de fin</label>
+                            <input class="form-control" id="programaFin" type="date"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entidades organizadoras -->
+                <div class="form-section">
+                    <h3><i class="bi bi-building me-2"></i>Entidades organizadoras</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Organizadora principal</label>
+                            <input class="form-control" id="org_principal" placeholder="Nombre de la entidad" type="text"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">NIF/CIF</label>
+                            <input class="form-control" id="org_nif" type="text" pattern="^([0-9]{8}[A-Za-z]|[XYZxyz][0-9]{7}[A-Za-z]|[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J])$" title="Introduzca NIF, NIE o CIF válido (ej. 12345678Z, X1234567L, B12345678)" maxlength="9"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Web</label>
+                            <input class="form-control" id="org_web" placeholder="https://..." type="url"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Persona de contacto</label>
+                            <input class="form-control" id="org_contacto" type="text"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" id="org_email" type="email" autocomplete="email"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Teléfono</label>
+                            <input class="form-control" id="org_tel" type="tel" inputmode="tel" pattern="^[0-9+\s().-]{6,20}$" title="Formato de teléfono válido (números, +, espacios, guiones)" autocomplete="tel"/>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h5>Entidades colaboradoras</h5>
+                        <div class="mb-3" id="colaboradorasContainer"></div>
+                        <button class="btn btn-outline-primary" onclick="addColaboradora()" type="button">
+                            <i class="bi bi-plus-circle me-2"></i>Añadir colaboradora
+                        </button>
+</div>
+</div>
+
+                <!-- Importe y descuentos -->
+                <div class="form-section" id="importeCampos">
+                    <h3><i class="bi bi-currency-euro me-2"></i>Importe y descuentos</h3>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Importe base (€)</label>
+                            <input class="form-control" id="imp_base" min="0" step="0.01" type="number"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Impuesto</label>
+                            <select class="form-select" id="imp_tipo">
+                                <option value="">Selecciona</option>
+                                <option value="IVA 21%">IVA 21%</option>
+                                <option value="IVA 10%">IVA 10%</option>
+                                <option value="IVA 4%">IVA 4%</option>
+                                <option value="Exento">Exento</option>
+</select>
+</div>
+                        <div class="col-md-3">
+                            <label class="form-label">Descuento (%)</label>
+                            <input class="form-control" id="imp_descuento_pct" max="100" min="0" step="1" type="number"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Código promocional</label>
+                            <input class="form-control" id="imp_codigo" type="text"/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Condiciones</label>
+                            <div class="input-group">
+                                <textarea class="form-control" id="imp_condiciones_es" placeholder="Condiciones (ES)" rows="2"></textarea>
+                                <button class="btn btn-traduccion" onclick="toggleTraduccion('condiciones')">
+                                    <i class="bi bi-translate"></i>
+                                </button>
+                            </div>
+                            <div class="traduccion d-none" id="traduccionCondiciones">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Català</label>
+                                        <textarea class="form-control form-control-sm" id="imp_condiciones_ca" placeholder="Condicions (CA)" rows="2"></textarea>
+</div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">English</label>
+                                        <textarea class="form-control form-control-sm" id="imp_condiciones_en" placeholder="Terms (EN)" rows="2"></textarea>
+</div>
+</div>
+</div>
+</div>
+          </div>
+        </div>
+
+                <!-- Subactividades -->
+                <div class="form-section">
+                    <h3><i class="bi bi-list-task me-2"></i>Subactividades</h3>
+                    <div class="mb-3" id="subactividadesContainer"></div>
+                    <button class="btn btn-outline-primary" onclick="addSubactividad()" type="button">
+                        <i class="bi bi-plus-circle me-2"></i>Añadir Subactividad
+                    </button>
+        </div>
+
+                <!-- Participantes -->
+                <div class="form-section">
+                    <h3><i class="bi bi-people me-2"></i>Participantes</h3>
+                    <div class="mb-3" id="participantesContainer"></div>
+                    <button class="btn btn-outline-primary" onclick="addParticipante()" type="button">
+                        <i class="bi bi-plus-circle me-2"></i>Añadir Participante
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-secondary" onclick="window.history.back()" type="button">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </button>
+                </div>
+                
+                <!-- Sección de Adjuntos -->
+                <div class="form-section" id="seccion-adjuntos">
+                    <h3><i class="bi bi-paperclip me-2"></i>Archivos adjuntos</h3>
+                    
+                    <!-- Área de subida de archivos -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Seleccionar archivos</label>
+                                    <input type="file" class="form-control" id="archivosInput" multiple accept="*/*">
+                                    <div class="form-text">Puedes seleccionar varios archivos a la vez</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Descripción general (opcional)</label>
+                                    <textarea class="form-control" id="descripcionAdjuntos" rows="2" placeholder="Descripción para todos los archivos..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" id="btnSubirAdjuntos" onclick="subirAdjuntos()">
+                                        <i class="bi bi-upload me-2"></i>Subir archivos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de adjuntos -->
+                    <div id="adjuntosContainer">
+                        <!-- Los adjuntos se cargarán dinámicamente -->
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-info" href="manual/editar-actividad.html" target="_blank" rel="noopener">
+                        <i class="bi bi-journal-text me-2"></i>Ayuda
+                    </a>
+                    <button class="btn btn-primary" onclick="guardarActividad()" type="button">
+                                <i class="bi bi-check-circle me-2"></i>Actualizar Actividad
+                    </button>
+                </div>
+            </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Alert -->
+    <div class="alert alert-info alert-fixed d-none" id="loadingAlert">
+        <i class="bi bi-hourglass-split me-2"></i>
+        <span id="loadingMessage">Cargando...</span>
+    </div>
+
+    <!-- Success Alert -->
+    <div class="alert alert-success alert-fixed d-none" id="successAlert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span id="successMessage">Operación completada con éxito</span>
+    </div>
+
+    <!-- Error Alert -->
+    <div class="alert alert-danger alert-fixed d-none" id="errorAlert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span id="errorMessage">Ha ocurrido un error</span>
+    </div>
+
+    <!-- Modal de Mensajes -->
+    <div class="modal fade" id="mensajesModal" tabindex="-1" aria-labelledby="mensajesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mensajesModalLabel">
+                        <i class="bi bi-chat-dots me-2"></i>Mensajes de la Actividad
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="mensajesModalContent">
+                        <!-- El contenido se cargará dinámicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cambio de Estado -->
+    <div class="modal fade" id="modalCambioEstado" tabindex="-1" aria-labelledby="modalCambioEstadoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCambioEstadoLabel">
+                        <i class="bi bi-arrow-repeat me-2"></i>Cambiar Estado de la Actividad
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCambioEstado">
+                        <div class="mb-3">
+                            <label for="nuevoEstadoSelect" class="form-label">Nuevo Estado</label>
+                            <select class="form-select" id="nuevoEstadoSelect" required>
+                                <option value="">Selecciona un estado...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcionMotivos" class="form-label">Descripción/Motivos (opcional)</label>
+                            <textarea class="form-control" id="descripcionMotivos" rows="3" 
+                                placeholder="Describe los motivos del cambio de estado..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="cambiarEstadoActividad()">
+                        <i class="bi bi-check-circle me-2"></i>Cambiar Estado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js?v=2.0"></script>
+    <script src="menu.js"></script>
+    <script src="header.js"></script>
+    <script src="ug-specific-fields.js"></script>
+    <script src="editar-actividad.js"></script>
+    <script src="adjuntos.js"></script>
+    <script src="cambios-estado.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadSidebarMenu('sidebarContainer');
+            loadHeader('headerContainer');
+            
+            // Requiere login
+            if (typeof Auth !== 'undefined') { Auth.requireAuth(); }
+            // Inicializar la página de edición
+            if (typeof initEditarActividad === 'function') {
+                initEditarActividad();
+            }
+            
+            // Inicializar campos específicos por unidad gestora
+            setTimeout(function() {
+                if (typeof window.initializeUGSpecificFields === 'function') {
+                    window.initializeUGSpecificFields();
+                }
+            }, 1000);
+        });
+</script>
+    <script>
+        // Feedback de validación bajo campos en editar-actividad
+        (function(){
+            function ensureFeedback(el){
+                var fb = el.nextElementSibling;
+                if(!fb || !fb.classList || !fb.classList.contains('invalid-feedback')){
+                    fb = document.createElement('div');
+                    fb.className = 'invalid-feedback';
+                    el.parentNode.insertBefore(fb, el.nextSibling);
+                }
+                return fb;
+            }
+            function updateFeedback(el){
+                var fb = ensureFeedback(el);
+                if(el.checkValidity()){
+                    fb.textContent = '';
+                    fb.classList.remove('d-block');
+                } else {
+                    var msg = el.validationMessage || el.getAttribute('title') || 'Valor no válido';
+                    fb.textContent = msg;
+                    fb.classList.add('d-block');
+                }
+            }
+            function attach(){
+                var fields = document.querySelectorAll('input, select, textarea');
+                fields.forEach(function(el){
+                    ensureFeedback(el);
+                    ['blur','input','change'].forEach(function(evt){
+                        el.addEventListener(evt, function(){ updateFeedback(el); });
+                    });
+                });
+            }
+            document.addEventListener('DOMContentLoaded', attach);
+        })();
+</script>
+</body>
+</html>

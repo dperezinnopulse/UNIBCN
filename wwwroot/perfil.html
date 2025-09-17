@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  
+  <title>Mi Perfil</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="css/styles.css" rel="stylesheet"/>
+</head>
+<body>
+  <div class="d-flex">
+    <div id="sidebarContainer"></div>
+    <div class="flex-grow-1">
+      <div id="headerContainer"></div>
+      <main class="p-4">
+      <h1 class="h4 mb-3">Mi perfil</h1>
+      <form class="vstack gap-3" id="perfilForm">
+        <div class="row g-2">
+          <div class="col-4">
+            <label class="form-label">Usuario</label>
+            <input id="username" class="form-control form-control-sm"/>
+          </div>
+          <div class="col-4">
+            <label class="form-label">Email</label>
+            <input id="email" type="email" class="form-control form-control-sm"/>
+          </div>
+          <div class="col-4">
+            <label class="form-label">Nueva contraseña</label>
+            <input id="password" type="password" class="form-control form-control-sm" placeholder="(opcional)"/>
+          </div>
+        </div>
+        <div class="text-end">
+          <button id="btnGuardar" class="btn btn-primary btn-sm" type="button">Guardar</button>
+        </div>
+      </form>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="auth.js"></script>
+  <script src="header.js"></script>
+  <script src="menu.js"></script>
+  <script src="perfil.js"></script>
+  <script>
+    if (typeof Auth !== 'undefined') Auth.requireAuth();
+    loadSidebarMenu('sidebarContainer');
+    loadHeader('headerContainer');
+  </script>
+</body>
+</html>
+
+

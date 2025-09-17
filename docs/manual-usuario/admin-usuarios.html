@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Admin Usuarios</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
+  <header>
+    <div class="brand">
+      <img src="/img/logo_ub.png" alt="UB"/>
+      <div>
+        <nav>
+          <a href="./index.html">Manual de Usuario</a>
+          <span>·</span>
+          <span style="color:#333">Admin Usuarios</span>
+        </nav>
+        <div class="nav-more">
+          <a href="./login.html">Login</a>
+          <a href="./crear-actividad.html">Crear Actividad</a>
+          <a href="./mensajes.html">Mensajes</a>
+          <a href="./perfil.html">Perfil</a>
+        </div>
+        <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Gestión de Usuarios (Admin)</h1>
+        <div class="small" style="color:#666">Listado, creación y edición de usuarios.</div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Cómo llegar</h2>
+      <p>Desde el <strong>menú de usuario</strong> (icono arriba a la derecha) → <em>Administración</em> → <strong>Usuarios</strong>.</p>
+      <figure data-route="/index.html" data-selector="#adminSubmenu [data-admin='usuarios']">
+        <a href="/manual/assets/context/como-llegar-admin-usuarios-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-admin-usuarios-context.png" alt="Navegación a Admin Usuarios"/>
+        </a>
+        <figcaption>Acceso a Gestión de Usuarios para perfil <em>Admin</em>.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Objetivo y listado</h2>
+      <p>Administrar usuarios del sistema: altas, modificaciones y desactivaciones.</p>
+      <figure data-route="/admin-usuarios.html" data-selector="#tablaUsuarios">
+        <a href="/manual/assets-root/admin-usuarios-lista.png" data-lightbox>
+          <img src="/manual/assets-root/admin-usuarios-lista.png" alt="Listado de usuarios"/>
+        </a>
+        <figcaption>Tabla de usuarios con acciones.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/admin-usuarios.html</code> · Selector: <code>#tablaUsuarios</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Crear/Editar</h2>
+      <ol>
+        <li>Pulse <strong>Nuevo</strong> para crear.</li>
+        <li>Complete <em>Usuario</em>, <em>Email</em>, <em>Rol</em> y <em>Unidad Gestora</em>.</li>
+        <li>Guarde para aplicar los cambios.</li>
+      </ol>
+      <figure data-route="/admin-usuarios.html" data-selector="#modalUsuario">
+        <a href="/manual/assets-root/admin-usuarios-modal.png" data-lightbox>
+          <img src="/manual/assets-root/admin-usuarios-modal.png" alt="Modal de usuario"/>
+        </a>
+        <figcaption>Modal para alta y edición de usuarios.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/admin-usuarios.html</code> · Selector: <code>#modalUsuario</code></div>
+      </figure>
+    </section>
+  </main>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

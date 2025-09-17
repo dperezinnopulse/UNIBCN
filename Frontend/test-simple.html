@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Test Simple - JavaScript</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test Simple - JavaScript</h1>
+        <div id="test-container">
+            <p>Verificando carga de JavaScript...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts.js?v=1.0.56&t=1756368003"></script>
+    
+    <script>
+        // Test simple para verificar si las funciones están disponibles
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 TEST SIMPLE - Verificando funciones...');
+            
+            const funciones = [
+                'llenarParticipantes',
+                'llenarSubactividades',
+                'agregarParticipante',
+                'agregarSubactividad',
+                'cargarActividadParaEdicionSinDominios',
+                'cargarDatosAdicionalesSinDominios'
+            ];
+            
+            const funcionesDisponibles = [];
+            const funcionesNoDisponibles = [];
+            
+            funciones.forEach(funcion => {
+                if (typeof window[funcion] === 'function') {
+                    funcionesDisponibles.push(funcion);
+                    console.log(`✅ ${funcion} está disponible`);
+                } else {
+                    funcionesNoDisponibles.push(funcion);
+                    console.log(`❌ ${funcion} NO está disponible`);
+                }
+            });
+            
+            const container = document.getElementById('test-container');
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <h4>Resultado del Test</h4>
+                    <p><strong>Funciones disponibles:</strong> ${funcionesDisponibles.length}</p>
+                    <p><strong>Funciones no disponibles:</strong> ${funcionesNoDisponibles.length}</p>
+                    <ul>
+                        ${funcionesDisponibles.map(f => `<li class="text-success">✅ ${f}</li>`).join('')}
+                        ${funcionesNoDisponibles.map(f => `<li class="text-danger">❌ ${f}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Flujo del Workflow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+        h3 { color: #7f8c8d; }
+        .flujo { font-family: monospace; background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; white-space: pre-line; }
+        .estado { background-color: #e3f2fd; padding: 8px 12px; border-radius: 5px; margin: 5px; display: inline-block; border: 2px solid #2196f3; }
+        .transicion { color: #1976d2; font-weight: bold; }
+        .rol { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .rol-admin { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+        .rol-coord { background-color: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .rol-tecnico { background-color: #d4edda; border-left: 4px solid #28a745; }
+        .rol-docente { background-color: #fff3cd; border-left: 4px solid #ffc107; }
+        .rol-responsable { background-color: #e2e3e5; border-left: 4px solid #6c757d; }
+        .rol-soporte { background-color: #f8f9fa; border-left: 4px solid #6c757d; }
+        .estado-final { background-color: #e8f5e8; border: 2px solid #28a745; }
+        .restriccion { background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }
+        .eliminada { color: #dc3545; text-decoration: line-through; }
+        .mantenida { color: #28a745; font-weight: bold; }
+        .caso-uso { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<h1>DIAGRAMA DE FLUJO DEL WORKFLOW</h1>
+
+<h2>FLUJO PRINCIPAL (Estados y Transiciones)</h2>
+
+<div class="flujo">
+                    ┌─────────────────┐
+                    │   BOR (Borrador) │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │  ENV (Enviada)   │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ EN_REVISION     │
+                    │ (En revisión)   │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │VALIDACION_UNIDAD│
+                    │(Validación unidad)│
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ DEFINICION      │
+                    │ (Definición)    │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │REVISION_ADMIN   │
+                    │(Revisión admin) │
+                    └─────────┬───────┘
+                              │
+                    ┌─────────▼───────┐
+                    │ PUBLICADA       │
+                    │ (Publicada)     │
+                    └─────────────────┘
+</div>
+
+<h2>ROLES Y SUS CAPACIDADES</h2>
+
+<div class="rol rol-docente">
+    <h3>DOCENTE_DINAMIZADOR</h3>
+    <div class="transicion">BOR → ENV</div>
+</div>
+
+<div class="rol rol-tecnico">
+    <h3>COORD_TECNICO</h3>
+    <div class="transicion">BOR → ENV</div>
+    <div class="transicion">DEFINICION → REVISION_ADMINISTRATIVA</div>
+</div>
+
+<div class="rol rol-coord">
+    <h3>COORD_FORMACION</h3>
+    <div class="transicion">ENV → EN_REVISION</div>
+    <div class="transicion">EN_REVISION → VALIDACION_UNIDAD</div>
+    <p><em>[Puede rechazar desde cualquier estado]</em></p>
+</div>
+
+<div class="rol rol-responsable">
+    <h3>RESPONSABLE_UNIDAD</h3>
+    <div class="transicion">VALIDACION_UNIDAD → DEFINICION</div>
+    <div class="transicion">VALIDACION_UNIDAD → EN_REVISION</div>
+    <p><em>[Puede rechazar desde cualquier estado]</em></p>
+</div>
+
+<div class="rol rol-admin">
+    <h3>ADMIN</h3>
+    <p><strong>[Acceso completo a todas las transiciones]</strong></p>
+</div>
+
+<div class="rol rol-soporte">
+    <h3>SOPORTE_ADMIN</h3>
+    <p><em>[Puede cancelar y publicar]</em></p>
+</div>
+
+<h2>ESTADOS FINALES</h2>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <div class="estado estado-final">
+        <strong>ACEPTADA</strong><br>
+        Estado: 9
+    </div>
+    <div class="estado estado-final">
+        <strong>RECHAZADA</strong><br>
+        Estado: 20
+    </div>
+    <div class="estado estado-final">
+        <strong>CANCELADA</strong><br>
+        Estado: 15
+    </div>
+    <div class="estado estado-final">
+        <strong>PUBLICADA</strong><br>
+        Estado: 19
+    </div>
+</div>
+
+<h2>FLUJO COMPLETO CON ROLES</h2>
+
+<div class="caso-uso">
+    <h3>1. DOCENTE_DINAMIZADOR crea actividad</h3>
+    <div class="transicion">BOR → ENV</div>
+</div>
+
+<div class="caso-uso">
+    <h3>2. COORD_FORMACION revisa</h3>
+    <div class="transicion">ENV → EN_REVISION</div>
+</div>
+
+<div class="caso-uso">
+    <h3>3. COORD_FORMACION valida</h3>
+    <div class="transicion">EN_REVISION → VALIDACION_UNIDAD</div>
+</div>
+
+<div class="caso-uso">
+    <h3>4. RESPONSABLE_UNIDAD define</h3>
+    <div class="transicion">VALIDACION_UNIDAD → DEFINICION</div>
+</div>
+
+<div class="caso-uso">
+    <h3>5. COORD_TECNICO prepara</h3>
+    <div class="transicion">DEFINICION → REVISION_ADMINISTRATIVA</div>
+</div>
+
+<div class="caso-uso">
+    <h3>6. ADMIN/SOPORTE_ADMIN publica</h3>
+    <div class="transicion">REVISION_ADMINISTRATIVA → PUBLICADA</div>
+</div>
+
+<h2>RESTRICCIONES IMPORTANTES</h2>
+
+<div class="restriccion">
+    <p><span class="eliminada">ELIMINADA</span>: ENV → DEFINICION (para COORD_FORMACION)</p>
+    <p><span class="mantenida">MANTENIDA</span>: ENV → EN_REVISION (para COORD_FORMACION)</p>
+</div>
+
+<div class="restriccion">
+    <h3>Capacidades por Rol:</h3>
+    <ul>
+        <li><strong>DOCENTE_DINAMIZADOR</strong>: Solo puede enviar (BOR → ENV)</li>
+        <li><strong>ADMIN</strong>: Acceso completo a todas las transiciones</li>
+        <li><strong>COORD_TECNICO</strong>: Puede enviar y pasar a revisión administrativa</li>
+        <li><strong>COORD_FORMACION</strong>: Puede revisar, validar y rechazar</li>
+        <li><strong>RESPONSABLE_UNIDAD</strong>: Puede validar, definir y rechazar</li>
+        <li><strong>SOPORTE_ADMIN</strong>: Puede cancelar y publicar</li>
+    </ul>
+</div>
+
+</body>
+</html>

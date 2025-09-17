@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esquema Completo del Sistema de Workflow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+        h3 { color: #7f8c8d; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
+        th { background-color: #ecf0f1; font-weight: bold; }
+        .estado-final { background-color: #e8f5e8; }
+        .estado-intermedio { background-color: #fff3cd; }
+        .rol-admin { background-color: #f8d7da; }
+        .rol-coord { background-color: #d1ecf1; }
+        .rol-tecnico { background-color: #d4edda; }
+        .rol-docente { background-color: #fff3cd; }
+        .rol-responsable { background-color: #e2e3e5; }
+        .rol-soporte { background-color: #f8f9fa; }
+        .transicion { font-family: monospace; background-color: #f8f9fa; padding: 2px 6px; border-radius: 3px; }
+        .eliminada { color: #dc3545; text-decoration: line-through; }
+        .mantenida { color: #28a745; font-weight: bold; }
+        .restriccion { background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }
+        .estadistica { background-color: #d1ecf1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<h1>ESQUEMA COMPLETO DEL SISTEMA DE WORKFLOW</h1>
+
+<h2>ESTADOS DEL SISTEMA (11 estados activos)</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Color</th>
+        <th>Descripción</th>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>6</td>
+        <td><strong>BOR</strong></td>
+        <td>Borrador</td>
+        <td>#6c757d</td>
+        <td>Estado inicial, actividad en creación</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>7</td>
+        <td><strong>ENV</strong></td>
+        <td>Enviada</td>
+        <td>#fd7e14</td>
+        <td>Actividad enviada para revisión</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>8</td>
+        <td><strong>SUB</strong></td>
+        <td>Subsanar</td>
+        <td>#dc3545</td>
+        <td>Actividad requiere correcciones</td>
+    </tr>
+    <tr class="estado-final">
+        <td>9</td>
+        <td><strong>ACE</strong></td>
+        <td>Aceptada</td>
+        <td>#2ecc71</td>
+        <td>Actividad aprobada</td>
+    </tr>
+    <tr class="estado-final">
+        <td>15</td>
+        <td><strong>CANCELADA</strong></td>
+        <td>Cancelada</td>
+        <td>#dc3545</td>
+        <td>Actividad cancelada</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>16</td>
+        <td><strong>DEFINICION</strong></td>
+        <td>Definición</td>
+        <td>#0d6efd</td>
+        <td>Actividad en fase de definición</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>17</td>
+        <td><strong>EN_REVISION</strong></td>
+        <td>En revisión</td>
+        <td>#0dcaf0</td>
+        <td>Actividad siendo revisada</td>
+    </tr>
+    <tr class="estado-final">
+        <td>19</td>
+        <td><strong>PUBLICADA</strong></td>
+        <td>Publicada</td>
+        <td>#198754</td>
+        <td>Actividad publicada</td>
+    </tr>
+    <tr class="estado-final">
+        <td>20</td>
+        <td><strong>RECHAZADA</strong></td>
+        <td>Rechazada</td>
+        <td>#dc3545</td>
+        <td>Actividad rechazada</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>21</td>
+        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+        <td>Revisión administrativa</td>
+        <td>#6f42c1</td>
+        <td>Revisión administrativa</td>
+    </tr>
+    <tr class="estado-intermedio">
+        <td>22</td>
+        <td><strong>VALIDACION_UNIDAD</strong></td>
+        <td>Validación unidad</td>
+        <td>#20c997</td>
+        <td>Validación por unidad gestora</td>
+    </tr>
+</table>
+
+<h2>ROLES NORMALIZADOS (6 roles activos)</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Descripción</th>
+    </tr>
+    <tr class="rol-admin">
+        <td>1</td>
+        <td><strong>ADMIN</strong></td>
+        <td>Administrador</td>
+        <td>Administrador del sistema con acceso completo</td>
+    </tr>
+    <tr class="rol-coord">
+        <td>2</td>
+        <td><strong>COORD_TECNICO</strong></td>
+        <td>Coordinador Técnico</td>
+        <td>Coordinador técnico de unidad gestora</td>
+    </tr>
+    <tr class="rol-coord">
+        <td>3</td>
+        <td><strong>COORD_FORMACION</strong></td>
+        <td>Coordinador de Formación</td>
+        <td>Coordinador de formación y actividades</td>
+    </tr>
+    <tr class="rol-docente">
+        <td>4</td>
+        <td><strong>DOCENTE_DINAMIZADOR</strong></td>
+        <td>Docente/Dinamizador</td>
+        <td>Docente o dinamizador de actividades</td>
+    </tr>
+    <tr class="rol-responsable">
+        <td>5</td>
+        <td><strong>RESPONSABLE_UNIDAD</strong></td>
+        <td>Responsable de Unidad</td>
+        <td>Responsable de unidad gestora</td>
+    </tr>
+    <tr class="rol-soporte">
+        <td>6</td>
+        <td><strong>SOPORTE_ADMIN</strong></td>
+        <td>Soporte Administrativo</td>
+        <td>Personal de soporte administrativo</td>
+    </tr>
+</table>
+
+<h2>FLUJO PRINCIPAL DE WORKFLOW</h2>
+
+<h3>1. Creación y Envío</h3>
+<div class="transicion">BOR (Borrador) → ENV (Enviada)</div>
+<ul>
+    <li>COORD_TECNICO: Puede enviar</li>
+    <li>DOCENTE_DINAMIZADOR: Puede enviar</li>
+</ul>
+
+<h3>2. Revisión y Evaluación</h3>
+<div class="transicion">ENV (Enviada) → EN_REVISION (En revisión)</div>
+<ul>
+    <li>COORD_FORMACION: Puede pasar a revisión</li>
+    <li>ADMIN: Puede pasar a revisión</li>
+</ul>
+
+<h3>3. Validación y Definición</h3>
+<div class="transicion">EN_REVISION (En revisión) → VALIDACION_UNIDAD (Validación unidad)</div>
+<ul>
+    <li>COORD_FORMACION: Puede validar</li>
+    <li>ADMIN: Puede validar</li>
+</ul>
+
+<div class="transicion">VALIDACION_UNIDAD → DEFINICION (Definición)</div>
+<ul>
+    <li>RESPONSABLE_UNIDAD: Puede definir</li>
+    <li>ADMIN: Puede definir</li>
+</ul>
+
+<h3>4. Revisión Administrativa</h3>
+<div class="transicion">DEFINICION → REVISION_ADMINISTRATIVA (Revisión administrativa)</div>
+<ul>
+    <li>COORD_TECNICO: Puede pasar a revisión administrativa</li>
+    <li>ADMIN: Puede pasar a revisión administrativa</li>
+</ul>
+
+<h3>5. Publicación</h3>
+<div class="transicion">REVISION_ADMINISTRATIVA → PUBLICADA (Publicada)</div>
+<ul>
+    <li>ADMIN: Puede publicar</li>
+    <li>SOPORTE_ADMIN: Puede publicar</li>
+</ul>
+
+<h2>RESTRICCIONES IMPORTANTES</h2>
+
+<div class="restriccion">
+    <h3>Transiciones Eliminadas:</h3>
+    <p><span class="eliminada">ENV → DEFINICION para COORD_FORMACION</span> (eliminada por ser incorrecta)</p>
+</div>
+
+<div class="restriccion">
+    <h3>Estados de Control:</h3>
+    <ul>
+        <li><strong>CANCELADA</strong>: Estado final, solo ADMIN y SOPORTE_ADMIN pueden modificar</li>
+        <li><strong>RECHAZADA</strong>: Estado final, solo ADMIN y roles superiores pueden modificar</li>
+        <li><strong>PUBLICADA</strong>: Estado final, solo ADMIN y SOPORTE_ADMIN pueden modificar</li>
+    </ul>
+</div>
+
+<h2>ESTADÍSTICAS DEL SISTEMA</h2>
+
+<div class="estadistica">
+    <ul>
+        <li><strong>Total Estados</strong>: 11 activos</li>
+        <li><strong>Total Roles</strong>: 6 normalizados</li>
+        <li><strong>Total Transiciones</strong>: 73 activas</li>
+        <li><strong>Estados Finales</strong>: 4 (CANCELADA, RECHAZADA, PUBLICADA, ACE)</li>
+        <li><strong>Estados Intermedios</strong>: 7 (BOR, ENV, EN_REVISION, DEFINICION, VALIDACION_UNIDAD, REVISION_ADMINISTRATIVA, SUB)</li>
+    </ul>
+</div>
+
+</body>
+</html>

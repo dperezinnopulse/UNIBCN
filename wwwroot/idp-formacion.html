@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Institut de Desenvolupament Professional - Universidad de Barcelona</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        /* PERSONALIZACIÓN IDP - Colores corporativos */
+        .header-section {
+            background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%); /* Azul IDP */
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo-ub {
+            height: 60px;
+        }
+        
+        .logo-ug {
+            height: 80px; /* Más grande para IDP */
+            max-width: 250px;
+            object-fit: contain;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-top: 4px solid #3182ce; /* Borde IDP */
+        }
+        
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #2c5282; /* Color IDP */
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #3182ce; /* Color IDP */
+            box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.25);
+        }
+        
+        .btn-search {
+            background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%); /* Gradiente IDP */
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(49, 130, 206, 0.3);
+            color: white;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .ug-filter {
+            display: none; /* Ocultar filtro UG en páginas específicas */
+        }
+        
+        .activity-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #3182ce; /* Borde IDP */
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .activity-title {
+            color: #2c5282; /* Color IDP */
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+        
+        .activity-type-icon {
+            color: #3182ce; /* Color IDP */
+            margin-right: 0.5rem;
+        }
+        
+        .activity-ug-logo {
+            height: 40px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+        
+        .activity-description {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .activity-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        .meta-item i {
+            color: #3182ce; /* Color IDP */
+            margin-right: 0.5rem;
+            width: 16px;
+        }
+        
+        .activity-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tag {
+            background: #e6f3ff; /* Color IDP suave */
+            color: #2c5282;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .activity-price {
+            background: #3182ce; /* Color IDP */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .activity-price.gratuito {
+            background: #d1edff;
+            color: #0c63e4;
+        }
+        
+        .pagination .page-link {
+            color: #2c5282; /* Color IDP */
+            border-color: #dee2e6;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #3182ce; /* Color IDP */
+            border-color: #3182ce;
+        }
+        
+        .pagination .page-link:hover {
+            color: #2c5282;
+            background-color: #e6f3ff; /* Color IDP suave */
+        }
+        
+        .help-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3182ce; /* Color IDP */
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(49, 130, 206, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .help-icon:hover {
+            background: #2c5282;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* IDP ESPECÍFICO - Sección hero personalizada */
+        .idp-hero {
+            background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .idp-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .idp-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* IDP ESPECÍFICO - Campos adicionales */
+        .idp-specific-filters {
+            background: #e6f3ff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .idp-specific-filters h5 {
+            color: #2c5282;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .logo-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .activity-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .activity-tags {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header con logos -->
+    <div class="header-section">
+        <div class="logo-container">
+            <img src="img/logo_ub.png" alt="Universidad de Barcelona" class="logo-ub">
+            <div class="text-center">
+                <h1 class="h3 mb-0">Institut de Desenvolupament Professional</h1>
+                <p class="mb-0 opacity-75">Formación y Desarrollo Profesional</p>
+            </div>
+            <img src="img/IDP.jpeg" alt="Institut de Desenvolupament Professional" class="logo-ug">
+        </div>
+    </div>
+
+    <!-- Hero Section IDP -->
+    <div class="idp-hero">
+        <div class="main-container">
+            <h1><i class="fas fa-graduation-cap me-3"></i>Formación Profesional Especializada</h1>
+            <p>Descubre nuestra oferta formativa diseñada para el desarrollo profesional y la excelencia académica</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Filtros de búsqueda -->
+        <div class="filters-section">
+            <h4 class="mb-4"><i class="fas fa-filter me-2"></i>Buscar Actividades IDP</h4>
+            
+            <!-- IDP - Filtros específicos -->
+            <div class="idp-specific-filters">
+                <h5><i class="fas fa-star me-2"></i>Filtros Especializados IDP</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">Área de Desarrollo</label>
+                            <select class="form-select" id="areaDesarrollo">
+                                <option value="">Todas las áreas</option>
+                                <option value="liderazgo">Liderazgo y Gestión</option>
+                                <option value="comunicacion">Comunicación</option>
+                                <option value="innovacion">Innovación</option>
+                                <option value="digital">Competencias Digitales</option>
+                                <option value="internacional">Cooperación Internacional</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">Modalidad de Formación</label>
+                            <select class="form-select" id="modalidadFormacion">
+                                <option value="">Todas las modalidades</option>
+                                <option value="presencial">Presencial</option>
+                                <option value="online">Online</option>
+                                <option value="hibrida">Híbrida</option>
+                                <option value="blended">Blended Learning</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Buscar por nombre o contenido</label>
+                        <input type="text" class="form-control" id="searchText" placeholder="Ej: liderazgo, gestión, comunicación...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">Tipo de actividad</label>
+                        <select class="form-select" id="tipoActividad">
+                            <option value="">Todos los tipos</option>
+                            <option value="Curso">Curso</option>
+                            <option value="Seminario">Seminario</option>
+                            <option value="Jornada">Jornada</option>
+                            <option value="Conferencia">Conferencia</option>
+                            <option value="Taller">Taller</option>
+                            <option value="Master">Master</option>
+                            <option value="Posgrado">Posgrado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <input type="checkbox" id="cursoGratuito" class="form-check-input me-2">
+                            <span id="gratuito-label">Mostrar todos</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha desde</label>
+                        <input type="date" class="form-control" id="fechaDesde">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha hasta</label>
+                        <input type="date" class="form-control" id="fechaHasta">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <button type="button" class="btn btn-search me-3" onclick="aplicarFiltros()">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                    <button type="button" class="btn btn-clear" onclick="limpiarFiltros()">
+                        <i class="fas fa-eraser me-2"></i>Limpiar filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados -->
+        <div id="results-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">Actividades disponibles</h5>
+                    <small class="text-muted" id="results-count">Cargando...</small>
+                </div>
+            </div>
+            
+            <div id="activitiesList">
+                <!-- Las actividades se cargarán aquí -->
+            </div>
+            
+            <!-- Paginación -->
+            <nav aria-label="Paginación de actividades" class="mt-4">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- La paginación se generará aquí -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Icono de ayuda -->
+    <a href="manual-alumnos/index.html" class="help-icon" title="Manual de usuario">
+        <i class="fas fa-question"></i>
+    </a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script de autenticación para monkey patch automático -->
+    <script src="auth.js"></script>
+    
+    <script>
+        // Configuración específica para IDP
+        const UG_CONFIG = {
+            id: 1,
+            nombre: 'Institut de Desenvolupament Professional',
+            codigo: 'IDP',
+            logo: 'img/IDP.jpeg',
+            color: '#3182ce',
+            colorSecundario: '#2c5282',
+            descripcion: 'Formación y Desarrollo Profesional'
+        };
+
+        // Variables globales
+        let allActivities = [];
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = 1;
+
+        // Cargar actividades específicas de IDP
+        async function cargarActividadesIDP() {
+            console.log('📋 Cargando actividades específicas de IDP...');
+            
+            try {
+                // Intentar login automático para obtener datos completos
+                const token = sessionStorage.getItem('ub_token');
+                if (!token) {
+                    try {
+                        const loginResp = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: 'Admin', password: 'Admin' })
+                        });
+                        if (loginResp.ok) {
+                            const loginData = await loginResp.json();
+                            sessionStorage.setItem('ub_token', loginData.token);
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Login automático falló:', e.message);
+                    }
+                }
+
+                // Cargar actividades de IDP
+                const url = new URL('/api/actividades', window.location.origin);
+                url.searchParams.set('ug', UG_CONFIG.id);
+                url.searchParams.set('pageSize', 100);
+
+                const response = await fetch(url.toString());
+                if (response.ok) {
+                    const data = await response.json();
+                    let actividades = data.items || [];
+                    
+                    // Filtrar solo actividades publicadas
+                    actividades = actividades.filter(act => act.estadoId === 7);
+                    
+                    allActivities = actividades;
+                    console.log(`✅ Actividades IDP cargadas: ${allActivities.length}`);
+                } else {
+                    console.log('⚠️ Fallback a endpoint público');
+                    const publicUrl = new URL('/api/actividades/buscar', window.location.origin);
+                    publicUrl.searchParams.set('ug', UG_CONFIG.id);
+                    publicUrl.searchParams.set('pageSize', 100);
+                    
+                    const publicResponse = await fetch(publicUrl.toString());
+                    if (publicResponse.ok) {
+                        const publicData = await publicResponse.json();
+                        allActivities = publicData.items || [];
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando actividades IDP:', error);
+                allActivities = [];
+            }
+
+            return allActivities;
+        }
+
+        // Aplicar filtros locales
+        function aplicarFiltrosLocales() {
+            const searchText = document.getElementById('searchText').value.toLowerCase().trim();
+            const tipoActividad = document.getElementById('tipoActividad').value;
+            const fechaDesde = document.getElementById('fechaDesde').value;
+            const fechaHasta = document.getElementById('fechaHasta').value;
+            const cursoGratuito = document.getElementById('cursoGratuito').checked;
+            const areaDesarrollo = document.getElementById('areaDesarrollo').value;
+            const modalidadFormacion = document.getElementById('modalidadFormacion').value;
+
+            let filtered = [...allActivities];
+
+            // Filtro de texto
+            if (searchText) {
+                filtered = filtered.filter(act => 
+                    (act.titulo || '').toLowerCase().includes(searchText) ||
+                    (act.descripcion || '').toLowerCase().includes(searchText) ||
+                    (act.codigo || '').toLowerCase().includes(searchText)
+                );
+            }
+
+            // Filtro de tipo
+            if (tipoActividad) {
+                filtered = filtered.filter(act => act.tipoActividad === tipoActividad);
+            }
+
+            // Filtro de fechas
+            if (fechaDesde) {
+                const desde = new Date(fechaDesde);
+                filtered = filtered.filter(act => {
+                    if (!act.fechaInicio) return false;
+                    const fechaAct = new Date(act.fechaInicio);
+                    return fechaAct >= desde;
+                });
+            }
+
+            if (fechaHasta) {
+                const hasta = new Date(fechaHasta);
+                filtered = filtered.filter(act => {
+                    if (!act.fechaInicio) return false;
+                    const fechaAct = new Date(act.fechaInicio);
+                    return fechaAct <= hasta;
+                });
+            }
+
+            // Filtro gratuito
+            if (cursoGratuito) {
+                filtered = filtered.filter(act => act.actividadPago === false);
+            }
+
+            // Filtros específicos IDP (simulados por ahora)
+            if (areaDesarrollo) {
+                filtered = filtered.filter(act => 
+                    (act.lineaEstrategica || '').toLowerCase().includes(areaDesarrollo) ||
+                    (act.descripcion || '').toLowerCase().includes(areaDesarrollo)
+                );
+            }
+
+            if (modalidadFormacion) {
+                filtered = filtered.filter(act => 
+                    (act.modalidadGestion || '').toLowerCase().includes(modalidadFormacion)
+                );
+            }
+
+            return filtered;
+        }
+
+        // Renderizar actividades
+        function renderActividades(actividades) {
+            const container = document.getElementById('activitiesList');
+            
+            if (!actividades || actividades.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No se encontraron actividades</h5>
+                        <p class="text-muted">Prueba ajustando los filtros de búsqueda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const actividadesHtml = actividades.map(actividad => {
+                const fechaInicio = actividad.fechaInicio ? 
+                    new Date(actividad.fechaInicio).toLocaleDateString('es-ES', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    }) : '';
+
+                const tipoIcon = getTipoIcon(actividad.tipoActividad);
+                const esGratuito = actividad.actividadPago === false;
+                
+                return `
+                    <div class="activity-card" onclick="location.href='detalle-publico.html?id=${actividad.id}'" style="cursor:pointer">
+                        <div class="activity-content">
+                            <div class="d-flex align-items-start justify-content-between mb-2">
+                                <h4 class="activity-title flex-grow-1">
+                                    <i class="${tipoIcon} activity-type-icon"></i>
+                                    ${actividad.titulo || 'Sin título'}
+                                    ${actividad.tipoActividad ? `<span class="text-muted small ms-2">(${actividad.tipoActividad})</span>` : ''}
+                                </h4>
+                                <img src="${UG_CONFIG.logo}" alt="${UG_CONFIG.nombre}" class="activity-ug-logo">
+                            </div>
+                            <div class="activity-description">
+                                ${truncateText(actividad.descripcion || '', 150)}
+                            </div>
+                            <div class="activity-meta">
+                                ${actividad.plazasTotales ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-users"></i>
+                                        <span>${actividad.plazasTotales} plazas</span>
+                                    </div>
+                                ` : ''}
+                                ${actividad.horasTotales ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>${actividad.horasTotales} horas</span>
+                                    </div>
+                                ` : ''}
+                                ${fechaInicio ? `
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>${fechaInicio}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="activity-tags">
+                                ${actividad.lineaEstrategica ? `<span class="tag">${actividad.lineaEstrategica}</span>` : ''}
+                                ${actividad.objetivoEstrategico ? `<span class="tag">${actividad.objetivoEstrategico}</span>` : ''}
+                            </div>
+                            <div class="mt-2">
+                                ${esGratuito ? 
+                                    `<span class="activity-price gratuito"><i class="fas fa-gift me-1"></i>Gratuito</span>` :
+                                    `<span class="activity-price"><i class="fas fa-euro-sign me-1"></i>Consultar precio</span>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = actividadesHtml;
+        }
+
+        // Funciones auxiliares
+        function getTipoIcon(tipo) {
+            const icons = {
+                'Curso': 'fas fa-graduation-cap',
+                'Seminario': 'fas fa-users',
+                'Jornada': 'fas fa-calendar-day',
+                'Conferencia': 'fas fa-microphone',
+                'Taller': 'fas fa-tools',
+                'Congreso': 'fas fa-globe',
+                'Master': 'fas fa-award',
+                'Posgrado': 'fas fa-certificate'
+            };
+            return icons[tipo] || 'fas fa-bookmark';
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        // Event listeners
+        function aplicarFiltros() {
+            const filtered = aplicarFiltrosLocales();
+            renderActividades(filtered);
+            document.getElementById('results-count').textContent = `${filtered.length} actividades encontradas`;
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchText').value = '';
+            document.getElementById('tipoActividad').value = '';
+            document.getElementById('fechaDesde').value = '';
+            document.getElementById('fechaHasta').value = '';
+            document.getElementById('cursoGratuito').checked = false;
+            document.getElementById('areaDesarrollo').value = '';
+            document.getElementById('modalidadFormacion').value = '';
+            document.getElementById('gratuito-label').textContent = 'Mostrar todos';
+            
+            renderActividades(allActivities);
+            document.getElementById('results-count').textContent = `${allActivities.length} actividades encontradas`;
+        }
+
+        // Checkbox gratuito
+        document.getElementById('cursoGratuito').addEventListener('change', function() {
+            const label = document.getElementById('gratuito-label');
+            label.textContent = this.checked ? 'Solo gratuitos' : 'Mostrar todos';
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🏛️ Inicializando página IDP...');
+            await cargarActividadesIDP();
+            renderActividades(allActivities);
+            document.getElementById('results-count').textContent = `${allActivities.length} actividades encontradas`;
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+

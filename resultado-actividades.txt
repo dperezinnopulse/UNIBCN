@@ -1,0 +1,12 @@
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'DescripcionPrograma' no es válido.
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'Duracion' no es válido.
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'CursoGratuito' no es válido.
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'DescripcionPrograma' no es válido.
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'Duracion' no es válido.
+Mensaje 207, Nivel 16, Estado 1, Servidor DESKTOP-C738SVD, Línea 7
+El nombre de columna 'CursoGratuito' no es válido.

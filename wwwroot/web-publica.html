@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Actividades - Universidad de Barcelona</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo-ub {
+            height: 60px;
+        }
+        
+        .logo-ug {
+            height: 60px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+        }
+        
+        .btn-search {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+            color: white;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .activities-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .activity-card {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-color: #1e3c72;
+        }
+        
+        .activity-title {
+            color: #1e3c72;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .activity-description {
+            color: #6c757d;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .activity-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        .meta-item i {
+            margin-right: 0.5rem;
+            color: #1e3c72;
+        }
+        
+        .activity-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .tag {
+            background: #e3f2fd;
+            color: #1e3c72;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .tag.gratuito {
+            background: #e8f5e8;
+            color: #28a745;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-count {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #1e3c72;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Filtro de unidades gestoras con logos */
+        .ug-filter {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        
+        .ug-option {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .ug-option:hover {
+            border-color: #1e3c72;
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+        }
+        
+        .ug-option.active {
+            border-color: #1e3c72;
+            background: #f8f9ff;
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
+        }
+        
+        .ug-option img {
+            max-height: 30px;
+            max-width: 80px;
+            object-fit: contain;
+            margin-bottom: 0.25rem;
+        }
+        
+        .ug-option .ug-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .ug-option.active .ug-name {
+            color: #1e3c72;
+        }
+        
+        /* Estilos para elementos en las tarjetas de actividades */
+        .activity-type-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            color: #1e3c72;
+        }
+        
+        .activity-ug-logo {
+            max-height: 25px;
+            max-width: 60px;
+            object-fit: contain;
+            margin-left: 0.5rem;
+        }
+        
+        .activity-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0.5rem 0;
+        }
+        
+        .activity-price {
+            background: #fff3cd;
+            color: #856404;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+        
+        .activity-price.gratuito {
+            background: #d1edff;
+            color: #0c63e4;
+        }
+
+        /* Estilos para navegación UG */
+        .ug-navigation {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .ug-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .ug-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .ug-link:hover {
+            text-decoration: none;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .ug-link span {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .ug-link small {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Colores específicos por UG */
+        .idp-link {
+            background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+            color: #2c5282;
+            border-color: #3182ce;
+        }
+
+        .idp-link:hover {
+            color: #2c5282;
+            background: linear-gradient(135deg, #cce7ff 0%, #b3daff 100%);
+        }
+
+        .crai-link {
+            background: linear-gradient(135deg, #e8f8f5 0%, #d1f2eb 100%);
+            color: #16a085;
+            border-color: #1abc9c;
+        }
+
+        .crai-link:hover {
+            color: #16a085;
+            background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%);
+        }
+
+        .sae-link {
+            background: linear-gradient(135deg, #fef5e7 0%, #fdebd0 100%);
+            color: #e67e22;
+            border-color: #f39c12;
+        }
+
+        .sae-link:hover {
+            color: #e67e22;
+            background: linear-gradient(135deg, #fdebd0 0%, #fcd9b6 100%);
+        }
+
+        /* Botón especializado UG con logos rotando */
+        .ug-specialized-btn {
+            position: relative;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            padding: 0.5rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .ug-specialized-btn:hover {
+            border-color: #1e3c72;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+        }
+
+        .ug-rotating-logo {
+            position: relative;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ug-logo-small {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            border-radius: 50%;
+        }
+
+        .ug-logo-small.active {
+            opacity: 1;
+        }
+
+        .web-icon {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: #1e3c72;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 768px) {
+            .ug-links {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .ug-link {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Header con logos -->
+    <div class="header-section">
+        <div class="logo-container">
+            <img src="img/logo_ub.png" alt="Universidad de Barcelona" class="logo-ub">
+            <div class="text-center">
+                <h1 class="mb-0">Actividades de Formación</h1>
+                <p class="mb-0 opacity-75" id="ug-name">Unidad Gestora</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="manual-alumnos/index.html" class="text-white text-decoration-none" title="Manual de ayuda para alumnos">
+                    <i class="fas fa-question-circle fs-4"></i>
+                </a>
+                <img id="ug-logo" src="" alt="Logo Unidad Gestora" class="logo-ug">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Sección de filtros -->
+        <div class="filters-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros de Búsqueda</h3>
+                <button class="ug-specialized-btn" type="button" data-bs-toggle="collapse" data-bs-target="#ugNavigation" aria-expanded="false" aria-controls="ugNavigation" id="toggleUgNavigation" title="Ver páginas especializadas de cada unidad gestora">
+                    <div class="ug-rotating-logo" id="rotatingLogo">
+                        <img src="img/IDP.jpeg" alt="UG" class="ug-logo-small active">
+                        <img src="img/CRAI.png" alt="UG" class="ug-logo-small">
+                        <img src="img/SAE.jpeg" alt="UG" class="ug-logo-small">
+                    </div>
+                    <i class="fas fa-external-link-alt web-icon"></i>
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="filter-group">
+                        <label class="filter-label">Buscar en título, descripción y programa</label>
+                        <input type="text" class="form-control" id="searchText" placeholder="Escribe para buscar...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha inicio desde</label>
+                        <input type="date" class="form-control" id="fechaDesde">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">Fecha inicio hasta</label>
+                        <input type="date" class="form-control" id="fechaHasta">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtro de unidades gestoras -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="filter-group">
+                        <label class="filter-label">Unidades gestoras</label>
+                        <div class="ug-filter" id="ugFilter">
+                            <div class="ug-option active" data-ug="todas">
+                                <div><i class="fas fa-globe" style="font-size: 24px; color: #1e3c72;"></i></div>
+                                <div class="ug-name">Todas</div>
+                            </div>
+                            <div class="ug-option" data-ug="idp">
+                                <div><img src="img/IDP.jpeg" alt="IDP"></div>
+                                <div class="ug-name">IDP</div>
+                            </div>
+                            <div class="ug-option" data-ug="crai">
+                                <div><img src="img/CRAI.png" alt="CRAI"></div>
+                                <div class="ug-name">CRAI</div>
+                            </div>
+                            <div class="ug-option" data-ug="sae">
+                                <div><img src="img/SAE.jpeg" alt="SAE"></div>
+                                <div class="ug-name">SAE</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <!-- Enlaces a páginas específicas de cada UG (colapsable) -->
+                        <div class="collapse mt-3" id="ugNavigation">
+                            <div class="ug-navigation">
+                                <p class="text-muted mb-2 text-center"><i class="fas fa-external-link-alt me-2"></i>Visita las páginas especializadas:</p>
+                                <div class="ug-links">
+                                    <a href="idp-formacion.html" class="ug-link idp-link" title="Página especializada del Institut de Desenvolupament Professional">
+                                        <i class="fas fa-graduation-cap me-2"></i>
+                                        <span>IDP Especializada</span>
+                                        <small>Desarrollo Profesional</small>
+                                    </a>
+                                    <a href="crai-formacion.html" class="ug-link crai-link" title="Página especializada del Centre de Recursos per a l'Aprenentatge">
+                                        <i class="fas fa-book me-2"></i>
+                                        <span>CRAI Especializada</span>
+                                        <small>Recursos de Aprendizaje</small>
+                                    </a>
+                                    <a href="sae-formacion.html" class="ug-link sae-link" title="Página especializada del Servei d'Activitats Extraordinàries">
+                                        <i class="fas fa-star me-2"></i>
+                                        <span>SAE Especializada</span>
+                                        <small>Actividades Especiales</small>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="filter-group">
+                        <label class="filter-label">Tipo de actividad</label>
+                        <select class="form-select" id="tipoActividad">
+                            <option value="">Todos los tipos</option>
+                            <option value="Seminario">Seminario</option>
+                            <option value="Conferencia">Conferencia</option>
+                            <option value="Taller">Taller</option>
+                            <option value="Congreso">Congreso</option>
+                            <option value="Master">Master</option>
+                            <option value="Posgrado">Posgrado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="filter-group">
+                        <label class="filter-label">Curso gratuito</label>
+                        <div class="d-flex align-items-center">
+                            <label class="switch me-3">
+                                <input type="checkbox" id="cursoGratuito">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="gratuito-label">Mostrar todos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="filter-group">
+                        <label class="filter-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-search" onclick="aplicarFiltros()">
+                                <i class="fas fa-search me-2"></i>Buscar
+                            </button>
+                            <button class="btn btn-clear" onclick="limpiarFiltros()">
+                                <i class="fas fa-times me-2"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de actividades -->
+        <div class="activities-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-list me-2"></i>Actividades Disponibles</h3>
+                <div class="results-count" id="resultsCount"></div>
+            </div>
+            
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <i class="fas fa-spinner"></i>
+                <p>Cargando actividades...</p>
+            </div>
+            
+            <div id="noResults" class="no-results" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h4>No se encontraron actividades</h4>
+                <p>Intenta ajustar los filtros de búsqueda</p>
+            </div>
+            
+            <div id="activitiesList">
+                <!-- Las actividades se cargarán aquí dinámicamente -->
+            </div>
+            <nav class="mt-3">
+                <ul id="pagination" class="pagination justify-content-center"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuración de la Unidad Gestora
+        const ugConfig = {
+            'crai': {
+                name: 'CRAI - Centro de Recursos para el Aprendizaje y la Investigación',
+                logo: 'img/CRAI.png',
+                id: 2
+            },
+            'sae': {
+                name: 'SAE - Servicio de Actividades Estudiantiles',
+                logo: 'img/SAE.jpeg',
+                id: 3
+            },
+            'idp': {
+                name: 'IDP - Instituto de Desarrollo Profesional',
+                logo: 'img/IDP.jpeg',
+                id: 1
+            }
+        };
+
+        let currentUG = null;
+        let allActivities = [];
+        let filteredActivities = [];
+        let page = 1;
+        let pageSize = 10;
+        let selectedUGs = ['todas']; // Por defecto todas las UGs
+
+        // Login automático silencioso para páginas públicas
+        async function loginSilencioso() {
+            console.log('🔍 Verificando token existente...');
+            const token = localStorage.getItem('ub_token');
+            if (!token) {
+                try {
+                    console.log('🔐 Haciendo login automático para acceso a datos...');
+                    const resp = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: 'Admin', password: 'Admin' })
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        localStorage.setItem('ub_token', data.token);
+                        console.log('✅ Login automático exitoso - Token guardado');
+                        return true;
+                    } else {
+                        console.log('❌ Login automático falló - Status:', resp.status);
+                        return false;
+                    }
+                } catch (e) {
+                    console.log('⚠️ Login automático falló - Error:', e.message);
+                    return false;
+                }
+            } else {
+                console.log('✅ Token ya existe en localStorage');
+                return true;
+            }
+        }
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌐 Inicializando página pública (sin autenticación)...');
+            
+            // Obtener parámetro de UG de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const ugParam = urlParams.get('ug');
+            
+            if (ugParam && ugConfig[ugParam]) {
+                // Modo específico de unidad gestora
+                currentUG = ugConfig[ugParam];
+                configurarPagina();
+                // Sincronizar filtros desde URL
+                syncFiltersFromUrl();
+                console.log('📋 Cargando actividades para UG específica:', ugParam);
+                cargarActividades();
+            } else {
+                // Modo general - sin UG específica
+                currentUG = null;
+                configurarPaginaGeneral();
+                // Sincronizar filtros desde URL
+                syncFiltersFromUrl();
+                console.log('🌐 Cargando página general - todas las unidades gestoras');
+                cargarActividades();
+            }
+
+            // Configurar eventos
+            document.getElementById('cursoGratuito').addEventListener('change', function() {
+                const label = document.getElementById('gratuito-label');
+                label.textContent = this.checked ? 'Solo gratuitos' : 'Mostrar todos';
+            });
+
+            // Buscar al presionar Enter
+            document.getElementById('searchText').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    aplicarFiltros();
+                }
+            });
+
+            // Configurar eventos para filtro de unidades gestoras
+            document.querySelectorAll('.ug-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const ugValue = this.getAttribute('data-ug');
+                    
+                    if (ugValue === 'todas') {
+                        // Si selecciona "todas", desmarcar las demás y marcar solo "todas"
+                        selectedUGs = ['todas'];
+                        document.querySelectorAll('.ug-option').forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                    } else {
+                        // Si selecciona una específica, quitar "todas" y toggle la seleccionada
+                        if (selectedUGs.includes('todas')) {
+                            selectedUGs = [];
+                            document.querySelector('.ug-option[data-ug="todas"]').classList.remove('active');
+                        }
+                        
+                        if (selectedUGs.includes(ugValue)) {
+                            // Deseleccionar
+                            selectedUGs = selectedUGs.filter(ug => ug !== ugValue);
+                            this.classList.remove('active');
+                        } else {
+                            // Seleccionar
+                            selectedUGs.push(ugValue);
+                            this.classList.add('active');
+                        }
+                        
+                        // Si no hay ninguna seleccionada, volver a "todas"
+                        if (selectedUGs.length === 0) {
+                            selectedUGs = ['todas'];
+                            document.querySelector('.ug-option[data-ug="todas"]').classList.add('active');
+                        }
+                    }
+                    
+                    console.log('🏢 Unidades gestoras seleccionadas:', selectedUGs);
+                    aplicarFiltros();
+                });
+            });
+        });
+
+        function configurarPagina() {
+            document.getElementById('ug-name').textContent = currentUG.name;
+            document.getElementById('ug-logo').src = currentUG.logo;
+            document.title = `Actividades - ${currentUG.name}`;
+        }
+
+        function configurarPaginaGeneral() {
+            document.getElementById('ug-name').textContent = 'Oferta Formativa';
+            document.getElementById('ug-logo').style.display = 'none'; // Ocultar logo específico
+            document.title = 'Actividades - Universidad de Barcelona';
+            
+            // Mostrar todas las UGs como seleccionadas por defecto
+            selectedUGs = ['todas'];
+        }
+
+        async function cargarTodasLasActividades() {
+            console.log('📋 Cargando actividades de todas las unidades gestoras...');
+            
+            const actividadesUnicas = new Map();
+            
+            // Intentar login automático para obtener datos completos
+            const token = sessionStorage.getItem('ub_token');
+            console.log('🔍 Token existente:', !!token);
+            if (!token) {
+                try {
+                    console.log('🔐 Haciendo login automático...');
+                    const loginResp = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: 'Admin', password: 'Admin' })
+                    });
+                    console.log('🔐 Login response status:', loginResp.status);
+                    if (loginResp.ok) {
+                        const loginData = await loginResp.json();
+                        sessionStorage.setItem('ub_token', loginData.token);
+                        console.log('✅ Login automático exitoso - Token guardado en sesión');
+                        
+                        // Pequeña pausa para asegurar que el token se procese
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    } else {
+                        console.log('❌ Login falló con status:', loginResp.status);
+                    }
+                } catch (e) {
+                    console.log('⚠️ Login automático falló:', e.message);
+                }
+            } else {
+                console.log('✅ Token ya existe en sesión');
+            }
+
+            // Cargar actividades individuales con datos completos
+            try {
+                console.log('🌐 Cargando actividades individuales con datos completos...');
+                
+                // Primero obtener lista de IDs de actividades publicadas
+                const listaUrl = new URL('/api/actividades', window.location.origin);
+                listaUrl.searchParams.set('pageSize', 100);
+                
+                const listaResponse = await fetch(listaUrl.toString());
+                console.log('📡 Lista response status:', listaResponse.status);
+                
+                if (listaResponse.ok) {
+                    const listaData = await listaResponse.json();
+                    const actividadesBasicas = listaData.items || [];
+                    console.log('📋 IDs obtenidos:', actividadesBasicas.map(a => a.id));
+                    
+                    // Cargar cada actividad individualmente para obtener datos completos
+                    for (const actBasica of actividadesBasicas) {
+                        if (actBasica.estadoId === 7 && !actividadesUnicas.has(actBasica.id)) {
+                            try {
+                                const actUrl = `/api/actividades/${actBasica.id}`;
+                                const actResponse = await fetch(actUrl);
+                                if (actResponse.ok) {
+                                    const actCompleta = await actResponse.json();
+                                    
+                                    // Cargar también los importes
+                                    try {
+                                        const importesResponse = await fetch(`/api/actividades/${actCompleta.id}/importes`);
+                                        if (importesResponse.ok) {
+                                            actCompleta.importesDescuentos = await importesResponse.json();
+                                        }
+                                    } catch (e) {
+                                        console.log('⚠️ Error cargando importes para', actCompleta.id);
+                                    }
+                                    
+                                    // Añadir datos de unidad gestión si no están
+                                    if (!actCompleta.unidadGestion && actCompleta.unidadGestionId) {
+                                        const ugConfig = {
+                                            1: { id: 1, nombre: 'Institut de Desenvolupament Professional', logo: 'img/IDP.jpeg' },
+                                            2: { id: 2, nombre: 'Centre de Recursos per a l\'Aprenentatge i la Investigació', logo: 'img/CRAI.png' },
+                                            3: { id: 3, nombre: 'Servei d\'Activitats Extraordinàries', logo: 'img/SAE.jpeg' }
+                                        };
+                                        actCompleta.unidadGestion = ugConfig[actCompleta.unidadGestionId] || null;
+                                    }
+                                    
+                                    console.log(`📋 Actividad ${actCompleta.id} completa:`, {
+                                        titulo: actCompleta.titulo,
+                                        tipoActividad: actCompleta.tipoActividad,
+                                        actividadPago: actCompleta.actividadPago,
+                                        lineaEstrategica: actCompleta.lineaEstrategica,
+                                        importes: actCompleta.importesDescuentos?.length || 0
+                                    });
+                                    actividadesUnicas.set(actCompleta.id, actCompleta);
+                                }
+                            } catch (e) {
+                                console.log(`❌ Error cargando actividad ${actBasica.id}:`, e);
+                            }
+                        }
+                    }
+                    
+                    console.log(`✅ Actividades completas cargadas: ${actividadesUnicas.size}`);
+                } else {
+                    console.log('⚠️ Fallback a endpoint público');
+                    // Fallback si falla
+                    for (const [key, config] of Object.entries(ugConfig)) {
+                        try {
+                            const url = new URL('/api/actividades/publicas', window.location.origin);
+                            url.searchParams.set('unidadGestionId', config.id);
+                            url.searchParams.set('pageSize', 100);
+                            
+                            const response = await fetch(url.toString());
+                            if (response.ok) {
+                                const data = await response.json();
+                                let actividades = Array.isArray(data) ? data : (data.items || []);
+                                
+                                actividades.forEach(act => {
+                                    if (!actividadesUnicas.has(act.id)) {
+                                        actividadesUnicas.set(act.id, act);
+                                    }
+                                });
+                                
+                                console.log(`✅ ${key.toUpperCase()}: ${actividades.length} actividades`);
+                            }
+                        } catch (e) {
+                            console.log(`❌ Error cargando ${key}:`, e);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('❌ Error general:', e);
+            }
+            
+            allActivities = Array.from(actividadesUnicas.values());
+            console.log('📊 Total actividades únicas cargadas:', allActivities.length);
+            
+            return allActivities;
+        }
+
+        async function cargarActividades() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const activitiesList = document.getElementById('activitiesList');
+            const noResults = document.getElementById('noResults');
+
+            loadingIndicator.style.display = 'block';
+            activitiesList.innerHTML = '';
+            noResults.style.display = 'none';
+
+            try {
+                await cargarTodasLasActividades();
+                aplicarFiltrosLocales();
+            } catch (error) {
+                console.error('Error:', error);
+                activitiesList.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error al cargar las actividades. Por favor, inténtalo de nuevo.
+                    </div>
+                `;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function mostrarActividades() {
+            const activitiesList = document.getElementById('activitiesList');
+            const noResults = document.getElementById('noResults');
+            const resultsCount = document.getElementById('resultsCount');
+
+            if (filteredActivities.length === 0) {
+                activitiesList.innerHTML = '';
+                noResults.style.display = 'block';
+                resultsCount.textContent = '';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            const total = filteredActivities.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (page > totalPages) page = totalPages;
+            const start = (page - 1) * pageSize;
+            const items = filteredActivities.slice(start, start + pageSize);
+            resultsCount.textContent = `${total} actividad${total !== 1 ? 'es' : ''} · página ${page}/${totalPages}`;
+
+            activitiesList.innerHTML = items.map(actividad => {
+                console.log(`🔍 Renderizando actividad ${actividad.id}:`, {
+                    titulo: actividad.titulo,
+                    tipoActividad: actividad.tipoActividad,
+                    actividadPago: actividad.actividadPago,
+                    fechaInicio: actividad.fechaInicio,
+                    lineaEstrategica: actividad.lineaEstrategica,
+                    unidadGestion: actividad.unidadGestion
+                });
+                
+                const logoUG = obtenerLogoUG(actividad.unidadGestion);
+                const iconoTipo = obtenerIconoTipo(actividad.tipoActividad);
+                const descripcionCorta = truncarDescripcion(actividad.descripcion, 250);
+                const precio = formatearPrecio(actividad);
+                
+                console.log(`🏢 Logo UG para actividad ${actividad.id}:`, logoUG);
+                
+                return `
+                <div class="activity-card" onclick="location.href='detalle-publico.html?id=${actividad.id || actividad.Id}'" style="cursor:pointer">
+                    <div class="activity-content">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <h4 class="activity-title flex-grow-1">
+                                <i class="${iconoTipo} activity-type-icon"></i>
+                                ${actividad.titulo || 'Sin título'}
+                                ${actividad.tipoActividad ? `<span class="text-muted small ms-2">(${actividad.tipoActividad})</span>` : ''}
+                            </h4>
+                            ${logoUG ? `<img src="${logoUG}" alt="${actividad.unidadGestion?.nombre}" class="activity-ug-logo">` : ''}
+                        </div>
+                        
+                        <div class="activity-description">
+                            ${descripcionCorta}
+                        </div>
+                        
+                        <div class="activity-meta">
+                            ${actividad.fechaInicio ? `
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Inicio: ${formatearFecha(actividad.fechaInicio)}</span>
+                                </div>
+                            ` : ''}
+                            ${actividad.fechaFin ? `
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Fin: ${formatearFecha(actividad.fechaFin)}</span>
+                                </div>
+                            ` : ''}
+                            ${actividad.plazasTotales ? `
+                                <div class="meta-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>${actividad.plazasTotales} plazas</span>
+                                </div>
+                            ` : ''}
+                            ${actividad.horasTotales ? `
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${actividad.horasTotales} horas</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="activity-tags">
+                            ${actividad.lineaEstrategica ? `<span class="tag">${actividad.lineaEstrategica}</span>` : ''}
+                            ${actividad.objetivoEstrategico ? `<span class="tag">${actividad.objetivoEstrategico}</span>` : ''}
+                        </div>
+                        
+                        <div class="mt-2">
+                            ${precio}
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            renderPagination(totalPages);
+        }
+
+        function aplicarFiltrosLocales() {
+            const searchText = document.getElementById('searchText').value.toLowerCase().trim();
+            const fechaDesde = document.getElementById('fechaDesde').value;
+            const fechaHasta = document.getElementById('fechaHasta').value;
+            const tipoActividad = document.getElementById('tipoActividad').value;
+            const cursoGratuito = document.getElementById('cursoGratuito').checked;
+
+            console.log('🔍 Aplicando filtros locales:', { searchText, tipoActividad, cursoGratuito, selectedUGs });
+
+            filteredActivities = allActivities.filter(actividad => {
+                // Filtro de unidades gestoras
+                if (!selectedUGs.includes('todas')) {
+                    const ugActividad = actividad.unidadGestion?.id || actividad.unidadGestionId;
+                    const ugValida = selectedUGs.some(ugSelected => {
+                        const config = Object.values(ugConfig).find(c => c.name.toLowerCase().includes(ugSelected) || ugSelected === 'idp' && c.id === 1 || ugSelected === 'crai' && c.id === 2 || ugSelected === 'sae' && c.id === 3);
+                        return config && config.id === ugActividad;
+                    });
+                    if (!ugValida) {
+                        return false;
+                    }
+                }
+                // Filtro de texto
+                if (searchText) {
+                    const textoCompleto = [
+                        actividad.titulo || '',
+                        actividad.descripcion || '',
+                        actividad.codigo || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!textoCompleto.includes(searchText)) {
+                        return false;
+                    }
+                }
+
+                // Filtro de tipo de actividad
+                if (tipoActividad && actividad.tipoActividad !== tipoActividad) {
+                    return false;
+                }
+
+                // Filtro de fecha inicio
+                if (fechaDesde && actividad.fechaInicio) {
+                    if (new Date(actividad.fechaInicio) < new Date(fechaDesde)) {
+                        return false;
+                    }
+                }
+
+                if (fechaHasta && actividad.fechaInicio) {
+                    if (new Date(actividad.fechaInicio) > new Date(fechaHasta)) {
+                        return false;
+                    }
+                }
+
+                // Filtro de curso gratuito
+                if (cursoGratuito) {
+                    console.log(`🔍 FILTRO GRATUITO - Actividad ${actividad.id} (${actividad.titulo}):`, {
+                        actividadPago: actividad.actividadPago,
+                        tipo: typeof actividad.actividadPago,
+                        esGratuito: actividad.actividadPago === false
+                    });
+                    
+                    const esGratuito = actividad.actividadPago === false;
+                    if (!esGratuito) {
+                        console.log(`   ❌ Filtrada: no es gratuita`);
+                        return false;
+                    } else {
+                        console.log(`   ✅ Pasa filtro: es gratuita`);
+                    }
+                }
+
+                return true;
+            });
+
+            console.log('📊 Después de filtros:', filteredActivities.length, 'de', allActivities.length);
+            
+            // Reiniciar a primera página
+            page = 1;
+            updateUrlWithFilters();
+            mostrarActividades();
+        }
+
+        function aplicarFiltros() {
+            // Aplicar filtros locales
+            aplicarFiltrosLocales();
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchText').value = '';
+            document.getElementById('fechaDesde').value = '';
+            document.getElementById('fechaHasta').value = '';
+            document.getElementById('tipoActividad').value = '';
+            document.getElementById('cursoGratuito').checked = false;
+            document.getElementById('gratuito-label').textContent = 'Mostrar todos';
+            
+            page = 1;
+            updateUrlWithFilters();
+            cargarActividades();
+        }
+
+        function formatearFecha(fecha) {
+            if (!fecha) return '';
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Función para obtener icono según tipo de actividad
+        function obtenerIconoTipo(tipoActividad) {
+            const iconos = {
+                'Curso': 'fas fa-graduation-cap',
+                'Seminario': 'fas fa-users',
+                'Jornada': 'fas fa-calendar-day',
+                'Conferencia': 'fas fa-microphone',
+                'Taller': 'fas fa-tools',
+                'Congreso': 'fas fa-globe',
+                'Master': 'fas fa-award',
+                'Posgrado': 'fas fa-certificate'
+            };
+            return iconos[tipoActividad] || 'fas fa-bookmark';
+        }
+
+        // Función para obtener logo de unidad gestora
+        function obtenerLogoUG(unidadGestion) {
+            if (!unidadGestion?.nombre) return '';
+            
+            const nombre = unidadGestion.nombre.toLowerCase();
+            if (nombre.includes('crai') || nombre.includes('recursos')) {
+                return 'img/CRAI.png';
+            } else if (nombre.includes('idp') || nombre.includes('desenvolupament')) {
+                return 'img/IDP.jpeg';
+            } else if (nombre.includes('sae') || nombre.includes('extraordinàries')) {
+                return 'img/SAE.jpeg';
+            }
+            return '';
+        }
+
+        // Función para formatear precio
+        function formatearPrecio(actividad) {
+            if (actividad.actividadPago === false) {
+                return '<span class="activity-price gratuito"><i class="fas fa-gift me-1"></i>Gratuito</span>';
+            } else if (actividad.actividadPago === true) {
+                // Usar importes si están disponibles en la actividad
+                if (actividad.importesDescuentos && actividad.importesDescuentos.length > 0) {
+                    const importeBase = actividad.importesDescuentos[0].importeBase;
+                    if (importeBase) {
+                        return `<span class="activity-price"><i class="fas fa-euro-sign me-1"></i>${importeBase}€</span>`;
+                    }
+                }
+                
+                // Fallback: mostrar "De pago" si no hay importe específico
+                return '<span class="activity-price"><i class="fas fa-credit-card me-1"></i>De pago</span>';
+            }
+            return '';
+        }
+
+        // Función para truncar descripción
+        function truncarDescripcion(descripcion, maxLength = 250) {
+            if (!descripcion) return 'Sin descripción disponible';
+            if (descripcion.length <= maxLength) return descripcion;
+            return descripcion.substring(0, maxLength) + '...';
+        }
+
+        function renderPagination(totalPages){
+            const ul = document.getElementById('pagination');
+            ul.innerHTML = '';
+            if (totalPages <= 1) return;
+            const addItem = (label, disabled, active, onClick) => {
+                const li = document.createElement('li');
+                li.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = label;
+                if (!disabled) a.addEventListener('click', (e)=>{ e.preventDefault(); onClick(); });
+                li.appendChild(a);
+                ul.appendChild(li);
+            };
+            addItem('«', page===1, false, ()=>{ page = Math.max(1, page-1); updateUrlWithFilters(); mostrarActividades(); });
+            const windowSize = 5;
+            let start = Math.max(1, page - Math.floor(windowSize/2));
+            let end = Math.min(totalPages, start + windowSize - 1);
+            if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+            for(let p=start; p<=end; p++){
+                addItem(p.toString(), false, p===page, ()=>{ page = p; updateUrlWithFilters(); mostrarActividades(); });
+            }
+            addItem('»', page===totalPages, false, ()=>{ page = Math.min(totalPages, page+1); updateUrlWithFilters(); mostrarActividades(); });
+        }
+
+        function updateUrlWithFilters(){
+            const params = new URLSearchParams(window.location.search);
+            
+            // Solo añadir parámetro ug si estamos en modo específico
+            if (currentUG && currentUG.id) {
+                params.set('ug', Object.keys(ugConfig).find(k=>ugConfig[k].id===currentUG.id) || 'idp');
+            } else {
+                // En modo general, eliminar parámetro ug
+                params.delete('ug');
+            }
+            
+            const s = document.getElementById('searchText').value.trim();
+            const d = document.getElementById('fechaDesde').value; 
+            const h = document.getElementById('fechaHasta').value;
+            const t = document.getElementById('tipoActividad').value; 
+            const g = document.getElementById('cursoGratuito').checked;
+            
+            if (s) params.set('q', s); else params.delete('q');
+            if (d) params.set('desde', d); else params.delete('desde');
+            if (h) params.set('hasta', h); else params.delete('hasta');
+            if (t) params.set('tipo', t); else params.delete('tipo');
+            if (g) params.set('gratis', '1'); else params.delete('gratis');
+            
+            // Añadir filtros de UGs seleccionadas (solo en modo general)
+            if (!currentUG && !selectedUGs.includes('todas')) {
+                params.set('ugs', selectedUGs.join(','));
+            } else {
+                params.delete('ugs');
+            }
+            
+            params.set('page', page.toString());
+            params.set('size', pageSize.toString());
+            const newUrl = `${location.pathname}?${params.toString()}`;
+            history.replaceState(null, '', newUrl);
+        }
+
+        function syncFiltersFromUrl(){
+            const p = new URLSearchParams(window.location.search);
+            const q = p.get('q') || '';
+            const desde = p.get('desde') || '';
+            const hasta = p.get('hasta') || '';
+            const tipo = p.get('tipo') || '';
+            const gratis = p.get('gratis') === '1';
+            page = parseInt(p.get('page') || '1', 10);
+            pageSize = parseInt(p.get('size') || '10', 10);
+            document.getElementById('searchText').value = q;
+            document.getElementById('fechaDesde').value = desde;
+            document.getElementById('fechaHasta').value = hasta;
+            document.getElementById('tipoActividad').value = tipo;
+            document.getElementById('cursoGratuito').checked = gratis;
+            document.getElementById('gratuito-label').textContent = gratis ? 'Solo gratuitos' : 'Mostrar todos';
+        }
+
+        // Funcionalidad para el botón con logos rotando
+        let currentLogoIndex = 0;
+        const logoRotationInterval = 1500; // 1.5 segundos
+
+        function rotateUGLogos() {
+            const logos = document.querySelectorAll('.ug-logo-small');
+            if (logos.length === 0) return;
+
+            // Ocultar logo actual
+            logos[currentLogoIndex].classList.remove('active');
+            
+            // Avanzar al siguiente logo
+            currentLogoIndex = (currentLogoIndex + 1) % logos.length;
+            
+            // Mostrar nuevo logo
+            logos[currentLogoIndex].classList.add('active');
+        }
+
+        // Inicializar rotación de logos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltip de Bootstrap
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Iniciar rotación de logos
+            setInterval(rotateUGLogos, logoRotationInterval);
+        });
+    </script>
+    
+    
+    <!-- Script de autenticación para monkey patch automático -->
+    <script src="auth.js"></script>
+    
+</body>
+</html>
+

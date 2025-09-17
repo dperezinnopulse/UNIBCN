@@ -1,0 +1,234 @@
+# Política de ejecución en Windows (no bloqueo) – Proyecto UB Formación
+
+Objetivo: evitar bloqueos del agente. Todos los servicios/comandos de larga duración deben ejecutarse en background, con logging y verificación de salud.
+
+Reglas operativas
+- Ejecutar procesos de larga duración SIEMPRE en background (Start-Process o Start-Job) y sin -Wait.
+- Redirigir SIEMPRE stdout/stderr a ficheros de log y, si es útil, leerlos en streaming (Get-Content -Wait) desde jobs aparte.
+- Aplicar timeouts: matar procesos colgados (Stop-Process -Force) si no responden en el tiempo esperado.
+- Usar rutas absolutas y establecer WorkingDirectory correcto antes de lanzar procesos.
+- Deshabilitar interactividad/paginadores: GIT_PAGER=cat, PAGER=cat, $ProgressPreference='SilentlyContinue'.
+- Forzar UTF-8: chcp 65001; $OutputEncoding = [System.Text.UTF8Encoding]::new($false).
+- Servicios HTTP: verificar salud con Invoke-WebRequest -TimeoutSec en bucle hasta éxito o timeout.
+- Antes de relanzar dotnet: matar procesos previos (Stop-ByName 'dotnet') y dormir 2-3 s.
+
+Snippets/Funciones reutilizables (PowerShell)
+- scripts/ps-utils.ps1 define:
+  - Start-BackgroundCommand: lanza procesos en background con logs y timeout de arranque.
+  - Tail-Logs: tail -Wait en jobs separados para stdout/stderr.
+  - Stop-ByName: termina procesos por nombre.
+  - Wait-HttpReady: health-check HTTP con reintentos/timeout.
+  - Invoke-Short: ejecutar comandos “cortos” no interactivos con timeout.
+
+Convenciones del proyecto
+- Backend (.NET): UB.Actividad1.API en http://localhost:5001
+- Frontend (WebServer .NET): http://localhost:8080
+- Scripts recomendados: start-app-robusto.ps1 (arranca ambos en background, health-check + tail logs)
+
+Ejemplo de uso rápido
+```
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\start-app-robusto.ps1
+```
+
+# Cursor Rules - Proyecto UB Formación
+
+## 🚫 COMANDOS QUE BLOQUEAN AL ASISTENTE
+
+### Comandos que NO usar (se quedan esperando):
+- `Start-Process` - ❌ BLOQUEA (cualquier variante)
+- `Start-Sleep` - ❌ BLOQUEA (tiempos largos)
+- `Get-Process` - ❌ BLOQUEA
+- `Start-Job` - ❌ BLOQUEA
+- `dotnet build` - ❌ BLOQUEA (sin flags)
+- `dotnet run` - ❌ BLOQUEA (sin &)
+- `netstat` - ❌ BLOQUEA (en algunos casos)
+- Comandos que abren ventanas del navegador
+
+### Alternativas que SÍ usar:
+- `netstat -an | findstr :puerto` - ✅ NO BLOQUEA (con pipe)
+- `dotnet build --verbosity quiet --no-restore` - ✅ NO BLOQUEA
+- `dotnet run --urls="http://localhost:5001" &` - ✅ NO BLOQUEA (con &)
+- `Invoke-RestMethod` - ✅ NO BLOQUEA
+- `Invoke-WebRequest` - ✅ NO BLOQUEA
+- `Write-Host` - ✅ NO BLOQUEA
+- `cd` - ✅ NO BLOQUEA
+- `&` (operador de background) - ✅ NO BLOQUEA
+- `tasklist` - ✅ NO BLOQUEA
+
+## 🏗️ ARQUITECTURA DEL PROYECTO
+
+### Backend (API)
+- **Puerto**: 5001
+- **URL**: http://localhost:5001
+- **Proyecto**: UB.Actividad1.API
+- **Framework**: .NET 8 Minimal APIs
+- **Base de datos**: SQL Server con Entity Framework Core
+
+### Frontend (WebServer)
+- **Puerto**: 8080
+- **URL**: http://localhost:8080
+- **Proyecto**: WebServer (actúa como proxy)
+- **Tecnologías**: HTML5, JavaScript, Bootstrap 5
+
+## 🔧 COMANDOS DE INICIO
+
+### Iniciar Backend:
+```powershell
+cd "UB.Actividad1.API" && dotnet run --urls="http://localhost:5001" &
+```
+
+### Iniciar Frontend:
+```powershell
+cd WebServer && dotnet run --urls="http://localhost:8080" &
+```
+
+### Verificar servicios:
+```powershell
+netstat -an | findstr ":5001\|:8080"
+```
+
+## 🔐 AUTENTICACIÓN
+
+### Usuarios de prueba:
+- **SAE**: username="SAE", password="SAE", rol="Gestor", UnidadGestionId=3
+- **Admin**: username="Admin", password="Admin", rol="Admin"
+
+### Endpoints de autenticación:
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Registro
+- `GET /api/auth/hash` - Generar hash BCrypt
+
+## 📊 BASE DE DATOS
+
+### Estados de Actividad:
+- ID 6: "Borrador" (BOR) - Estado por defecto para nuevas actividades
+- ID 7: "Enviada" (ENV)
+- ID 8: "Subsanar" (SUB)
+- ID 9: "Aceptada" (ACE)
+
+### Unidades de Gestión:
+- ID 1: IDP
+- ID 2: CRAI  
+- ID 3: SAE
+
+## 🎯 FUNCIONALIDADES IMPLEMENTADAS
+
+### Creación de Actividades:
+- ✅ Solo el campo "Título" es obligatorio
+- ✅ Validación en frontend y backend
+- ✅ Estado "Borrador" asignado automáticamente
+- ✅ UsuarioAutorId extraído del token JWT
+- ✅ Código automático generado si no se proporciona
+
+### Validación:
+- ✅ Frontend: Indicación visual en rojo para campos obligatorios
+- ✅ Backend: Error 400 Bad Request si falta título
+- ✅ Mensaje: "El título es obligatorio"
+
+### Sistema de Mensajes No Leídos:
+- ✅ Backend: Marca mensajes como no leídos cuando otros usuarios escriben
+- ✅ Endpoint para marcar mensajes como leídos
+- ✅ Endpoint para obtener conteo de mensajes no leídos por actividad
+- ✅ Frontend: Filtro de mensajes no leídos (switch on/off)
+- ✅ Frontend: Etiquetas de mensajes no leídos en lista
+- ✅ Frontend: Icono de mensajes cambia a azul cuando hay no leídos
+- ✅ Marcado automático como leído al abrir mensajes
+
+## 🔄 FLUJO DE TRABAJO
+
+### Para probar funcionalidad:
+1. Verificar servicios: `netstat -an | findstr ":5001\|:8080"`
+2. Login: `Invoke-RestMethod -Uri "http://localhost:5001/api/auth/login" -Method POST -ContentType "application/json" -Body '{"username":"SAE","password":"SAE"}'`
+3. Crear actividad: `Invoke-RestMethod -Uri "http://localhost:5001/api/actividades" -Method POST -Headers $headers -Body '{"Titulo":"Test","UnidadGestionId":1}'`
+
+### Para desarrollo:
+- Usar scripts de prueba: `.\test-frontend.ps1`, `.\test-validation.ps1`, `.\test-final.ps1`
+- Verificar logs en consola del navegador
+- Usar `Invoke-WebRequest` para capturar páginas HTML
+
+## 📁 ARCHIVOS IMPORTANTES
+
+### Frontend:
+- `Frontend/index.html` - Página principal de creación
+- `Frontend/scripts-clean.js` - Lógica principal
+- `Frontend/auth.js` - Autenticación
+- `Frontend/ug-specific-fields.js` - Campos por unidad gestora
+
+### Backend:
+- `UB.Actividad1.API/Program.cs` - Endpoints principales
+- `UB.Actividad1.API/DTOs/CreateActividadDto.cs` - DTO para crear actividades
+
+## 🚨 PROBLEMAS CONOCIDOS Y SOLUCIONES
+
+### Error 404 en /api/actividades-frontend:
+- **Solución**: Usar `/api/actividades` (endpoint correcto)
+
+### Error 400 Bad Request:
+- **Causa**: Formato de datos incorrecto (camelCase vs PascalCase)
+- **Solución**: Enviar datos en PascalCase desde frontend
+
+### Error de clave foránea FK_Actividades_EstadosActividad:
+- **Causa**: EstadoId hardcodeado a 1 (no existe)
+- **Solución**: Usar EstadoId = 6 (Borrador)
+
+### Redirección con ID undefined:
+- **Causa**: Frontend accede a `resultado.Id` (PascalCase) pero backend devuelve `id` (camelCase)
+- **Solución**: Usar `resultado.id` en lugar de `resultado.Id`
+
+### Error 401 (Unauthorized) en mensajes:
+- **Causa**: Backend no reiniciado después de cambios en endpoints de mensajes
+- **Solución**: Reiniciar backend con `taskkill /F /IM dotnet.exe` y `cd "UB.Actividad1.API" && dotnet run --urls="http://localhost:5001" &`
+
+### Comandos que bloquean:
+- **Solución**: Usar alternativas que retornen inmediatamente
+
+### Comando Start-Sleep bloquea:
+- **Causa**: `Start-Sleep -Seconds 5` bloquea la ejecución esperando que termine el tiempo
+- **Solución**: NUNCA usar `Start-Sleep` - continuar con el siguiente paso sin esperar
+- **Alternativa**: Ejecutar comandos secuencialmente sin delays bloqueantes
+
+### Comando dotnet build bloquea:
+- **Causa**: `dotnet build` puede bloquear si hay errores de compilación
+- **Solución**: Usar `dotnet build --verbosity quiet` o verificar errores con `dotnet build --no-restore` y luego usar `&` para background
+
+### Comando dotnet run bloquea:
+- **Causa**: `dotnet run` sin `&` bloquea la ejecución esperando que termine el servidor
+- **Solución**: SIEMPRE usar `dotnet run --urls="http://localhost:5001" &` para ejecutar en background
+- **Alternativa**: Usar `Start-Process dotnet -ArgumentList "run", "--urls=http://localhost:5001"` para ejecutar en proceso separado
+- **Recordatorio**: Nunca ejecutar `dotnet run` sin `&` o se quedará esperando indefinidamente
+
+### Comando sqlcmd bloquea:
+- **Causa**: `sqlcmd` sin opciones no interactivas espera entrada del usuario
+- **Solución**: Usar `sqlcmd -Q "query"` para ejecutar consultas directamente sin interacción
+- **Alternativa**: Usar `Invoke-Sqlcmd -Query "query"` de PowerShell con módulo SqlServer importado
+
+### Comando Start-Process bloquea:
+- **Causa**: `Start-Process` puede bloquearse si el proceso hijo requiere entrada del usuario o confirmaciones
+- **Solución**: Usar `&` al final para ejecutar completamente en background
+- **Alternativa**: Usar `Start-Job` con `-ScriptBlock` en lugar de `Start-Process`
+
+### Comando Invoke-WebRequest bloquea:
+- **Causa**: `Invoke-WebRequest` con `-TimeoutSec` puede bloquearse esperando la respuesta o el timeout
+- **Solución**: Usar `Start-Job` para ejecutar la petición en background
+- **Alternativa**: Usar `curl.exe` que es más rápido y no bloquea tanto
+
+## 📝 NOTAS DE DESARROLLO
+
+- El frontend envía datos en PascalCase para coincidir con el DTO del backend
+- Las fechas se envían como ISO string o null
+- El token JWT se añade automáticamente por auth.js
+- Los usuarios no-Admin solo ven sus propias actividades
+- La unidad gestora se preselecciona según el usuario logueado
+
+## 🧪 Playwright / Generación de manual – Lecciones aprendidas
+
+- Node no disponible como `node` en PATH: usar ruta absoluta `"C:\\Program Files\\nodejs\\node.exe"` para ejecutar Playwright.
+- Evitar tuberías tipo `| cat` en PowerShell: provocan errores de `Get-Content`. Ejecutar sin pipe.
+- Rutas de tests: en Windows las barras invertidas pueden interpretarse como regex. Usar forward slashes y comillas: `test 'tests/playwright/generate-ug-captures.spec.ts'`.
+- Servicios deben estar levantados antes de las capturas: backend y frontend con `--urls='http://0.0.0.0:5001'` y `--urls='http://0.0.0.0:8080'` en background.
+- Si el login falla o bloquea, inyectar token antes de navegar: `page.addInitScript(() => localStorage.setItem('ub_token','E2E'); ...)` y navegar directo a `/index.html`.
+- Selectores UG: los elementos `[data-ug]` pueden estar ocultos; seleccionar la UG en `#actividadUnidadGestion` antes de capturar para asegurar visibilidad real.
+- Overlay rojo desalineado: evitar `boundingBox + scroll`. Usar `getBoundingClientRect()` y dibujar overlay `position: fixed` sin desplazar la página.
+ - PowerShell: ejecutar binarios con rutas con espacios usando SIEMPRE el operador de invocación `&` y comillas.
+   - Correcto: `& "C:\\Program Files\\nodejs\\node.exe" ".\\scripts\\capture-mensajes.js"`
+   - Incorrecto: `"C:\\Program Files\\nodejs\\node.exe" .\\scripts\\capture-mensajes.js &` (ParserError)

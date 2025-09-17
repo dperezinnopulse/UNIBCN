@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "Carga de página",
+      "status": "PASSED",
+      "details": "Página cargada sin errores críticos",
+      "timestamp": "2025-09-01 10:21:15"
+    },
+    {
+      "name": "Dropdowns cargados",
+      "status": "PASSED",
+      "details": "Todos los dropdowns tienen opciones",
+      "timestamp": "2025-09-01 10:21:16"
+    },
+    {
+      "name": "URLs API",
+      "status": "PASSED",
+      "details": "No se encontraron URLs con 'undefined'",
+      "timestamp": "2025-09-01 10:21:17"
+    },
+    {
+      "name": "Campos problemáticos",
+      "status": "PASSED",
+      "details": "Todos los campos problemáticos tienen valores",
+      "timestamp": "2025-09-01 10:21:21"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "errors": []
+  }
+}

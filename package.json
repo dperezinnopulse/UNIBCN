@@ -1,0 +1,38 @@
+{
+  "name": "ub-actividad-autonomous",
+  "version": "1.0.0",
+  "description": "Sistema autónomo de verificación para UB Actividad",
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File .\\iniciar-app-background.ps1",
+    "stop": "powershell -ExecutionPolicy Bypass -File .\\detener-app.ps1",
+    "restart": "npm run stop && npm run start",
+    "snapshot": "powershell -ExecutionPolicy Bypass -File .cursor/browser/snapshot.ps1",
+    "verify": "npm run snapshot",
+    "verify:historico": "powershell -ExecutionPolicy Bypass -File .cursor/browser/snapshot.ps1 -Route /historico.html",
+    "verify:mensajes": "powershell -ExecutionPolicy Bypass -File .cursor/browser/snapshot.ps1 -Route /mensajes.html",
+    "verify:index": "powershell -ExecutionPolicy Bypass -File .cursor/browser/snapshot.ps1 -Route /index.html",
+    "verify:editar": "powershell -ExecutionPolicy Bypass -File .cursor/browser/snapshot.ps1 -Route '/editar-actividad.html?id=60'"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dperezinnopulse/UNIBCN.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dperezinnopulse/UNIBCN/issues"
+  },
+  "homepage": "https://github.com/dperezinnopulse/UNIBCN#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
