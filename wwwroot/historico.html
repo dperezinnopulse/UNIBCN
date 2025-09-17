@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
   
-  <title>Histórico de Propuestas - UB</title>
+  <title>Histórico de Propuestas - UB (v2.1 - $(new Date().getTime()))</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
@@ -23,16 +26,20 @@
     /* Estilos para la lista de propuestas */
     #proposalList[data-view="list"] .proposal-item {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: row;
+      align-items: flex-start;
       /* Borde azulado similar al ejemplo */
       border: 1px solid #d4dffc;
       border-radius: 0.5rem;
       padding: 1rem;
       margin-bottom: 0.75rem;
       background-color: #ffffff;
+    }
+    #proposalList[data-view="list"] .proposal-item .proposal-link {
       text-decoration: none;
       color: inherit;
+      flex-grow: 1;
+      margin-right: 1rem;
     }
     #proposalList[data-view="list"] .proposal-item.unread {
       background-color: #eef5ff;
@@ -41,8 +48,13 @@
       flex-grow: 1;
     }
     #proposalList[data-view="list"] .proposal-item .proposal-meta {
-      /* Eliminar alineación a la derecha y ancho fijo para permitir distribución natural */
-      flex-shrink: 0;
+      /* Meta información distribuida a la derecha, ocupando ~25% del ancho */
+      flex: 0 0 25%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+      justify-content: flex-start;
     }
     /* Vista en tarjetas */
     #proposalList[data-view="cards"] {
@@ -69,12 +81,10 @@
       flex-grow: 1;
     }
     #proposalList[data-view="cards"] .proposal-item .proposal-meta {
+      /* Meta información ahora está dentro de proposal-content */
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
       border-top: 1px solid #dee2e6;
-      padding: 0.75rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
     }
     /* Botones de conmutación de vista */
     .view-toggle .btn {
@@ -117,11 +127,16 @@
         align-items: stretch;
       }
       
-      #proposalList[data-view="list"] .proposal-item .proposal-content {
+      #proposalList[data-view="list"] .proposal-item .proposal-link {
+        margin-right: 0;
         margin-bottom: 0.75rem;
       }
       
       #proposalList[data-view="list"] .proposal-item .proposal-meta {
+        /* En móviles, volver a distribución horizontal */
+        flex: none;
+        flex-direction: row;
+        align-items: center;
         justify-content: flex-start;
         flex-wrap: wrap;
         gap: 0.5rem;
@@ -293,6 +308,7 @@
   </script>
   <!-- Script para cambiar la vista y cargar datos del backend -->
   <script>
+    console.log("🔥🔥🔥 HISTORICO.HTML CARGADO - VERSIÓN 2.1 - TIMESTAMP:", new Date().getTime());
     const listBtn = document.getElementById('listViewBtn');
     const cardBtn = document.getElementById('cardViewBtn');
     const proposalList = document.getElementById('proposalList');
@@ -405,6 +421,7 @@
 
     // Cargar actividades desde backend
     async function cargarActividadesHistorico() {
+      console.log("🚀 cargarActividadesHistorico - Iniciando...");
       try {
         renderLoading();
         const url = new URL('/api/actividades', window.location.origin);
@@ -426,12 +443,14 @@
         url.searchParams.set('page', String(paginaActual));
         url.searchParams.set('pageSize', String(pageSize));
         
+        console.log("🚀 cargarActividadesHistorico - URL:", url.toString());
         const resp = await fetch(url.toString(), { 
           headers: { 
             'Accept': 'application/json',
             'Authorization': `Bearer ${Auth.getToken()}`
           } 
         });
+        console.log("🚀 cargarActividadesHistorico - Response status:", resp.status);
         if (!resp.ok) {
           let detailMsg = '';
           try {
@@ -451,11 +470,13 @@
         const data = await resp.json();
         actividades = Array.isArray(data) ? data : (data.items || []);
         totalPaginas = Array.isArray(data) ? 1 : (data.totalPages || 1);
+        console.log("🚀 cargarActividadesHistorico - Datos recibidos:", actividades.length, "actividades");
         renderActividades();
         renderPaginacion();
       } catch (e) {
-        renderError(e?.message || 'Error cargando actividades');
         console.error('❌ Error cargando actividades:', e);
+        console.error('❌ Error stack:', e.stack);
+        renderError(e?.message || 'Error cargando actividades');
       }
     }
 
@@ -565,11 +586,15 @@
     }
 
     const ESTADO_BADGE = {
-      6: 'bg-secondary',            // Borrador
-      7: 'bg-warning text-dark',    // Enviada
-      8: 'bg-danger',               // Subsanar
-      9: 'bg-success',              // Aceptada
-      19: 'bg-primary'              // Publicada
+      1: 'bg-secondary',            // Borrador
+      2: 'bg-warning text-dark',    // Enviada
+      3: 'bg-info',                 // En revisión
+      4: 'bg-success',              // Validación de unidad
+      5: 'bg-primary',              // Definición
+      6: 'bg-warning',              // Revisión administrativa
+      7: 'bg-primary',              // Publicada
+      8: 'bg-dark',                 // Cancelada
+      9: 'bg-danger'                // Rechazada
     };
 
     function getEstadoColorByNombre(nombre) {
@@ -608,6 +633,9 @@
     }
 
     function renderActividades() {
+      console.log("🚀 RENDER ACTIVIDADES - Versión 2.0 - Iniciando renderizado...");
+      console.log("🚀 Total actividades:", actividades?.length || 0);
+      
       if (!actividades || actividades.length === 0) {
         proposalList.innerHTML = `
           <div class="text-center text-muted py-4">
@@ -616,21 +644,48 @@
         return;
       }
 
-      const html = actividades.map(a => `
-        <a class="proposal-item" href="editar-actividad.html?id=${a.id}">
-          <div class="proposal-content">
-            <div class="fw-semibold">#${a.id} · ${escapeHtml(a.titulo || 'Sin título')}</div>
-            <div class="small text-muted">
-              <i class="bi ${getTipoIconClass(a.tipoActividad)}"></i> ${escapeHtml(a.tipoActividad || 'Sin tipo')}
+      const html = actividades.map(a => {
+        // Debug: mostrar información del estado para TODAS las actividades
+        console.log(`🔍 DEBUG Actividad #${a.id}:`, {
+          estadoId: a.estado?.id,
+          estadoNombre: a.estado?.nombre,
+          estadoCompleto: a.estado
+        });
+        
+        // Verificar si la actividad está en estado "Publicada" (múltiples verificaciones)
+        const isPublicada = a.estado?.id === 7 || 
+                           a.estado?.nombre?.toLowerCase() === 'publicada' ||
+                           a.estado?.nombre?.toLowerCase().includes('publicada');
+        
+        if (isPublicada) {
+          console.log(`✅ ACTIVIDAD PUBLICADA DETECTADA #${a.id}:`, {
+            estadoId: a.estado?.id,
+            estadoNombre: a.estado?.nombre,
+            isPublicada: isPublicada
+          });
+        }
+        
+        return `
+        <div class="proposal-item">
+          <a href="editar-actividad.html?id=${a.id}" class="proposal-link">
+            <div class="proposal-content">
+              <div class="fw-semibold">#${a.id} · ${escapeHtml(a.titulo || 'Sin título')}</div>
+              <div class="small text-muted">
+                <i class="bi ${getTipoIconClass(a.tipoActividad)}"></i> ${escapeHtml(a.tipoActividad || 'Sin tipo')}
+              </div>
+              <div class="text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(a.descripcion || '')}</div>
             </div>
-            <div class="text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(a.descripcion || '')}</div>
-          </div>
-          <div class="proposal-meta d-flex align-items-center gap-2">
+          </a>
+          <div class="proposal-meta d-flex align-items-center gap-2 mt-2">
             <span class="badge" style="background-color: ${getEstadoColorByNombre(a.estado?.nombre)};">${a.estado?.nombre || 'Estado'}</span>
+            ${isPublicada ? `<a href="detalle-publico.html?id=${a.id}" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver en oferta pública">
+              <i class="bi bi-globe"></i>
+            </a>` : ''}
             <span class="badge bg-info">${a.unidadGestion?.nombre || 'Unidad'}</span>
           </div>
-        </a>
-      `).join('');
+        </div>
+      `;
+      }).join('');
       proposalList.innerHTML = html;
     }
 
@@ -693,8 +748,13 @@
 
     // Arranque
     document.addEventListener('DOMContentLoaded', function() {
-      cargarDominios();
-      cargarActividadesHistorico();
+      console.log("🚀 DOMContentLoaded - Iniciando carga...");
+      try {
+        cargarDominios();
+        cargarActividadesHistorico();
+      } catch (error) {
+        console.error("❌ ERROR en DOMContentLoaded:", error);
+      }
     });
   </script>
   

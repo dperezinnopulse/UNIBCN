@@ -24,7 +24,7 @@ BEGIN TRY
     ('VALIDACION_UNIDAD', 'Validación de unidad', 'Revisión por Responsable de Unidad.', '#20c997', 4, 1),
     ('DEFINICION', 'Definición', 'Definición académico-docente y subactividades.', '#17a2b8', 5, 1),
     ('REVISION_ADMIN', 'Revisión administrativa', 'Control final por Soporte Administrativo.', '#fd7e14', 6, 1),
-    ('PUBLICADA', 'Publicada', 'Visible en catálogo.', '#0d6efd', 7, 1),
+    ('PUBLICADA', 'Publicada', 'Visible en catálogo.', '#28a745', 7, 1),
     ('CANCELADA', 'Cancelada', 'Cierre anticipado con motivo.', '#343a40', 8, 1),
     ('RECHAZADA', 'Rechazada', 'Denegada, con comentario.', '#dc3545', 9, 1);
 

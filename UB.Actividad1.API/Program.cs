@@ -11,6 +11,7 @@ using Microsoft.Extensions.FileProviders;
 var builder = WebApplication.CreateBuilder(args);
 
 // Agregar servicios al contenedor
+// Configurar Entity Framework - DESHABILITADO TEMPORALMENTE PARA PRUEBAS
 builder.Services.AddDbContext<UbFormacionContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -80,6 +81,26 @@ app.Use(async (context, next) =>
 
 // app.UseHttpsRedirection(); // Comentado temporalmente para pruebas HTTP
 app.UseCors("AllowAll");
+
+// Middleware para capturar errores detallados
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"🚨 ERROR DETALLADO:");
+        Console.WriteLine($"   Mensaje: {ex.Message}");
+        Console.WriteLine($"   Stack Trace: {ex.StackTrace}");
+        Console.WriteLine($"   Inner Exception: {ex.InnerException?.Message}");
+        
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsync($"Error interno del servidor: {ex.Message}");
+    }
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
@@ -128,6 +149,28 @@ app.MapPost("/api/auth/login", async (LoginDto dto, UbFormacionContext context) 
     var jwt = handler.WriteToken(token);
     return Results.Ok(new { token = jwt, user = new { user.Id, user.Username, user.Rol, user.UnidadGestionId } });
 });
+
+// Endpoint de prueba simple (sin base de datos)
+app.MapGet("/api/test", () =>
+{
+    return Results.Ok(new { 
+        message = "Backend funcionando correctamente", 
+        timestamp = DateTime.Now,
+        version = "1.6.0"
+    });
+});
+
+// Endpoint de prueba para detalle público (sin base de datos)
+app.MapGet("/api/actividades/publicas-test", () =>
+{
+    return Results.Ok(new { 
+        message = "Endpoint público funcionando", 
+        actividades = new[] {
+            new { id = 6, titulo = "Actividad de prueba", estado = "Publicada" }
+        }
+    });
+});
+
 
 // DEV: generar hash BCrypt para una contraseña dada
 app.MapGet("/api/auth/hash", (string pwd) =>
@@ -370,29 +413,11 @@ app.MapGet("/api/actividades/publicas", async (UbFormacionContext context, [AsPa
             return Results.Ok(new List<object>());
         }
 
-        // Solo actividades en estado "PUBLICADA"
+        // Solo actividades en estado "PUBLICADA" - DEVOLVER TODOS LOS CAMPOS
         var actividades = await context.Actividades
             .AsNoTracking()
             .Include(a => a.UnidadGestion)
             .Where(a => a.EstadoId == estadoPublicadaId)
-            .Select(a => new
-            {
-                id = a.Id,
-                titulo = a.Titulo ?? "",
-                descripcion = a.Descripcion ?? "",
-                programaDescripcion = a.ProgramaDescripcionES ?? "",
-                fechaInicio = a.FechaInicio,
-                fechaFin = a.FechaFin,
-                tipoActividad = a.TipoActividad ?? "",
-                anioAcademico = a.AnioAcademico ?? "",
-                plazasTotales = a.PlazasTotales,
-                horasTotales = a.HorasTotales,
-                cursoGratuito = !a.ActividadPago,
-                unidadGestion = new { 
-                    id = a.UnidadGestionId ?? 0, 
-                    nombre = a.UnidadGestion != null ? a.UnidadGestion.Nombre : "Sin unidad" 
-                }
-            })
             .ToListAsync();
         
         Console.WriteLine($"✅ DEBUG: Encontradas {actividades.Count} actividades públicas");

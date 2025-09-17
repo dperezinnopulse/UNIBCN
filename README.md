@@ -1,12 +1,12 @@
-# UB Actividad 1 - Sistema de Gestión de Actividades Formativas
+# UB Actividad 1 - Oferta Formativa
 
-**Versión**: 1.1.0  
-**Estado**: Backend funcional. Frontend de edición cargando datos reales; guardado pendiente (400 por tipos numéricos).  
-**Fecha**: 3 Septiembre 2025
+**Versión**: 1.7.0  
+**Estado**: Sistema completo y funcional con backend API y frontend unificado.  
+**Fecha**: 17 Septiembre 2025
 
 ## 🎯 Descripción del Proyecto
 
-Sistema web para la gestión de actividades formativas de la Universidad de Barcelona. Implementa un backend API REST con .NET 8 y un frontend HTML/JavaScript para la gestión completa de actividades, subactividades y participantes con soporte multidioma.
+**Oferta formativa - Todo funcionando** - Sistema completo de gestión de actividades formativas de la Universidad de Barcelona. Implementa un backend API REST con .NET 8 y un frontend HTML/JavaScript unificado para la gestión completa de actividades, workflow de estados, mensajería, autenticación JWT y administración de usuarios.
 
 ## 🚀 Inicio Rápido
 
@@ -29,23 +29,28 @@ cd UNIBCN
 ```
 
 ### URLs de Acceso
-- **API Swagger**: https://localhost:7001/swagger
-- **Frontend**: Frontend/index.html
-- **Pruebas**: Frontend/test-api.html
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:5001
+- **API Swagger**: http://localhost:5001/swagger
+- **Manual de Usuario**: http://localhost:8080/manual/
 
-## 📋 Estado Actual (v1.1.0)
+## 📋 Estado Actual (v1.7.0)
 
 ### ✅ Completado
-- **Backend API**: Todos los endpoints implementados y funcionales
-- **Base de Datos**: Configurada con datos de ejemplo
-- **Documentación**: OpenAPI, Postman, instrucciones completas
-- **Frontend**: Prototipos HTML/JS listos
+- **Backend API**: Sistema completo con autenticación JWT, workflow de estados, mensajería
+- **Base de Datos**: Configurada con datos reales y usuarios de prueba
+- **Frontend**: Sistema unificado con menús, administración de usuarios, perfil
+- **Workflow**: Estados de actividad (Borrador, Enviada, Subsanar, Aceptada)
+- **Mensajería**: Sistema de mensajes no leídos y notificaciones
+- **Autenticación**: Login/logout con roles (Admin, Gestor, Usuario)
+- **Documentación**: Manual de usuario y documentación completa
 
-### ⏳ Pendiente (v0.2)
-- Integración frontend-backend
-- Modal multidioma funcional
-- Validaciones de publicación
-- Tests automatizados
+### 🚀 Funcionalidades Principales
+- Gestión completa de actividades formativas
+- Sistema de workflow con transiciones de estado
+- Mensajería interna entre usuarios
+- Administración de usuarios y roles
+- Interfaz unificada y responsive
 
 ## 🏗️ Arquitectura
 

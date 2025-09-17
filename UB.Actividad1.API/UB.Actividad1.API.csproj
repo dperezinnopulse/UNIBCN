@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.5.0</Version>
-    <PackageReleaseNotes>Sistema robusto de workflow con roles normalizados, eliminación de transiciones incorrectas, consolidación de estados duplicados, mapeo robusto de roles por ID en lugar de strings, debug logs extensivos, scripts SQL para mantenimiento del sistema.</PackageReleaseNotes>
+    <Version>1.7.0</Version>
+    <PackageReleaseNotes>Oferta formativa - Todo funcionando. Sistema completo de gestión de actividades formativas con páginas públicas, endpoint público con datos completos, icono web en histórico, colores de estados actualizados (Publicada en verde), y funcionalidad completa sin autenticación para páginas públicas.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

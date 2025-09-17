@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.4.0</Version>
-    <PackageReleaseNotes>Frontend unificado (menu/header), mensajes no leídos, adjuntos, cambios de estado, admin usuarios, perfil, manual /manual y assets, CSS unificado sidebar/menús.</PackageReleaseNotes>
+    <Version>1.6.0</Version>
+    <PackageReleaseNotes>Oferta formativa - Todo funcionando. Frontend unificado con páginas públicas, histórico con icono web, layout mejorado, y funcionalidad completa para oferta formativa.</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

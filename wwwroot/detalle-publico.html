@@ -267,32 +267,13 @@
             // Cargar actividad usando el nuevo endpoint público con todos los campos
             let act;
             
-            // Intentar cargar con autenticación primero (datos completos)
-            const token = sessionStorage.getItem('ub_token');
-            if(token) {
-                try {
-                    console.log('🔍 Intentando cargar con autenticación...');
-                    const resp = await fetch(`/api/actividades/${id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if(resp.ok) {
-                        act = await resp.json();
-                        console.log('✅ Datos cargados con autenticación (TODOS los campos)');
-                    }
-                } catch(e) {
-                    console.log('❌ Error con autenticación:', e);
-                }
-            }
-            
-            // Si no hay token o falló, usar endpoint público (datos limitados)
-            if(!act) {
-                console.log('⚠️ Sin autenticación - usando endpoint público (datos básicos)');
-            const resp = await fetch('/api/actividades/publicas');
+            // Cargar actividad desde endpoint público (datos completos)
+            console.log('🌐 Cargando actividad desde endpoint público...');
+            const resp = await fetch('http://localhost:5001/api/actividades/publicas');
             if(!resp.ok){ throw new Error('HTTP '+resp.status); }
             const lista = await resp.json();
-                act = lista.find(a => (a.id ?? a.Id) == id);
-                console.log('📋 Nota: Para ver todos los campos, haz login primero');
-            }
+            act = lista.find(a => (a.id ?? a.Id) == id);
+            console.log('✅ Datos cargados desde endpoint público (TODOS los campos)');
             
             if(!act){ throw new Error('Actividad no encontrada'); }
             
@@ -522,7 +503,7 @@
             
             // Cargar y mostrar TODOS los ImportesDescuentos
             try {
-                const importesResponse = await fetch(`/api/actividades/${act.id}/importes`);
+                const importesResponse = await fetch(`http://localhost:5001/api/actividades/${act.id}/importes`);
                 if (importesResponse.ok) {
                     const importesCompletos = await importesResponse.json();
                     console.log('💰 ImportesDescuentos cargados:', importesCompletos);

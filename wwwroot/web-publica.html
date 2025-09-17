@@ -835,125 +835,47 @@
             
             const actividadesUnicas = new Map();
             
-            // Intentar login automático para obtener datos completos
-            const token = sessionStorage.getItem('ub_token');
-            console.log('🔍 Token existente:', !!token);
-            if (!token) {
+            // Cargar actividades desde endpoint público (datos completos)
+            console.log('🌐 Cargando actividades desde endpoint público...');
+            
+            // Cargar desde endpoint público para todas las UGs
+            for (const [key, config] of Object.entries(ugConfig)) {
                 try {
-                    console.log('🔐 Haciendo login automático...');
-                    const loginResp = await fetch('/api/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: 'Admin', password: 'Admin' })
-                    });
-                    console.log('🔐 Login response status:', loginResp.status);
-                    if (loginResp.ok) {
-                        const loginData = await loginResp.json();
-                        sessionStorage.setItem('ub_token', loginData.token);
-                        console.log('✅ Login automático exitoso - Token guardado en sesión');
-                        
-                        // Pequeña pausa para asegurar que el token se procese
-                        await new Promise(resolve => setTimeout(resolve, 200));
+                    const url = new URL('/api/actividades/publicas', 'http://localhost:5001');
+                    url.searchParams.set('unidadGestionId', config.id);
+                    url.searchParams.set('pageSize', 100);
+                    
+                    const response = await fetch(url.toString());
+                    if (response.ok) {
+                        const data = await response.json();
+                        data.forEach(act => {
+                            if (!actividadesUnicas.has(act.id)) {
+                                // Cargar también los importes para cada actividad
+                                fetch(`http://localhost:5001/api/actividades/${act.id}/importes`)
+                                    .then(importesResponse => {
+                                        if (importesResponse.ok) {
+                                            return importesResponse.json();
+                                        }
+                                        return [];
+                                    })
+                                    .then(importes => {
+                                        act.importesDescuentos = importes;
+                                    })
+                                    .catch(e => {
+                                        console.log('⚠️ Error cargando importes para', act.id);
+                                        act.importesDescuentos = [];
+                                    });
+                                
+                                actividadesUnicas.set(act.id, act);
+                            }
+                        });
+                        console.log(`✅ ${key.toUpperCase()}: ${data.length} actividades`);
                     } else {
-                        console.log('❌ Login falló con status:', loginResp.status);
+                        console.error(`❌ Error cargando actividades públicas para UG ${config.id}: HTTP ${response.status}`);
                     }
                 } catch (e) {
-                    console.log('⚠️ Login automático falló:', e.message);
+                    console.error(`❌ Error cargando actividades para UG ${config.id}:`, e);
                 }
-            } else {
-                console.log('✅ Token ya existe en sesión');
-            }
-
-            // Cargar actividades individuales con datos completos
-            try {
-                console.log('🌐 Cargando actividades individuales con datos completos...');
-                
-                // Primero obtener lista de IDs de actividades publicadas
-                const listaUrl = new URL('/api/actividades', window.location.origin);
-                listaUrl.searchParams.set('pageSize', 100);
-                
-                const listaResponse = await fetch(listaUrl.toString());
-                console.log('📡 Lista response status:', listaResponse.status);
-                
-                if (listaResponse.ok) {
-                    const listaData = await listaResponse.json();
-                    const actividadesBasicas = listaData.items || [];
-                    console.log('📋 IDs obtenidos:', actividadesBasicas.map(a => a.id));
-                    
-                    // Cargar cada actividad individualmente para obtener datos completos
-                    for (const actBasica of actividadesBasicas) {
-                        if (actBasica.estadoId === 7 && !actividadesUnicas.has(actBasica.id)) {
-                            try {
-                                const actUrl = `/api/actividades/${actBasica.id}`;
-                                const actResponse = await fetch(actUrl);
-                                if (actResponse.ok) {
-                                    const actCompleta = await actResponse.json();
-                                    
-                                    // Cargar también los importes
-                                    try {
-                                        const importesResponse = await fetch(`/api/actividades/${actCompleta.id}/importes`);
-                                        if (importesResponse.ok) {
-                                            actCompleta.importesDescuentos = await importesResponse.json();
-                                        }
-                                    } catch (e) {
-                                        console.log('⚠️ Error cargando importes para', actCompleta.id);
-                                    }
-                                    
-                                    // Añadir datos de unidad gestión si no están
-                                    if (!actCompleta.unidadGestion && actCompleta.unidadGestionId) {
-                                        const ugConfig = {
-                                            1: { id: 1, nombre: 'Institut de Desenvolupament Professional', logo: 'img/IDP.jpeg' },
-                                            2: { id: 2, nombre: 'Centre de Recursos per a l\'Aprenentatge i la Investigació', logo: 'img/CRAI.png' },
-                                            3: { id: 3, nombre: 'Servei d\'Activitats Extraordinàries', logo: 'img/SAE.jpeg' }
-                                        };
-                                        actCompleta.unidadGestion = ugConfig[actCompleta.unidadGestionId] || null;
-                                    }
-                                    
-                                    console.log(`📋 Actividad ${actCompleta.id} completa:`, {
-                                        titulo: actCompleta.titulo,
-                                        tipoActividad: actCompleta.tipoActividad,
-                                        actividadPago: actCompleta.actividadPago,
-                                        lineaEstrategica: actCompleta.lineaEstrategica,
-                                        importes: actCompleta.importesDescuentos?.length || 0
-                                    });
-                                    actividadesUnicas.set(actCompleta.id, actCompleta);
-                                }
-                            } catch (e) {
-                                console.log(`❌ Error cargando actividad ${actBasica.id}:`, e);
-                            }
-                        }
-                    }
-                    
-                    console.log(`✅ Actividades completas cargadas: ${actividadesUnicas.size}`);
-                } else {
-                    console.log('⚠️ Fallback a endpoint público');
-                    // Fallback si falla
-                    for (const [key, config] of Object.entries(ugConfig)) {
-                        try {
-                            const url = new URL('/api/actividades/publicas', window.location.origin);
-                            url.searchParams.set('unidadGestionId', config.id);
-                            url.searchParams.set('pageSize', 100);
-                            
-                            const response = await fetch(url.toString());
-                            if (response.ok) {
-                                const data = await response.json();
-                                let actividades = Array.isArray(data) ? data : (data.items || []);
-                                
-                                actividades.forEach(act => {
-                                    if (!actividadesUnicas.has(act.id)) {
-                                        actividadesUnicas.set(act.id, act);
-                                    }
-                                });
-                                
-                                console.log(`✅ ${key.toUpperCase()}: ${actividades.length} actividades`);
-                            }
-                        } catch (e) {
-                            console.log(`❌ Error cargando ${key}:`, e);
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('❌ Error general:', e);
             }
             
             allActivities = Array.from(actividadesUnicas.values());
