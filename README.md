@@ -1,12 +1,12 @@
 # UB Actividad 1 - Oferta Formativa
 
-**Versión**: 1.7.0  
-**Estado**: Sistema completo y funcional con backend API y frontend unificado.  
+**Versión**: 1.8.0  
+**Estado**: Sistema completo y funcional con backend API, frontend unificado y traducción automática.  
 **Fecha**: 17 Septiembre 2025
 
 ## 🎯 Descripción del Proyecto
 
-**Oferta formativa - Todo funcionando** - Sistema completo de gestión de actividades formativas de la Universidad de Barcelona. Implementa un backend API REST con .NET 8 y un frontend HTML/JavaScript unificado para la gestión completa de actividades, workflow de estados, mensajería, autenticación JWT y administración de usuarios.
+**WebLot integrado - Traducción automática funcionando** - Sistema completo de gestión de actividades formativas de la Universidad de Barcelona. Implementa un backend API REST con .NET 8 y un frontend HTML/JavaScript unificado para la gestión completa de actividades, workflow de estados, mensajería, autenticación JWT y administración de usuarios.
 
 ## 🚀 Inicio Rápido
 
@@ -34,7 +34,7 @@ cd UNIBCN
 - **API Swagger**: http://localhost:5001/swagger
 - **Manual de Usuario**: http://localhost:8080/manual/
 
-## 📋 Estado Actual (v1.7.0)
+## 📋 Estado Actual (v1.8.0)
 
 ### ✅ Completado
 - **Backend API**: Sistema completo con autenticación JWT, workflow de estados, mensajería
@@ -43,6 +43,7 @@ cd UNIBCN
 - **Workflow**: Estados de actividad (Borrador, Enviada, Subsanar, Aceptada)
 - **Mensajería**: Sistema de mensajes no leídos y notificaciones
 - **Autenticación**: Login/logout con roles (Admin, Gestor, Usuario)
+- **Traducción**: WebLot integrado para traducción automática (ES, EN, FR, CA)
 - **Documentación**: Manual de usuario y documentación completa
 
 ### 🚀 Funcionalidades Principales

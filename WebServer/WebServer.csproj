@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.6.0</Version>
-    <PackageReleaseNotes>Oferta formativa - Todo funcionando. Frontend unificado con páginas públicas, histórico con icono web, layout mejorado, y funcionalidad completa para oferta formativa.</PackageReleaseNotes>
+    <Version>1.7.0</Version>
+    <PackageReleaseNotes>WebLot integrado - Traducción automática funcionando. Frontend unificado con páginas públicas, histórico con icono web, layout mejorado, funcionalidad completa para oferta formativa, y traducción automática con WebLot en todas las páginas públicas (Español, Inglés, Francés, Catalán).</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
