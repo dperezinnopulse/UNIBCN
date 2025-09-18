@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.8.0</Version>
-    <PackageReleaseNotes>WebLot integrado - Traducción automática funcionando. Sistema completo de gestión de actividades formativas con páginas públicas, endpoint público con datos completos, icono web en histórico, colores de estados actualizados (Publicada en verde), funcionalidad completa sin autenticación para páginas públicas, y traducción automática con WebLot en todas las páginas públicas (Español, Inglés, Francés, Catalán).</PackageReleaseNotes>
+    <Version>1.9.0</Version>
+    <PackageReleaseNotes>Sistema de Preinscripciones iFormalia - Integración completa con servicio SOAP de preinscripciones. Formulario de preinscripción con validación de documentos (NIF/NIE/PASAPORTE), campos obligatorios, modal de inscripción, conexión a base de datos remota (192.168.8.157), XML SOAP correctamente formateado con campos principales (email, telefonoFijo), procesamiento de respuestas con detección de errores, logging detallado de peticiones/respuestas, y funcionalidad completa de preinscripción en páginas públicas.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

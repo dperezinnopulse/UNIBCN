@@ -111,6 +111,12 @@
                         <div id="estadoBadge" class="mb-2"></div>
                         <div id="unidadGestion" class="text-muted"></div>
                         <div id="anioAcademico" class="text-muted"></div>
+                        <!-- Botón de preinscripción -->
+                        <div id="preinscripcionSection" class="mt-3">
+                            <button id="btnPreinscribirse" class="btn btn-success btn-lg" style="display: none;">
+                                <i class="fas fa-user-plus me-2"></i>Inscribirme
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -308,6 +314,103 @@
         </div>
     </div>
 
+    <!-- Modal de Preinscripción -->
+    <div class="modal fade" id="modalPreinscripcion" tabindex="-1" aria-labelledby="modalPreinscripcionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalPreinscripcionLabel">
+                        <i class="fas fa-user-plus me-2"></i>Preinscripción en Actividad
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formPreinscripcion">
+                        <div class="row g-3">
+                            <!-- Tipo de Documento -->
+                            <div class="col-md-6">
+                                <label for="tipoDocumento" class="form-label">Tipo de Documento <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tipoDocumento" name="tipoDocumento" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="NIF">NIF</option>
+                                    <option value="NIE">NIE</option>
+                                    <option value="PASAPORTE">PASAPORTE</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Número de Documento -->
+                            <div class="col-md-6">
+                                <label for="numeroDocumento" class="form-label">Número de Documento <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="numeroDocumento" name="numeroDocumento" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Nombre -->
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Apellido 1 -->
+                            <div class="col-md-6">
+                                <label for="apellido1" class="form-label">Primer Apellido <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="apellido1" name="apellido1" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Apellido 2 -->
+                            <div class="col-md-6">
+                                <label for="apellido2" class="form-label">Segundo Apellido <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="apellido2" name="apellido2" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Confirmar Email -->
+                            <div class="col-md-6">
+                                <label for="confirmarEmail" class="form-label">Confirmar Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="confirmarEmail" name="confirmarEmail" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de la actividad -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-muted mb-2">Actividad seleccionada:</h6>
+                            <div id="infoActividadPreinscripcion" class="text-primary"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnGuardarPreinscripcion">
+                        <i class="fas fa-save me-2"></i>Guardar Preinscripción
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección para mostrar resultados de preinscripción -->
+    <div id="resultadoPreinscripcion" class="d-none mt-4">
+        <!-- Aquí se mostrarán los resultados de la preinscripción -->
+    </div>
+
     <script>
     function qs(name){ const p = new URLSearchParams(location.search); return p.get(name); }
     function fmtDate(d){ if(!d) return ''; const x=new Date(d); return x.toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'}); }
@@ -323,16 +426,20 @@
         }
         
         try{
-            // Cargar actividad usando el nuevo endpoint público con todos los campos
+            // Cargar actividad usando el endpoint público específico
             let act;
             
-            // Cargar actividad desde endpoint público (datos completos)
-            console.log('🌐 Cargando actividad desde endpoint público...');
-            const resp = await fetch('http://localhost:5001/api/actividades/publicas');
-            if(!resp.ok){ throw new Error('HTTP '+resp.status); }
-            const lista = await resp.json();
-            act = lista.find(a => (a.id ?? a.Id) == id);
-            console.log('✅ Datos cargados desde endpoint público (TODOS los campos)');
+            // Cargar actividad desde endpoint público específico
+            console.log('🌐 Cargando actividad desde endpoint público específico...');
+            const resp = await fetch(`http://localhost:5001/api/actividades/publicas/${id}`);
+            if(!resp.ok){ 
+                if(resp.status === 404) {
+                    throw new Error('Actividad no encontrada o no está publicada');
+                }
+                throw new Error('HTTP '+resp.status); 
+            }
+            act = await resp.json();
+            console.log('✅ Datos cargados desde endpoint público específico');
             
             if(!act){ throw new Error('Actividad no encontrada'); }
             
@@ -679,6 +786,11 @@
             document.getElementById('loading').classList.add('d-none');
             document.getElementById('detalle').classList.remove('d-none');
             
+            // Mostrar botón de preinscripción si la actividad está publicada
+            if (act.estado?.nombre?.toLowerCase() === 'publicada') {
+                document.getElementById('btnPreinscribirse').style.display = 'block';
+            }
+            
         }catch(err){
             console.error('Error cargando actividad:', err);
             document.getElementById('loading').classList.add('d-none');
@@ -687,8 +799,339 @@
             e.classList.remove('d-none');
         }
     }
+
+    // ===== FUNCIONES DE PREINSCRIPCIÓN =====
+    
+    // Validaciones de documentos
+    function validarDocumento(tipo, numero) {
+        if (!numero) return false;
+        
+        switch(tipo) {
+            case 'NIF':
+                // NIF: 8 dígitos + letra
+                const nifRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+                return nifRegex.test(numero);
+            case 'NIE':
+                // NIE: X/Y/Z + 7 dígitos + letra
+                const nieRegex = /^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+                return nieRegex.test(numero);
+            case 'PASAPORTE':
+                // Pasaporte: alfanumérico, mínimo 6 caracteres
+                const pasaporteRegex = /^[A-Z0-9]{6,}$/i;
+                return pasaporteRegex.test(numero);
+            default:
+                return false;
+        }
+    }
+    
+    // Validar formulario completo
+    function validarFormularioPreinscripcion() {
+        let esValido = true;
+        
+        // Limpiar validaciones anteriores
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        
+        const form = document.getElementById('formPreinscripcion');
+        const formData = new FormData(form);
+        
+        // Validar tipo de documento
+        const tipoDocumento = formData.get('tipoDocumento');
+        if (!tipoDocumento) {
+            document.getElementById('tipoDocumento').classList.add('is-invalid');
+            document.querySelector('#tipoDocumento + .invalid-feedback').textContent = 'Seleccione un tipo de documento';
+            esValido = false;
+        }
+        
+        // Validar número de documento
+        const numeroDocumento = formData.get('numeroDocumento');
+        if (!numeroDocumento) {
+            document.getElementById('numeroDocumento').classList.add('is-invalid');
+            document.querySelector('#numeroDocumento + .invalid-feedback').textContent = 'El número de documento es obligatorio';
+            esValido = false;
+        } else if (tipoDocumento && !validarDocumento(tipoDocumento, numeroDocumento)) {
+            document.getElementById('numeroDocumento').classList.add('is-invalid');
+            let mensaje = '';
+            switch(tipoDocumento) {
+                case 'NIF': mensaje = 'NIF debe tener 8 dígitos seguidos de una letra'; break;
+                case 'NIE': mensaje = 'NIE debe empezar por X/Y/Z, seguido de 7 dígitos y una letra'; break;
+                case 'PASAPORTE': mensaje = 'Pasaporte debe ser alfanumérico (mínimo 6 caracteres)'; break;
+            }
+            document.querySelector('#numeroDocumento + .invalid-feedback').textContent = mensaje;
+            esValido = false;
+        }
+        
+        // Validar campos obligatorios
+        const camposObligatorios = ['nombre', 'apellido1', 'apellido2', 'telefono', 'email'];
+        camposObligatorios.forEach(campo => {
+            const valor = formData.get(campo);
+            if (!valor || valor.trim() === '') {
+                document.getElementById(campo).classList.add('is-invalid');
+                document.querySelector(`#${campo} + .invalid-feedback`).textContent = 'Este campo es obligatorio';
+                esValido = false;
+            }
+        });
+        
+        // Validar email
+        const email = formData.get('email');
+        const confirmarEmail = formData.get('confirmarEmail');
+        if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            document.getElementById('email').classList.add('is-invalid');
+            document.querySelector('#email + .invalid-feedback').textContent = 'Formato de email inválido';
+            esValido = false;
+        }
+        
+        // Validar confirmación de email
+        if (confirmarEmail && email !== confirmarEmail) {
+            document.getElementById('confirmarEmail').classList.add('is-invalid');
+            document.querySelector('#confirmarEmail + .invalid-feedback').textContent = 'Los emails no coinciden';
+            esValido = false;
+        }
+        
+        return esValido;
+    }
+    
+    // Enviar preinscripción
+    async function enviarPreinscripcion() {
+        if (!validarFormularioPreinscripcion()) {
+            return;
+        }
+        
+        const form = document.getElementById('formPreinscripcion');
+        const formData = new FormData(form);
+        const actividadId = qs('id');
+        
+        const datosPreinscripcion = {
+            tipoDocumento: formData.get('tipoDocumento'),
+            numeroDocumento: formData.get('numeroDocumento'),
+            nombre: formData.get('nombre'),
+            apellido1: formData.get('apellido1'),
+            apellido2: formData.get('apellido2'),
+            email: formData.get('email'),
+            telefono: formData.get('telefono'),
+            actividadId: parseInt(actividadId)
+        };
+        
+        console.log('📤 Datos de preinscripción a enviar:', datosPreinscripcion);
+        
+        try {
+            // Mostrar loading en el botón
+            const btnGuardar = document.getElementById('btnGuardarPreinscripcion');
+            const textoOriginal = btnGuardar.innerHTML;
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+            btnGuardar.disabled = true;
+            
+            const response = await fetch('http://localhost:5001/api/preinscripciones', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datosPreinscripcion)
+            });
+            
+            const resultado = await response.json();
+            
+            if (response.ok) {
+                // Éxito
+                mostrarResultadoPreinscripcion('success', '✅ Preinscripción enviada correctamente. Recibirá un email de confirmación.');
+                // Cerrar modal y limpiar formulario después de 3 segundos
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalPreinscripcion'));
+                    modal.hide();
+                    form.reset();
+                    ocultarResultadoPreinscripcion();
+                }, 3000);
+            } else {
+                // Error
+                const errorMsg = resultado.message || 'Error desconocido';
+                mostrarResultadoPreinscripcion('error', `❌ Error al enviar la preinscripción: ${errorMsg}`, resultado);
+            }
+            
+        } catch (error) {
+            console.error('Error enviando preinscripción:', error);
+            mostrarResultadoPreinscripcion('error', '❌ Error de conexión. Inténtelo de nuevo.', error);
+        } finally {
+            // Restaurar botón
+            const btnGuardar = document.getElementById('btnGuardarPreinscripcion');
+            btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Preinscripción';
+            btnGuardar.disabled = false;
+        }
+    }
+    
+    // Función para mostrar resultado de preinscripción
+    function mostrarResultadoPreinscripcion(tipo, mensaje, detalles = null) {
+        const resultadoDiv = document.getElementById('resultadoPreinscripcion');
+        if (!resultadoDiv) {
+            console.error('Elemento resultadoPreinscripcion no encontrado');
+            return;
+        }
+        
+        const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+        const iconClass = tipo === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+        
+        let contenido = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="${iconClass} me-2"></i>
+                <strong>${mensaje}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // En modo desarrollo, mostrar detalles del error
+        if (tipo === 'error' && detalles) {
+            contenido += `
+                <div class="mt-3">
+                    <h6 class="text-danger">Detalles del error (modo desarrollo):</h6>
+                    <pre class="bg-light p-3 rounded small text-muted" style="max-height: 200px; overflow-y: auto;">${JSON.stringify(detalles, null, 2)}</pre>
+                </div>
+            `;
+            
+            // Si hay detalles HTTP, mostrarlos de forma más legible
+            if (detalles.detallesHttp) {
+                const http = detalles.detallesHttp;
+                contenido += `
+                    <div class="mt-3">
+                        <h6 class="text-info">📡 Detalles de la llamada HTTP:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">📤 Petición:</h6>
+                                <div class="bg-light p-2 rounded small">
+                                    <strong>URL:</strong> ${http.Url}<br>
+                                    <strong>Método:</strong> ${http.Metodo}<br>
+                                    <strong>Content-Type:</strong> ${http.ContentType || 'No especificado'}<br>
+                                    <strong>Headers:</strong><br>
+                                    <pre class="small text-muted">${JSON.stringify(http.HeadersPeticion, null, 2)}</pre>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">📥 Respuesta:</h6>
+                                <div class="bg-light p-2 rounded small">
+                                    <strong>Status Code:</strong> <span class="badge bg-danger">${http.StatusCode}</span><br>
+                                    <strong>Headers:</strong><br>
+                                    <pre class="small text-muted">${JSON.stringify(http.HeadersRespuesta, null, 2)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h6 class="text-success">📄 Body de la petición (XML SOAP):</h6>
+                            <pre class="bg-dark text-light p-2 rounded small" style="max-height: 300px; overflow-y: auto;">${http.BodyPeticion}</pre>
+                        </div>
+                        <div class="mt-2">
+                            <h6 class="text-warning">📄 Body de la respuesta:</h6>
+                            <pre class="bg-warning text-dark p-2 rounded small" style="max-height: 200px; overflow-y: auto;">${http.BodyRespuesta || '(vacío)'}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        resultadoDiv.innerHTML = contenido;
+        resultadoDiv.classList.remove('d-none');
+        
+        // Scroll hacia el resultado
+        resultadoDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Función para ocultar resultado de preinscripción
+    function ocultarResultadoPreinscripcion() {
+        const resultadoDiv = document.getElementById('resultadoPreinscripcion');
+        if (resultadoDiv) {
+            resultadoDiv.classList.add('d-none');
+            resultadoDiv.innerHTML = '';
+        }
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 DOMContentLoaded - Configurando event listeners...');
+        
+        // Botón de preinscripción
+        const btnPreinscribirse = document.getElementById('btnPreinscribirse');
+        if (btnPreinscribirse) {
+            console.log('✅ Botón de preinscripción encontrado, agregando event listener...');
+            btnPreinscribirse.addEventListener('click', function() {
+                console.log('🖱️ Botón de preinscripción clickeado!');
+                
+                try {
+                    const modalElement = document.getElementById('modalPreinscripcion');
+                    if (!modalElement) {
+                        console.error('❌ Modal no encontrado');
+                        return;
+                    }
+                    
+                    console.log('✅ Modal encontrado, creando instancia Bootstrap...');
+                    const modal = new bootstrap.Modal(modalElement);
+                    
+                    // Cargar información de la actividad en el modal
+                    const actividadId = qs('id');
+                    const titulo = document.getElementById('titulo').textContent;
+                    const codigo = document.getElementById('codigo').textContent;
+                    
+                    console.log('📝 Cargando información de actividad:', { actividadId, titulo, codigo });
+                    
+                    const infoElement = document.getElementById('infoActividadPreinscripcion');
+                    if (infoElement) {
+                        infoElement.innerHTML = `
+                            <strong>${titulo}</strong><br>
+                            <small class="text-muted">${codigo}</small>
+                        `;
+                    }
+                    
+                    console.log('🎭 Mostrando modal...');
+                    
+                    // Limpiar resultado anterior
+                    ocultarResultadoPreinscripcion();
+                    
+                    modal.show();
+                } catch (error) {
+                    console.error('❌ Error al mostrar modal:', error);
+                    alert('Error al abrir el formulario de preinscripción: ' + error.message);
+                }
+            });
+        } else {
+            console.error('❌ Botón de preinscripción no encontrado');
+        }
+        
+        // Botón guardar preinscripción
+        document.getElementById('btnGuardarPreinscripcion').addEventListener('click', enviarPreinscripcion);
+        
+        // Validación en tiempo real del número de documento
+        document.getElementById('numeroDocumento').addEventListener('input', function() {
+            const tipo = document.getElementById('tipoDocumento').value;
+            const numero = this.value;
+            
+            if (tipo && numero) {
+                if (validarDocumento(tipo, numero)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            }
+        });
+        
+        // Validación de confirmación de email
+        document.getElementById('confirmarEmail').addEventListener('input', function() {
+            const email = document.getElementById('email').value;
+            const confirmarEmail = this.value;
+            
+            if (email && confirmarEmail) {
+                if (email === confirmarEmail) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            }
+        });
+    });
     
     document.addEventListener('DOMContentLoaded', cargarDetalle);
     </script>
+    
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

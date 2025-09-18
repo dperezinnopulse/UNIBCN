@@ -10,6 +10,12 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar logging detallado para desarrollo
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
 // Agregar servicios al contenedor
 // Configurar Entity Framework - DESHABILITADO TEMPORALMENTE PARA PRUEBAS
 builder.Services.AddDbContext<UbFormacionContext>(options =>
@@ -25,6 +31,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAntiforgery();
+
+// Configurar HttpClient para servicios externos
+builder.Services.AddHttpClient<UB.Actividad1.API.Services.PreInscripcionService>();
+builder.Services.AddScoped<UB.Actividad1.API.Services.PreInscripcionService>();
 
 // Configuración JWT simple (clave de desarrollo)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "DEV_SECRET_KEY_CHANGE_ME_IN_PRODUCTION_USE_AT_LEAST_32_CHARACTERS";
@@ -64,23 +74,46 @@ app.UseDeveloperExceptionPage();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Logging detallado de excepciones
-app.Use(async (context, next) =>
+// Logging detallado de excepciones (solo en producción)
+if (!app.Environment.IsDevelopment())
 {
-    try
+    app.Use(async (context, next) =>
     {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"🚨 EXCEPTION: {ex.Message}");
-        Console.WriteLine($"🚨 STACK TRACE: {ex.StackTrace}");
-        throw;
-    }
-});
+        try
+        {
+            await next();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"🚨 EXCEPTION: {ex.Message}");
+            Console.WriteLine($"🚨 STACK TRACE: {ex.StackTrace}");
+            throw;
+        }
+    });
+}
 
 // app.UseHttpsRedirection(); // Comentado temporalmente para pruebas HTTP
 app.UseCors("AllowAll");
+
+// Middleware para logging detallado de requests (solo en desarrollo)
+if (app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        Console.WriteLine($"🔍 REQUEST: {context.Request.Method} {context.Request.Path}");
+        Console.WriteLine($"🔍 Headers: {string.Join(", ", context.Request.Headers.Select(h => $"{h.Key}: {h.Value}"))}");
+        
+        if (context.Request.ContentLength > 0)
+        {
+            context.Request.EnableBuffering();
+            var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
+            context.Request.Body.Position = 0;
+            Console.WriteLine($"🔍 Body: {body}");
+        }
+        
+        await next();
+    });
+}
 
 // Middleware para capturar errores detallados
 app.Use(async (context, next) =>
@@ -545,7 +578,7 @@ app.MapPut("/api/usuarios/yo", async (UpdateOwnProfileDto dto, UbFormacionContex
     return Results.Ok(new { u.Id, u.Username, u.Email });
 }).RequireAuthorization();
 
-// Listado de Unidades de Gestión (para selects)
+// Listado de Unidades de Gestión (para selects) - REQUIERE AUTENTICACIÓN
 app.MapGet("/api/unidades-gestion", async (UbFormacionContext context) =>
 {
     var ugs = await context.UnidadesGestion.AsNoTracking()
@@ -555,6 +588,73 @@ app.MapGet("/api/unidades-gestion", async (UbFormacionContext context) =>
         .ToListAsync();
     return Results.Ok(ugs);
 }).RequireAuthorization();
+
+// Listado de Estados (para selects) - REQUIERE AUTENTICACIÓN
+app.MapGet("/api/estados", async (UbFormacionContext context) =>
+{
+    var estados = await context.EstadosActividad.AsNoTracking()
+        .Where(e => e.Activo)
+        .OrderBy(e => e.Orden)
+        .Select(e => new { e.Id, e.Nombre, e.Codigo, e.Color })
+        .ToListAsync();
+    return Results.Ok(estados);
+}).RequireAuthorization();
+
+// Endpoint público para obtener una actividad específica (solo si está publicada)
+app.MapGet("/api/actividades/publicas/{id}", async (int id, UbFormacionContext context) =>
+{
+    try
+    {
+        // Resolver id del estado PUBLICADA por código
+        var estadoPublicadaId = await context.EstadosActividad
+            .Where(e => e.Codigo == "PUBLICADA" && e.Activo)
+            .Select(e => e.Id)
+            .FirstOrDefaultAsync();
+        
+        if (estadoPublicadaId == 0)
+        {
+            return Results.NotFound("Estado 'Publicada' no encontrado");
+        }
+
+        var actividad = await context.Actividades
+            .Include(a => a.Estado)
+            .Include(a => a.UnidadGestion)
+            .Include(a => a.UsuarioAutor)
+            .Where(a => a.Id == id && a.EstadoId == estadoPublicadaId)
+            .Select(a => new
+            {
+                a.Id,
+                a.Codigo,
+                a.Titulo,
+                a.Descripcion,
+                a.FechaActividad,
+                a.PlazasTotales,
+                a.HorasTotales,
+                a.CondicionesEconomicas,
+                a.AnioAcademico,
+                a.FechaInicioImparticion,
+                a.FechaFinImparticion,
+                a.ActividadPago,
+                a.FechaCreacion,
+                Estado = new { a.Estado.Id, a.Estado.Nombre, a.Estado.Codigo, a.Estado.Color },
+                UnidadGestion = new { a.UnidadGestion.Id, a.UnidadGestion.Nombre, a.UnidadGestion.Codigo },
+                UsuarioAutor = new { a.UsuarioAutor.Id, a.UsuarioAutor.Username }
+            })
+            .FirstOrDefaultAsync();
+
+        if (actividad == null)
+        {
+            return Results.NotFound("Actividad no encontrada o no está publicada");
+        }
+
+        return Results.Ok(actividad);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR EN /api/actividades/publicas/{id}: {ex.Message}");
+        return Results.Problem($"Error interno: {ex.Message}");
+    }
+});
 
 // Endpoint público para obtener actividades publicadas por Unidad Gestora
 // Eliminado duplicado de /api/actividades/publicas
@@ -934,7 +1034,8 @@ app.MapPatch("/api/actividades/{id}/estado", async (int id, PatchEstadoDto dto, 
     return Results.Ok(actividad);
 }).RequireAuthorization();
 
-app.MapGet("/api/estados", async (UbFormacionContext context, HttpContext httpContext) =>
+// Endpoint de estados con lógica de roles (requiere autenticación)
+app.MapGet("/api/estados/autenticado", async (UbFormacionContext context, HttpContext httpContext) =>
 {
     // Obtener el rol del usuario
     var userRoleClaim = httpContext.User.FindFirst("rol");
@@ -2542,6 +2643,65 @@ static string? DeterminarSiguienteRolImplicado(string estadoCodigo, int? unidadG
 }
 
 // (Eliminado duplicado de /api/actividades/publicas)
+
+// ==========================
+// Endpoint de Preinscripciones
+// ==========================
+app.MapPost("/api/preinscripciones", async (PreInscripcionDto dto, UB.Actividad1.API.Services.PreInscripcionService preInscripcionService, UbFormacionContext context) =>
+{
+    try
+    {
+        Console.WriteLine($"🔍 DEBUG: Recibida preinscripción para actividad {dto.ActividadId}");
+        
+        // Validar que la actividad existe y está publicada
+        var actividad = await context.Actividades
+            .Include(a => a.Estado)
+            .FirstOrDefaultAsync(a => a.Id == dto.ActividadId);
+            
+        if (actividad == null)
+        {
+            Console.WriteLine($"❌ Actividad {dto.ActividadId} no encontrada");
+            return Results.BadRequest("Actividad no encontrada");
+        }
+        
+        if (actividad.Estado?.Codigo != "PUBLICADA")
+        {
+            Console.WriteLine($"❌ Actividad {dto.ActividadId} no está publicada (estado: {actividad.Estado?.Codigo})");
+            return Results.BadRequest("La actividad no está disponible para preinscripciones");
+        }
+        
+        Console.WriteLine($"✅ Actividad {dto.ActividadId} validada, enviando a iFormalia...");
+        
+        // Enviar preinscripción al servicio externo
+        var resultado = await preInscripcionService.EnviarPreinscripcion(dto);
+        
+        if (resultado.Exito)
+        {
+            Console.WriteLine($"✅ Preinscripción enviada correctamente para {dto.Email}");
+            return Results.Ok(new { 
+                success = true, 
+                message = resultado.Mensaje,
+                actividadId = dto.ActividadId,
+                email = dto.Email,
+                detallesHttp = resultado.DetallesHttp
+            });
+        }
+        else
+        {
+            Console.WriteLine($"❌ Error en preinscripción: {resultado.Mensaje}");
+            return Results.BadRequest(new { 
+                success = false, 
+                message = resultado.Mensaje,
+                detallesHttp = resultado.DetallesHttp
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR EN /api/preinscripciones: {ex.Message}");
+        return Results.Problem($"Error interno: {ex.Message}");
+    }
+});
 
 // Fallback al index (público si existe) para rutas no-API
 app.MapFallback(async context =>
