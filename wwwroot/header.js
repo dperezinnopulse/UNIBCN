@@ -102,8 +102,119 @@
       const adminSub = $('#adminSubmenu');
       const userIcon = $('#userIcon');
       const userLabel = $('#userLabel');
-      let UG = 'TODAS';
+      
+      // Obtener información del usuario logueado
+      function getUserInfo() {
+        try {
+          console.log('🔍 DEBUG: Obteniendo información del usuario...');
+          
+          // Intentar obtener desde sessionStorage (auth.js)
+          const userData = sessionStorage.getItem('ub_user');
+          console.log('🔍 DEBUG: userData desde sessionStorage:', userData);
+          if (userData) {
+            const parsed = JSON.parse(userData);
+            console.log('🔍 DEBUG: Usuario parseado desde sessionStorage:', parsed);
+            return parsed;
+          }
+          
+          // Fallback: intentar obtener desde localStorage
+          const userDataLocal = localStorage.getItem('ub_user');
+          console.log('🔍 DEBUG: userData desde localStorage:', userDataLocal);
+          if (userDataLocal) {
+            const parsed = JSON.parse(userDataLocal);
+            console.log('🔍 DEBUG: Usuario parseado desde localStorage:', parsed);
+            return parsed;
+          }
+          
+          // Fallback: intentar decodificar el token JWT
+          const token = sessionStorage.getItem('ub_token') || localStorage.getItem('ub_token');
+          console.log('🔍 DEBUG: Token encontrado:', !!token);
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              console.log('🔍 DEBUG: Payload del token:', payload);
+              const userInfo = {
+                Id: payload.sub,
+                Username: payload.username,
+                Rol: payload.rol,
+                UnidadGestionId: payload.ugId ? parseInt(payload.ugId) : null,
+                // También incluir en camelCase para compatibilidad
+                id: payload.sub,
+                username: payload.username,
+                rol: payload.rol,
+                unidadGestionId: payload.ugId ? parseInt(payload.ugId) : null
+              };
+              console.log('🔍 DEBUG: Usuario extraído del token:', userInfo);
+              return userInfo;
+            } catch (e) {
+              console.warn('Error decodificando token:', e);
+            }
+          }
+          
+          console.log('🔍 DEBUG: No se pudo obtener información del usuario');
+          return null;
+        } catch (e) {
+          console.warn('Error obteniendo información del usuario:', e);
+          return null;
+        }
+      }
+      
+      // Mapear ID de UG a nombre
+      function getUGName(ugId) {
+        const ugMap = {
+          1: 'IDP',
+          2: 'CRAI', 
+          3: 'SAE'
+        };
+        return ugMap[ugId] || 'Todas';
+      }
+      
+      // Estado de UG - inicializar con la UG del usuario
+      const userInfo = getUserInfo();
+      console.log('🔍 DEBUG: userInfo obtenido:', userInfo);
+      
+      // Obtener UnidadGestionId (puede estar en camelCase o PascalCase)
+      const unidadGestionId = userInfo?.UnidadGestionId || userInfo?.unidadGestionId;
+      console.log('🔍 DEBUG: unidadGestionId encontrado:', unidadGestionId);
+      
+      let UG = userInfo && unidadGestionId ? getUGName(unidadGestionId) : 'TODAS';
+      console.log('🔍 DEBUG: UG calculada:', UG);
       const ugLabel = $('#ugActual');
+      const isAdmin = userInfo && (userInfo.Rol === 'Admin' || userInfo.rol === 'Admin');
+      console.log('🔍 DEBUG: isAdmin:', isAdmin);
+      
+      // Establecer la UG del usuario en la etiqueta
+      if (ugLabel && userInfo && unidadGestionId) {
+        const ugName = getUGName(unidadGestionId);
+        console.log('🔍 DEBUG: Estableciendo UG en etiqueta:', ugName);
+        ugLabel.textContent = ugName;
+        ugLabel.dataset.userSet = 'true'; // Marcar como establecido por el usuario
+        console.log('🔍 DEBUG: Etiqueta UG actualizada:', ugLabel.textContent);
+      } else {
+        console.log('🔍 DEBUG: No se pudo establecer UG del usuario:', {
+          ugLabel: !!ugLabel,
+          userInfo: !!userInfo,
+          unidadGestionId: unidadGestionId
+        });
+      }
+      
+      // Actualizar etiqueta del usuario
+      if (userInfo && userLabel) {
+        userLabel.textContent = userInfo.Username || userInfo.username || 'Usuario';
+      }
+      
+      // Configurar estilo visual del selector de UG según permisos
+      const openUGElement = $('#openUG');
+      if (openUGElement) {
+        if (isAdmin) {
+          openUGElement.style.cursor = 'pointer';
+          openUGElement.title = 'Hacer clic para cambiar unidad gestora';
+        } else {
+          openUGElement.style.cursor = 'default';
+          openUGElement.style.opacity = '0.7';
+          openUGElement.title = 'Unidad gestora asignada (solo Admin puede cambiar)';
+        }
+      }
       // Aplica el filtro de UG a todos los elementos con atributo data-ug
       function applyUG(){
         const blocks = document.querySelectorAll('[data-ug]');
@@ -116,8 +227,10 @@
           const show = UG === 'TODAS' || appliesTo.includes(UG);
           el.style.display = show ? '' : 'none';
         });
-        // Texto legible para la UG actual
-        if (ugLabel) ugLabel.textContent = UG === 'TODAS' ? 'Todas' : UG;
+        // Texto legible para la UG actual (solo si no se ha establecido previamente)
+        if (ugLabel && !ugLabel.dataset.userSet) {
+          ugLabel.textContent = UG === 'TODAS' ? 'Todas' : UG;
+        }
         // Establece estado activo en las opciones del submenú
         $$('.ugOption').forEach(btn => btn.classList.toggle('active', (btn.dataset.ug || '').toUpperCase() === UG));
       }
@@ -194,8 +307,17 @@
       
       // También actualizar después de un pequeño delay para asegurar que Auth esté disponible
       setTimeout(updateUserLabel, 500);
-      // Abre el submenú al clicar en la opción de UG
-      $('#openUG')?.addEventListener('click', (e) => openSub(e));
+      // Abre el submenú al clicar en la opción de UG (solo Admin)
+      $('#openUG')?.addEventListener('click', (e) => {
+        if (isAdmin) {
+          openSub(e);
+        } else {
+          // Para usuarios no-Admin, mostrar mensaje informativo
+          e.preventDefault();
+          e.stopPropagation();
+          alert('Solo los administradores pueden cambiar la unidad gestora.');
+        }
+      });
       // Abre submenú de administración (solo admin visible)
       $('#openAdmin')?.addEventListener('click', (e) => {
         if (e) e.stopPropagation();
@@ -209,6 +331,13 @@
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           UG = (btn.dataset.ug || 'Todas').toUpperCase();
+          
+          // Actualizar la etiqueta cuando Admin cambia la UG
+          if (ugLabel && isAdmin) {
+            ugLabel.textContent = UG === 'TODAS' ? 'Todas' : UG;
+            ugLabel.dataset.userSet = 'true';
+          }
+          
           applyUG();
           if (menu && !menu.classList.contains('d-none')) {
             sub?.classList.add('d-none');

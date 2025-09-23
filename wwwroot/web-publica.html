@@ -11,6 +11,26 @@
     <!-- WebLot para traducción automática -->
     <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
     <script>
+        // Configuración dinámica de URLs de API
+        function getApiBaseUrl() {
+            const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
+            
+            // Si estamos en localhost, usar localhost:5001
+            if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+                return 'http://localhost:5001';
+            }
+            
+            // Si estamos en ngrok o cualquier otra URL externa, usar la misma URL base
+            if (currentHost.includes('ngrok') || currentHost.includes('ngrok-free')) {
+                // Para ngrok, el backend también está expuesto en el mismo dominio
+                return `${currentProtocol}//${currentHost}`;
+            }
+            
+            // Para otros dominios, asumir que el backend está en el mismo dominio
+            return `${currentProtocol}//${currentHost}`;
+        }
+        
         // Función para inicializar WebLot con reintentos
         function inicializarWebLot() {
             console.log('🌐 Intentando inicializar WebLot...');
@@ -900,7 +920,8 @@
             // Cargar desde endpoint público para todas las UGs
             for (const [key, config] of Object.entries(ugConfig)) {
                 try {
-                    const url = new URL('/api/actividades/publicas', 'http://localhost:5001');
+                    const apiBaseUrl = getApiBaseUrl();
+                    const url = new URL('/api/actividades/publicas', apiBaseUrl);
                     url.searchParams.set('unidadGestionId', config.id);
                     url.searchParams.set('pageSize', 100);
                     
@@ -910,7 +931,8 @@
                         data.forEach(act => {
                             if (!actividadesUnicas.has(act.id)) {
                                 // Cargar también los importes para cada actividad
-                                fetch(`http://localhost:5001/api/actividades/${act.id}/importes`)
+                                const apiBaseUrl = getApiBaseUrl();
+                                fetch(`${apiBaseUrl}/api/actividades/${act.id}/importes`)
                                     .then(importesResponse => {
                                         if (importesResponse.ok) {
                                             return importesResponse.json();

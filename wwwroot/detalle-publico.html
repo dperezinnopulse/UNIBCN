@@ -10,6 +10,27 @@
     <!-- WebLot para traducción automática -->
     <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
     <script>
+        // Configuración dinámica de URLs de API
+        function getApiBaseUrl() {
+            const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
+            
+            // Si estamos en localhost, usar localhost:5001
+            if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+                return 'http://localhost:5001';
+            }
+            
+            // Si estamos en ngrok o cualquier otra URL externa, usar la misma URL base
+            // pero cambiar el puerto a 5001 para el backend
+            if (currentHost.includes('ngrok') || currentHost.includes('ngrok-free')) {
+                // Para ngrok, el backend también está expuesto en el mismo dominio
+                return `${currentProtocol}//${currentHost}`;
+            }
+            
+            // Para otros dominios, asumir que el backend está en el mismo dominio
+            return `${currentProtocol}//${currentHost}`;
+        }
+        
         // Función para inicializar WebLot con reintentos
         function inicializarWebLot() {
             console.log('🌐 Intentando inicializar WebLot...');
@@ -394,12 +415,100 @@
                             <h6 class="text-muted mb-2">Actividad seleccionada:</h6>
                             <div id="infoActividadPreinscripcion" class="text-primary"></div>
                         </div>
+                        
+                        <!-- Información de protección de datos -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-muted mb-3">DERECHO DE INFORMACIÓN RELATIVO AL TRATAMIENTO DE DATOS PERSONALES</h6>
+                            <div class="small text-muted">
+                                <ol class="mb-3">
+                                    <li>El responsable del tratamiento de los datos es la Secretaría General de la Universidad de Barcelona.</li>
+                                    <li>La finalidad del tratamiento es gestionar la inscripción al curso de formación.</li>
+                                    <li>Puede ejercer los derechos de acceso, rectificación, supresión, oposición, portabilidad y limitación del tratamiento.</li>
+                                    <li>Si lo necesita, puede consultar la <a href="#" id="linkInfoDetallada" class="text-primary" style="text-decoration: underline;">información detallada del tratamiento de datos personales</a>.</li>
+                                </ol>
+                                
+                                <!-- Checkbox obligatorio -->
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="aceptoProteccionDatos" name="aceptoProteccionDatos" required>
+                                    <label class="form-check-label" for="aceptoProteccionDatos">
+                                        <strong>Declaro que he leído el derecho de información.</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="invalid-feedback">Debe aceptar la información de protección de datos para continuar.</div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-success" id="btnGuardarPreinscripcion">
                         <i class="fas fa-save me-2"></i>Guardar Preinscripción
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Información Detallada de Protección de Datos -->
+    <div class="modal fade" id="modalInfoProteccionDatos" tabindex="-1" aria-labelledby="modalInfoProteccionDatosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalInfoProteccionDatosLabel">
+                        <i class="fas fa-shield-alt me-2"></i>Información Detallada de Protección de Datos
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">DERECHO DE INFORMACIÓN RELATIVO AL TRATAMIENTO DE DATOS PERSONALES</h6>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Responsable del tratamiento</h6>
+                            <p class="mb-1">Secretaría General de la Universidad de Barcelona</p>
+                            <p class="mb-1">Gran Via de les Corts Catalanes, 585, 08007 Barcelona</p>
+                            <p class="mb-0"><a href="mailto:secretaria.general@ub.edu" class="text-primary">secretaria.general@ub.edu</a></p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Finalidad del tratamiento</h6>
+                            <p class="mb-0">Gestionar la inscripción al curso de formación.</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Base jurídica</h6>
+                            <p class="mb-0">La base jurídica es el cumplimiento de una misión realizada en interés público (Ley orgánica 2/2023, de 22 de marzo, del Sistema Universitario y Ley 1/2003, de 19 de febrero, de universidades de Cataluña).</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Plazo de conservación de los datos</h6>
+                            <p class="mb-0">Los datos se conservan durante el tiempo necesario para cumplir la finalidad para la cual se han recogido y determinar las posibles responsabilidades que pudieran derivarse.</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Destinatarios</h6>
+                            <p class="mb-0">Los destinatarios de los datos son la propia universidad y, en su caso, los encargados del tratamiento. No se prevé la cesión de datos a terceros, salvo que exista obligación legal.</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Derechos de las personas</h6>
+                            <p class="mb-0">Puede ejercer los derechos de acceso, rectificación, supresión, oposición, portabilidad y limitación del tratamiento de los datos mediante escrito dirigido a la Secretaría General de la Universidad de Barcelona por correo postal (Gran Via de les Corts Catalanes, 585, 08007 Barcelona) o por correo electrónico (<a href="mailto:secretaria.general@ub.edu" class="text-primary">secretaria.general@ub.edu</a>). Será necesario adjuntar una fotocopia del DNI u otro documento válido que le identifique.</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark">Delegado de protección de datos</h6>
+                            <p class="mb-0">Si considera que estos derechos no se han atendido adecuadamente, puede comunicarlo al delegado de Protección de Datos de la Universidad de Barcelona por correo postal (Gran Via de les Corts Catalanes, 585, 08007 Barcelona) o por correo electrónico (<a href="mailto:protecciodedades@ub.edu" class="text-primary">protecciodedades@ub.edu</a>).</p>
+                        </div>
+                        
+                        <div class="mb-0">
+                            <h6 class="fw-bold text-dark">Autoridad de control</h6>
+                            <p class="mb-0">También puede presentar una reclamación ante la Autoridad Catalana de Protección de Datos.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-2"></i>Entendido
                     </button>
                 </div>
             </div>
@@ -431,7 +540,9 @@
             
             // Cargar actividad desde endpoint público específico
             console.log('🌐 Cargando actividad desde endpoint público específico...');
-            const resp = await fetch(`http://localhost:5001/api/actividades/publicas/${id}`);
+            const apiBaseUrl = getApiBaseUrl();
+            console.log('🌐 Usando URL de API:', apiBaseUrl);
+            const resp = await fetch(`${apiBaseUrl}/api/actividades/publicas/${id}`);
             if(!resp.ok){ 
                 if(resp.status === 404) {
                     throw new Error('Actividad no encontrada o no está publicada');
@@ -669,7 +780,8 @@
             
             // Cargar y mostrar TODOS los ImportesDescuentos
             try {
-                const importesResponse = await fetch(`http://localhost:5001/api/actividades/${act.id}/importes`);
+                const apiBaseUrl = getApiBaseUrl();
+                const importesResponse = await fetch(`${apiBaseUrl}/api/actividades/${act.id}/importes`);
                 if (importesResponse.ok) {
                     const importesCompletos = await importesResponse.json();
                     console.log('💰 ImportesDescuentos cargados:', importesCompletos);
@@ -888,6 +1000,14 @@
             esValido = false;
         }
         
+        // Validar checkbox de protección de datos (obligatorio)
+        const aceptoProteccionDatos = document.getElementById('aceptoProteccionDatos');
+        if (!aceptoProteccionDatos.checked) {
+            aceptoProteccionDatos.classList.add('is-invalid');
+            document.querySelector('#aceptoProteccionDatos + .invalid-feedback').textContent = 'Debe aceptar la información de protección de datos para continuar';
+            esValido = false;
+        }
+        
         return esValido;
     }
     
@@ -921,7 +1041,8 @@
             btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
             btnGuardar.disabled = true;
             
-            const response = await fetch('http://localhost:5001/api/preinscripciones', {
+            const apiBaseUrl = getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/preinscripciones`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1126,6 +1247,30 @@
                 }
             }
         });
+        
+        // Event listener para el enlace de información detallada de protección de datos
+        const linkInfoDetallada = document.getElementById('linkInfoDetallada');
+        if (linkInfoDetallada) {
+            linkInfoDetallada.addEventListener('click', function(e) {
+                e.preventDefault();
+                const modalInfoProteccion = new bootstrap.Modal(document.getElementById('modalInfoProteccionDatos'));
+                modalInfoProteccion.show();
+            });
+        }
+        
+        // Validación del checkbox de protección de datos
+        const checkboxProteccionDatos = document.getElementById('aceptoProteccionDatos');
+        if (checkboxProteccionDatos) {
+            checkboxProteccionDatos.addEventListener('change', function() {
+                if (this.checked) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        }
     });
     
     document.addEventListener('DOMContentLoaded', cargarDetalle);
