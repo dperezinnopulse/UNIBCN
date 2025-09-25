@@ -3526,6 +3526,11 @@ async function autoSeleccionarUnidadGestion() {
         const userInfo = JSON.parse(sessionStorage.getItem('ub_user') || '{}');
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - User info:', userInfo);
         
+        // Verificar si el usuario es Admin
+        const userRole = userInfo.rol || userInfo.Rol;
+        const isAdmin = userRole === 'Admin';
+        console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Rol del usuario:', userRole, 'Es Admin:', isAdmin);
+        
         // Buscar UnidadGestionId en camelCase o PascalCase
         const unidadGestionId = userInfo.unidadGestionId || userInfo.UnidadGestionId;
         
@@ -3534,16 +3539,25 @@ async function autoSeleccionarUnidadGestion() {
             return;
         }
         
-        // Mapear ID a código
-        const ugMap = { 1: 'IDP', 2: 'CRAI', 3: 'SAE' };
-        const ugCodigo = ugMap[unidadGestionId];
+        // Mapear ID del usuario a código y al valor del select
+        const ugMap = { 
+            1: { codigo: 'IDP', selectValue: '35' }, 
+            2: { codigo: 'CRAI', selectValue: '36' }, 
+            3: { codigo: 'SAE', selectValue: '37' } 
+        };
+        const ugInfo = ugMap[unidadGestionId];
         
-        if (!ugCodigo) {
+        if (!ugInfo) {
             console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Código UG no encontrado para ID:', unidadGestionId);
             return;
         }
         
+        const ugCodigo = ugInfo.codigo;
+        const selectValue = ugInfo.selectValue;
+        
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Código UG:', ugCodigo);
+        console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - ID del usuario:', unidadGestionId);
+        console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Valor del select:', selectValue);
         
         // Esperar a que se cargue el select
         let intentos = 0;
@@ -3553,28 +3567,45 @@ async function autoSeleccionarUnidadGestion() {
             const select = document.getElementById('actividadUnidadGestion');
             if (select && select.options.length > 1) {
                 console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Select encontrado, opciones:', select.options.length);
+                console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Buscando opción con selectValue:', selectValue, 'ugCodigo:', ugCodigo);
                 
-                // Buscar y seleccionar la opción
+                // Mostrar todas las opciones disponibles para debug
+                for (let i = 0; i < select.options.length; i++) {
+                    const option = select.options[i];
+                    console.log(`🎯 DEBUG: autoSeleccionarUnidadGestion - Opción ${i}: value="${option.value}", text="${option.text}"`);
+                }
+                
+                // Buscar y seleccionar la opción por valor del select o por código
                 for (let option of select.options) {
-                    if (option.value === ugCodigo || option.text === ugCodigo) {
-                        // Primero seleccionar la opción usando select.value
-                        select.value = ugCodigo;
+                    if (option.value === selectValue || 
+                        option.value === unidadGestionId.toString() || 
+                        option.value === ugCodigo || 
+                        option.text === ugCodigo ||
+                        option.text.includes(ugCodigo)) {
                         
-                        // Luego deshabilitar el select
-                        select.disabled = true;
-                        select.style.backgroundColor = '#f8f9fa';
-                        select.style.cursor = 'not-allowed';
+                        // Seleccionar la opción
+                        select.value = option.value;
                         
-                        // Añadir texto explicativo
-                        const label = document.querySelector('label[for="actividadUnidadGestion"]');
-                        if (label && !label.querySelector('.text-muted')) {
-                            const explicacion = document.createElement('small');
-                            explicacion.className = 'text-muted ms-2';
-                            explicacion.textContent = '(Auto-asignado según tu unidad)';
-                            label.appendChild(explicacion);
+                        // Solo deshabilitar si NO es Admin
+                        if (!isAdmin) {
+                            select.disabled = true;
+                            select.style.backgroundColor = '#f8f9fa';
+                            select.style.cursor = 'not-allowed';
+                            
+                            // Añadir texto explicativo
+                            const label = document.querySelector('label[for="actividadUnidadGestion"]');
+                            if (label && !label.querySelector('.text-muted')) {
+                                const explicacion = document.createElement('small');
+                                explicacion.className = 'text-muted ms-2';
+                                explicacion.textContent = '(Auto-asignado según tu unidad)';
+                                label.appendChild(explicacion);
+                            }
+                            
+                            console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada para usuario no-Admin:', ugCodigo);
+                        } else {
+                            console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora preseleccionada para Admin (editable):', ugCodigo);
                         }
                         
-                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada:', ugCodigo);
                         console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Valor seleccionado:', select.value);
                         return;
                     }

@@ -25,18 +25,22 @@
         }
     };
 
-    // Mapeo de IDs de unidad gestora a códigos
+    // Mapeo de IDs de unidad gestora a códigos (valores del select)
     const UG_ID_TO_CODE = {
+        35: 'IDP',
+        36: 'CRAI', 
+        37: 'SAE',
+        // Mantener compatibilidad con IDs antiguos
         1: 'IDP',
         2: 'CRAI', 
         3: 'SAE'
     };
 
-    // Mapeo de códigos a IDs de unidad gestora
+    // Mapeo de códigos a IDs de unidad gestora (valores del select)
     const UG_CODE_TO_ID = {
-        'IDP': 1,
-        'CRAI': 2,
-        'SAE': 3
+        'IDP': 35,
+        'CRAI': 36,
+        'SAE': 37
     };
 
     let currentUserUG = null;

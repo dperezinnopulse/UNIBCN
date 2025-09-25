@@ -817,6 +817,8 @@ async function cargarDatosReales(actividadId) {
             const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
             const userRole = user?.rol || user?.Rol || '';
             const normalizedRole = normalizeRoleForWorkflow(userRole);
+            console.log('🔒 DEBUG: cargarDatosReales - user:', user, 'userRole:', userRole, 'normalizedRole:', normalizedRole);
+            
             const estadoId = (actividad.estadoId ?? actividad.EstadoId ?? actividad.estado?.id ?? actividad.Estado?.Id);
             let estadoCodigo = null;
             try {
@@ -828,6 +830,24 @@ async function cargarDatosReales(actividadId) {
             } catch {}
             await aplicarPermisosEdicion(normalizedRole, estadoCodigo);
         } catch (e) { Utils.log('Aplicación de permisos de edición omitida:', e); }
+        
+        // Aplicar permisos de edición después de cargar dominios (para asegurar que el select esté cargado)
+        setTimeout(async () => {
+            try {
+                const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+                const userRole = user?.rol || user?.Rol || '';
+                const normalizedRole = normalizeRoleForWorkflow(userRole);
+                console.log('🔒 DEBUG: aplicarPermisosEdicion (retry) - user:', user, 'userRole:', userRole, 'normalizedRole:', normalizedRole);
+                await aplicarPermisosEdicion(normalizedRole, estadoCodigo);
+            } catch (e) { 
+                console.log('🔒 DEBUG: Error en retry de permisos:', e); 
+            }
+        }, 2000);
+        
+        // SOLUCIÓN SIMPLE: Deshabilitar select de unidad gestora para usuarios no-Admin
+        setTimeout(() => {
+            deshabilitarSelectUnidadGestion();
+        }, 3000);
         
     } catch (error) {
         Utils.error('Error cargando datos reales:', error);
@@ -1300,10 +1320,99 @@ function canEditByRoleAndState(normalizedRole, estadoCodigo) {
     }
 }
 
+// FUNCIÓN SIMPLE: Deshabilitar select de unidad gestora para usuarios no-Admin (SIN interferir con campos específicos)
+function deshabilitarSelectUnidadGestion() {
+    console.log('🔒 SIMPLE: Deshabilitando select de unidad gestora...');
+    
+    try {
+        // Obtener información del usuario
+        const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+        const userRole = user?.rol || user?.Rol || '';
+        const isAdmin = userRole && userRole.toString().toUpperCase() === 'ADMIN';
+        
+        console.log('🔒 SIMPLE: Usuario:', user?.username, 'Rol:', userRole, 'Es Admin:', isAdmin);
+        
+        // Buscar el select de unidad gestora
+        const select = document.getElementById('actividadUnidadGestion');
+        if (!select) {
+            console.log('❌ SIMPLE: Select de unidad gestora no encontrado');
+            return;
+        }
+        
+        console.log('✅ SIMPLE: Select encontrado, deshabilitando para usuarios no-Admin');
+        
+        // Deshabilitar para usuarios no-Admin
+        if (!isAdmin) {
+            select.disabled = true;
+            console.log('🔒 SIMPLE: Select deshabilitado para usuario no-Admin');
+            
+            // Añadir texto explicativo
+            const label = document.querySelector('label[for="actividadUnidadGestion"]');
+            if (label && !label.textContent.includes('(Auto-asignado según tu unidad)')) {
+                label.textContent = label.textContent.replace(' *', '') + ' (Auto-asignado según tu unidad)';
+                console.log('📝 SIMPLE: Texto explicativo añadido');
+            }
+        } else {
+            select.disabled = false;
+            console.log('🔓 SIMPLE: Select habilitado para Admin');
+            
+            // Restaurar texto original
+            const label = document.querySelector('label[for="actividadUnidadGestion"]');
+            if (label) {
+                label.textContent = label.textContent.replace(' (Auto-asignado según tu unidad)', ' *');
+                console.log('📝 SIMPLE: Texto original restaurado');
+            }
+        }
+        
+        // IMPORTANTE: NO tocar los campos específicos por unidad gestora
+        // La lógica existente en ug-specific-fields.js ya maneja esto correctamente
+        console.log('ℹ️ SIMPLE: No se modifican campos específicos por unidad gestora');
+        
+    } catch (error) {
+        console.error('❌ SIMPLE: Error deshabilitando select:', error);
+    }
+}
+
 async function aplicarPermisosEdicion(normalizedRole, estadoCodigo) {
+    console.log('🔒 DEBUG: aplicarPermisosEdicion - normalizedRole:', normalizedRole, 'estadoCodigo:', estadoCodigo);
+    
     const editable = canEditByRoleAndState(normalizedRole, estadoCodigo);
     const container = document.querySelector('main');
     if (!container) return;
+    
+    // Deshabilitar select de unidad gestora para usuarios no-Admin (independientemente del estado)
+    const unidadGestionSelect = document.getElementById('actividadUnidadGestion');
+    console.log('🔒 DEBUG: aplicarPermisosEdicion - unidadGestionSelect encontrado:', !!unidadGestionSelect);
+    if (unidadGestionSelect) {
+        const isAdmin = normalizedRole === 'ADMIN';
+        console.log('🔒 DEBUG: aplicarPermisosEdicion - isAdmin:', isAdmin, 'normalizedRole:', normalizedRole);
+        console.log('🔒 DEBUG: aplicarPermisosEdicion - Select antes de deshabilitar:', unidadGestionSelect.disabled);
+        unidadGestionSelect.disabled = !isAdmin;
+        console.log('🔒 DEBUG: aplicarPermisosEdicion - Select después de deshabilitar:', unidadGestionSelect.disabled);
+        
+        // Añadir event listener para mantener el select deshabilitado
+        if (!isAdmin) {
+            unidadGestionSelect.addEventListener('change', function() {
+                if (!isAdmin) {
+                    console.log('🔒 DEBUG: Event listener - Manteniendo select deshabilitado');
+                    this.disabled = true;
+                }
+            });
+        }
+        
+        // Añadir texto explicativo para usuarios no-Admin
+        const label = document.querySelector('label[for="actividadUnidadGestion"]');
+        if (label && !isAdmin) {
+            // Verificar si ya tiene el texto explicativo
+            if (!label.textContent.includes('(Auto-asignado según tu unidad)')) {
+                label.textContent = label.textContent.replace(' *', '') + ' (Auto-asignado según tu unidad)';
+            }
+        } else if (label && isAdmin) {
+            // Restaurar texto original para Admin
+            label.textContent = label.textContent.replace(' (Auto-asignado según tu unidad)', ' *');
+        }
+    }
+    
     const inputs = container.querySelectorAll('.form-section input, .form-section select, .form-section textarea');
     inputs.forEach(el => {
         const id = el.id || '';
@@ -2037,10 +2146,10 @@ function actualizarCamposUG() {
     console.log('🔧 DEBUG: actualizarCamposUG - Es Admin:', isAdmin);
     console.log('🔧 DEBUG: actualizarCamposUG - UserData:', userData);
     
-    // Si no tenemos datos del usuario, usar función de prueba directa
+    // Si no tenemos datos del usuario, usar la lógica de ug-specific-fields.js
     if (!userData.rol) {
-        console.log('🔧 DEBUG: No hay datos del usuario, usando función de prueba directa...');
-        testAdminStyles();
+        console.log('🔧 DEBUG: No hay datos del usuario, delegando a ug-specific-fields.js...');
+        // No hacer nada aquí, dejar que ug-specific-fields.js maneje la lógica
         return;
     }
     
@@ -2174,6 +2283,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof initEditarActividad === 'function') {
         initEditarActividad();
     }
+    
+    // SOLUCIÓN SIMPLE: Deshabilitar select de unidad gestora después de cargar la página
+    setTimeout(() => {
+        deshabilitarSelectUnidadGestion();
+    }, 1000);
     
     // El resumen de mensajes se carga desde initEditarActividad()
     
