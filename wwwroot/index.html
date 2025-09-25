@@ -16,6 +16,26 @@
 
 <link href="css/styles.css" rel="stylesheet"/>
 <style>
+      /* Estilos para campos específicos por unidad gestora */
+      div[data-ug="CRAI"] input.form-control, div[data-ug="CRAI"] select.form-control, div[data-ug="CRAI"] select.form-select, div[data-ug="CRAI"] textarea.form-control {
+        border: 3px solid #0d6efd !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+      }
+      
+      div[data-ug="IDP"] input.form-control, div[data-ug="IDP"] select.form-control, div[data-ug="IDP"] select.form-select, div[data-ug="IDP"] textarea.form-control {
+        border: 3px solid #ffc107 !important;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+      }
+      
+      div[data-ug="SAE"] input.form-control, div[data-ug="SAE"] select.form-control, div[data-ug="SAE"] textarea.form-control {
+        border: 1px solid #000000 !important;
+      }
+      
+      /* Resetear todos los campos a borde negro por defecto */
+      input.form-control, select.form-control, textarea.form-control {
+        border: 1px solid #000000 !important;
+      }
+
 /* UG Visual cues */
 [data-ug~="IDP"]{ border:1px solid #fcd34d; border-left:6px solid #f59e0b; border-radius:10px; padding:12px; background:#fffbeb; }
 [data-ug~="CRAI"]{ border:1px solid #93c5fd; border-left:6px solid #3b82f6; border-radius:10px; padding:12px; background:#eff6ff; }
@@ -26,6 +46,51 @@
 .usersubmenu .ugOption[data-ug="CRAI"] .chip{ background:#3b82f6; }
 .usersubmenu .ugOption[data-ug="SAE"] .chip{ background:#10b981; }
 .usersubmenu .ugOption[data-ug="Todas"] .chip{ background:#6b7280; }
+
+      /* Estilos del menú flotante */
+      .sidebar {
+        background-color: #f7f7f7;
+        width: 260px;
+        min-height: 100vh;
+        transition: width 0.25s ease;
+        overflow-x: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      }
+        .sidebar.collapsed { width: 72px !important; }
+      .sidebar .nav-link {
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.6rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .sidebar .nav-link.active {
+        background-color: #e7effb;
+        color: #0366d6;
+        font-weight: 600;
+      }
+      .sidebar .nav-link:hover {
+        background-color: #e6e6e6;
+        color: #0366d6;
+      }
+        .sidebar.collapsed .nav-link { justify-content: center; }
+        .sidebar.collapsed .link-text { display: none !important; }
+        
+        /* Ajustar contenido principal para sidebar flotante */
+        .main-content-wrapper {
+          margin-left: 72px;
+          transition: margin-left 0.25s ease;
+        }
+        .main-content-wrapper.sidebar-expanded {
+          margin-left: 260px;
+        }
 </style>
 </head>
 <body>
@@ -43,7 +108,7 @@
 <!-- Contenedor para el menú lateral cargado dinámicamente -->
 <div id="sidebarContainer"></div>
 <!-- Contenido principal -->
-<div class="flex-grow-1">
+<div class="flex-grow-1 main-content-wrapper">
 <!-- Contenedor de la cabecera (se insertará dinámicamente) -->
 <div id="headerContainer"></div>
 <!-- Formulario -->
@@ -77,8 +142,41 @@
 </div>
 </div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option>Jornada</option></select></div>
-<div class="col-md-4"><label class="form-label">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion"><option>IDP</option><option>CRAI</option><option>SAE</option></select></div>
+<div class="col-md-4"><label class="form-label">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion"><option value="">Seleccionar...</option><option value="IDP">IDP</option><option value="CRAI">CRAI</option><option value="SAE">SAE</option></select></div>
 <div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" id="descripcion" rows="3" placeholder="Descripción de la actividad"></textarea></div>
+
+<!-- NUEVOS CAMPOS - INFORMACIÓN GENERAL -->
+<div class="col-md-3">
+    <label class="form-label d-block">Preinscripción</label>
+    <div class="form-check form-switch">
+        <input class="form-check-input" id="preinscripcion" type="checkbox"/>
+        <label class="form-check-label" for="preinscripcion">Activar</label>
+    </div>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Estado actividad</label>
+    <select class="form-select" id="estadoActividad">
+        <option value="">Selecciona</option>
+        <option value="Abierta">Abierta</option>
+        <option value="Cerrada">Cerrada</option>
+    </select>
+</div>
+<div class="col-md-3" data-ug="CRAI">
+    <label class="form-label">Asignatura (CRAI)</label>
+    <select class="form-select" id="asignaturaId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3" data-ug="CRAI">
+    <label class="form-label">Grupo Asignatura (CRAI)</label>
+    <input class="form-control" id="grupoAsignatura" type="text" maxlength="150"/>
+</div>
+<div class="col-md-3" data-ug="CRAI">
+    <label class="form-label">Disciplina relacionada (CRAI)</label>
+    <select class="form-select" id="disciplinaRelacionadaId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
 <div class="col-md-4"><label class="form-label">Condiciones económicas</label><input class="form-control" id="condicionesEconomicas" type="text"/></div>
 <div class="col-md-4"><label class="form-label">Año académico</label><input class="form-control" id="actividadAnioAcademico" placeholder="2025-2026" type="text"/></div>
 <div class="col-md-4"><label class="form-label">Línea estratégica</label><select class="form-select" id="lineaEstrategica"><option>Línea 1</option></select></div>
@@ -182,6 +280,36 @@
 <label class="form-label">Código promocional</label>
 <input class="form-control" data-save="1" id="imp_codigo" type="text"/>
 </div>
+
+<!-- NUEVOS CAMPOS - IMPORTE Y DESCUENTOS -->
+<div class="col-md-3">
+    <label class="form-label">Coste estimado de la actividad (€)</label>
+    <input class="form-control" id="costeEstimadoActividad" min="0" step="0.01" type="number" inputmode="decimal"/>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Tipos de financiación</label>
+    <select class="form-select" id="tiposFinanciacionId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Año inicial de financiación</label>
+    <input class="form-control" id="anoInicialFinanciacion" type="number" min="2000" max="2100"/>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Año final de financiación</label>
+    <input class="form-control" id="anoFinalFinanciacion" type="number" min="2000" max="2100"/>
+</div>
+<div class="col-md-6">
+    <label class="form-label">Denominación del Descuento</label>
+    <select class="form-select" id="denominacionDescuentoIds" multiple>
+        <option value="">Selecciona (múltiple)</option>
+    </select>
+</div>
+<div class="col-md-6">
+    <label class="form-label">Plazas afectadas por el descuento</label>
+    <input class="form-control" id="plazasAfectadasDescuento" min="0" step="1" type="number" inputmode="numeric"/>
+</div>
 <div class="col-12 position-relative">
 <label class="form-label">Condiciones</label>
 <div class="input-group">
@@ -237,6 +365,35 @@
 <div><small class="text-muted">English</small><textarea class="form-control" data-save="1" id="insc_requisitos_en" placeholder="Requirements (EN)" rows="2"></textarea></div>
 </div>
 </div>
+
+<!-- NUEVOS CAMPOS - INSCRIPCIÓN -->
+<div class="col-md-3">
+    <label class="form-label">Fecha Límite de Pago</label>
+    <input class="form-control" id="fechaLimitePago" type="date"/>
+</div>
+<div class="col-md-3">
+    <label class="form-label d-block">TPV</label>
+    <div class="form-check form-switch">
+        <input class="form-check-input" id="tpv" type="checkbox"/>
+        <label class="form-check-label" for="tpv">Activar</label>
+    </div>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Remesa</label>
+    <select class="form-select" id="remesa">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Tipos de Inscripción</label>
+    <select class="form-select" id="tiposInscripcionId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-6">
+    <label class="form-label">Fecha Adjudicación Preinscripción</label>
+    <input class="form-control" id="fechaAdjudicacionPreinscripcion" type="date"/>
+</div>
 </div>
 </section>
 <section class="mb-5" id="seccion-programa">
@@ -287,20 +444,80 @@
 <label class="form-label">Fecha de fin</label>
 <input class="form-control" data-save="1" id="programa_fin" type="date"/>
 </div>
+
+<!-- NUEVOS CAMPOS - PROGRAMA -->
+<div class="col-12">
+    <label class="form-label">Metodología</label>
+    <textarea class="form-control" id="metodologia" rows="3" placeholder="Metodología de la actividad"></textarea>
+</div>
+<div class="col-12">
+    <label class="form-label">Sistema de Evaluación</label>
+    <textarea class="form-control" id="sistemaEvaluacion" rows="3" placeholder="Sistema de evaluación"></textarea>
+</div>
+<div class="col-12">
+    <label class="form-label">Horario y Calendario</label>
+    <textarea class="form-control" id="horarioYCalendario" rows="3" placeholder="Horario y calendario de la actividad"></textarea>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Idioma de Impartición</label>
+    <select class="form-select" id="idiomaImparticionId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Tipos de Certificación</label>
+    <select class="form-select" id="tiposCertificacionId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3">
+    <label class="form-label">Materia / Disciplina</label>
+    <select class="form-select" id="materiaDisciplinaId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-md-3" data-ug="IDP">
+    <label class="form-label">Ámbito de formación (IDP)</label>
+    <select class="form-select" id="ambitoFormacionId">
+        <option value="">Selecciona</option>
+    </select>
+</div>
+<div class="col-12">
+    <label class="form-label">Observaciones</label>
+    <textarea class="form-control" id="observaciones" rows="3" placeholder="Observaciones adicionales"></textarea>
+</div>
+<div class="col-12">
+    <label class="form-label">Espacio de Impartición</label>
+    <textarea class="form-control" id="espacioImparticion" rows="3" placeholder="Espacio donde se imparte la actividad"></textarea>
+</div>
+<div class="col-12">
+    <label class="form-label">Lugar de Impartición</label>
+    <textarea class="form-control" id="lugarImparticion" rows="3" placeholder="Lugar específico de impartición"></textarea>
+</div>
+<div class="col-12">
+    <label class="form-label">Otras Ubicaciones</label>
+    <textarea class="form-control" id="otrasUbicaciones" rows="3" placeholder="Otras ubicaciones relacionadas"></textarea>
+</div>
+<div class="col-md-6">
+    <label class="form-label">URL plataforma virtual</label>
+    <input class="form-control" id="urlPlataformaVirtual" type="url" placeholder="https://..."/>
+</div>
+<div class="col-md-6">
+    <label class="form-label">URL cuestionario de satisfacción</label>
+    <input class="form-control" id="urlCuestionarioSatisfaccion" type="text" placeholder="URL del cuestionario"/>
+</div>
 </div>
 <div class="row g-3 mt-1">
 <div class="col-md-4" data-ug="SAE">
 <label class="form-label">Tipus d'estudi (SAE)</label>
 <select class="form-select" id="tipusEstudiSAE">
 <option value="">Selecciona...</option>
-<option>Grau</option><option>Màster</option><option>Doctorat</option>
 </select>
 </div>
 <div class="col-md-4" data-ug="SAE">
 <label class="form-label">Categoria (SAE)</label>
 <select class="form-select" id="categoriaSAE">
 <option value="">Selecciona...</option>
-<option>Bàsic</option><option>Avançat</option><option>Especialització</option>
 </select>
 </div>
 <div class="col-md-4" data-ug="SAE">

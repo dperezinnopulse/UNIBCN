@@ -60,7 +60,7 @@ header { background:#fff; border-bottom:1px solid #ddd; padding:10px 20px; }
 }
 .form-control:valid,
 .form-select:valid {
-  border-color: #198754 !important;
+  border-color: #000000 !important;
 }
 .form-control:invalid:focus,
 .form-select:invalid:focus {

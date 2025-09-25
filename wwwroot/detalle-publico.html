@@ -410,6 +410,81 @@
                             </div>
                         </div>
                         
+                        <!-- Nuevos campos adicionales -->
+                        <div class="row g-3 mt-2">
+                            <!-- Fecha de Nacimiento -->
+                            <div class="col-md-6">
+                                <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Código Postal -->
+                            <div class="col-md-6">
+                                <label for="codigoPostal" class="form-label">Código Postal</label>
+                                <input type="text" class="form-control" id="codigoPostal" name="codigoPostal" maxlength="5" pattern="[0-9]{5}" placeholder="12345">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <!-- Localidad -->
+                            <div class="col-md-6">
+                                <label for="localidad" class="form-label">Localidad</label>
+                                <select class="form-select" id="localidad" name="localidad">
+                                    <option value="">Seleccione una localidad...</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Población -->
+                            <div class="col-md-6">
+                                <label for="poblacion" class="form-label">Población</label>
+                                <input type="text" class="form-control" id="poblacion" name="poblacion" placeholder="Nombre de la población">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <!-- Email Alternativo -->
+                            <div class="col-md-6">
+                                <label for="emailAlternativo" class="form-label">Email Alternativo</label>
+                                <input type="email" class="form-control" id="emailAlternativo" name="emailAlternativo" placeholder="email@ejemplo.com">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <!-- Otro Teléfono -->
+                            <div class="col-md-6">
+                                <label for="otroTelefono" class="form-label">Otro Teléfono</label>
+                                <input type="tel" class="form-control" id="otroTelefono" name="otroTelefono" placeholder="+34 123 456 789">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <!-- Género -->
+                            <div class="col-md-6">
+                                <label for="genero" class="form-label">Género</label>
+                                <select class="form-select" id="genero" name="genero">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="No binario">No binario</option>
+                                    <option value="Prefiero no contestar">Prefiero no contestar</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <!-- Observaciones -->
+                            <div class="col-12">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Información adicional que considere relevante..."></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
                         <!-- Información de la actividad -->
                         <div class="mt-4 p-3 bg-light rounded">
                             <h6 class="text-muted mb-2">Actividad seleccionada:</h6>
@@ -1000,6 +1075,22 @@
             esValido = false;
         }
         
+        // Validar código postal (si se introduce)
+        const codigoPostal = formData.get('codigoPostal');
+        if (codigoPostal && !codigoPostal.match(/^[0-9]{5}$/)) {
+            document.getElementById('codigoPostal').classList.add('is-invalid');
+            document.querySelector('#codigoPostal + .invalid-feedback').textContent = 'El código postal debe tener 5 dígitos';
+            esValido = false;
+        }
+        
+        // Validar email alternativo (si se introduce)
+        const emailAlternativo = formData.get('emailAlternativo');
+        if (emailAlternativo && !emailAlternativo.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            document.getElementById('emailAlternativo').classList.add('is-invalid');
+            document.querySelector('#emailAlternativo + .invalid-feedback').textContent = 'Formato de email inválido';
+            esValido = false;
+        }
+        
         // Validar checkbox de protección de datos (obligatorio)
         const aceptoProteccionDatos = document.getElementById('aceptoProteccionDatos');
         if (!aceptoProteccionDatos.checked) {
@@ -1029,6 +1120,14 @@
             apellido2: formData.get('apellido2'),
             email: formData.get('email'),
             telefono: formData.get('telefono'),
+            fechaNacimiento: formData.get('fechaNacimiento') || null,
+            codigoPostal: formData.get('codigoPostal') || null,
+            localidad: formData.get('localidad') || null,
+            poblacion: formData.get('poblacion') || null,
+            emailAlternativo: formData.get('emailAlternativo') || null,
+            otroTelefono: formData.get('otroTelefono') || null,
+            genero: formData.get('genero') || null,
+            observaciones: formData.get('observaciones') || null,
             actividadId: parseInt(actividadId)
         };
         
@@ -1203,6 +1302,12 @@
                     // Limpiar resultado anterior
                     ocultarResultadoPreinscripcion();
                     
+                    // Inicializar el formulario cuando se muestre el modal
+                    modalElement.addEventListener('shown.bs.modal', function() {
+                        console.log('📋 Modal mostrado, inicializando formulario...');
+                        inicializarFormularioPreinscripcion();
+                    });
+                    
                     modal.show();
                 } catch (error) {
                     console.error('❌ Error al mostrar modal:', error);
@@ -1273,6 +1378,125 @@
         }
     });
     
+    // Función para cargar localidades por código postal
+    async function cargarLocalidades(codigoPostal) {
+        console.log('🔍 cargarLocalidades llamada con:', codigoPostal);
+        
+        if (!codigoPostal || codigoPostal.length !== 5) {
+            console.log('❌ Código postal inválido:', codigoPostal);
+            document.getElementById('localidad').innerHTML = '<option value="">Primero introduzca un código postal</option>';
+            return;
+        }
+        
+        try {
+            const apiBaseUrl = getApiBaseUrl();
+            const url = `${apiBaseUrl}/api/localidades?codigoPostal=${codigoPostal}`;
+            console.log('🌐 Llamando a:', url);
+            
+            const response = await fetch(url);
+            console.log('📡 Respuesta recibida:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const localidades = await response.json();
+                console.log('📋 Localidades recibidas:', localidades);
+                
+                const selectLocalidad = document.getElementById('localidad');
+                if (selectLocalidad) {
+                    if (localidades && localidades.length > 0) {
+                        selectLocalidad.innerHTML = '';
+                        
+                        if (localidades.length === 1) {
+                            // Si solo hay una localidad, seleccionarla automáticamente
+                            const localidad = localidades[0];
+                            const option = document.createElement('option');
+                            option.value = localidad.id;
+                            option.textContent = localidad.localidad;
+                            option.selected = true;
+                            selectLocalidad.appendChild(option);
+                            console.log('✅ Localidad única seleccionada automáticamente:', localidad.localidad);
+                        } else {
+                            // Si hay múltiples localidades, mostrar opción de selección
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '';
+                            defaultOption.textContent = 'Seleccione una localidad...';
+                            selectLocalidad.appendChild(defaultOption);
+                            
+                            localidades.forEach(localidad => {
+                                const option = document.createElement('option');
+                                option.value = localidad.id;
+                                option.textContent = localidad.localidad;
+                                selectLocalidad.appendChild(option);
+                            });
+                            console.log('✅ Múltiples localidades cargadas en el select');
+                        }
+                    } else {
+                        selectLocalidad.innerHTML = '<option value="">No se encontraron localidades para este código postal</option>';
+                        console.log('⚠️ No se encontraron localidades');
+                    }
+                }
+            } else {
+                console.error('❌ Error en la respuesta:', response.status, response.statusText);
+                const selectLocalidad = document.getElementById('localidad');
+                if (selectLocalidad) {
+                    selectLocalidad.innerHTML = '<option value="">Error cargando localidades</option>';
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error cargando localidades:', error);
+            const selectLocalidad = document.getElementById('localidad');
+            if (selectLocalidad) {
+                selectLocalidad.innerHTML = '<option value="">Error cargando localidades</option>';
+            }
+        }
+    }
+    
+    // Función para inicializar el formulario de preinscripción
+    function inicializarFormularioPreinscripcion() {
+        const codigoPostalInput = document.getElementById('codigoPostal');
+        const selectLocalidad = document.getElementById('localidad');
+        
+        console.log('🔧 Inicializando formulario de preinscripción...');
+        console.log('🔍 codigoPostalInput encontrado:', !!codigoPostalInput);
+        console.log('🔍 selectLocalidad encontrado:', !!selectLocalidad);
+        
+        if (selectLocalidad) {
+            // Inicializar el select con mensaje
+            selectLocalidad.innerHTML = '<option value="">Primero introduzca un código postal</option>';
+            console.log('✅ Select de localidad inicializado');
+        }
+        
+        if (codigoPostalInput) {
+            codigoPostalInput.addEventListener('input', function() {
+                const codigo = this.value.replace(/\D/g, ''); // Solo números
+                this.value = codigo;
+                
+                console.log('📝 Código postal introducido:', codigo);
+                
+                if (codigo.length === 5) {
+                    console.log('🔍 Cargando localidades para código postal:', codigo);
+                    cargarLocalidades(codigo);
+                } else {
+                    if (selectLocalidad) {
+                        selectLocalidad.innerHTML = '<option value="">Primero introduzca un código postal</option>';
+                    }
+                }
+            });
+            console.log('✅ Event listener de código postal añadido');
+        }
+        
+        // Event listener para cuando se abre el select de localidad
+        if (selectLocalidad) {
+            selectLocalidad.addEventListener('focus', function() {
+                const codigoPostal = document.getElementById('codigoPostal')?.value || '';
+                console.log('🎯 Select de localidad enfocado, código postal actual:', codigoPostal);
+                if (!codigoPostal || codigoPostal.length !== 5) {
+                    this.innerHTML = '<option value="">Primero introduzca un código postal</option>';
+                }
+            });
+            console.log('✅ Event listener de focus añadido al select');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', cargarDetalle);
     </script>
     

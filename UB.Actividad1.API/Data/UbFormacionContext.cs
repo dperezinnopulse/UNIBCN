@@ -30,6 +30,8 @@ public class UbFormacionContext : DbContext
     public DbSet<TransicionEstado> TransicionesEstado { get; set; }
     public DbSet<RolNormalizado> RolesNormalizados { get; set; }
     public DbSet<MapeoRol> MapeoRoles { get; set; }
+    public DbSet<Localidad> Localidades { get; set; }
+    public DbSet<ActividadDenominacionDescuento> ActividadDenominacionDescuentos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -274,6 +276,81 @@ public class UbFormacionContext : DbContext
                   .HasForeignKey(e => e.RolNormalizadoId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.RolOriginal, e.RolNormalizadoId }).IsUnique();
+        });
+
+        modelBuilder.Entity<Localidad>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Localidades");
+            entity.Property(e => e.Id).HasColumnName("LocalidadId");
+            entity.Property(e => e.CodigoPostal).IsRequired().HasMaxLength(5);
+            entity.Property(e => e.NombreLocalidad).IsRequired().HasMaxLength(150).HasColumnName("Localidad");
+            entity.Property(e => e.ProvinciaCod).HasMaxLength(12);
+            entity.Property(e => e.Municipio).HasMaxLength(150);
+            entity.Property(e => e.ComarcaId).HasMaxLength(100);
+            entity.Property(e => e.Activa).HasMaxLength(1);
+            entity.Property(e => e.Validada).HasMaxLength(1);
+            entity.Property(e => e.ValorExportacion).HasMaxLength(150);
+            entity.Property(e => e.NumHabitantes).HasMaxLength(100);
+            entity.HasIndex(e => e.CodigoPostal);
+        });
+
+        // ActividadDenominacionDescuento (tabla de unión para selección múltiple)
+        modelBuilder.Entity<ActividadDenominacionDescuento>(entity =>
+        {
+            entity.HasKey(e => new { e.ActividadId, e.DenominacionDescuentoId });
+            entity.HasOne(e => e.Actividad)
+                  .WithMany(a => a.DenominacionesDescuento)
+                  .HasForeignKey(e => e.ActividadId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.DenominacionDescuento)
+                  .WithMany()
+                  .HasForeignKey(e => e.DenominacionDescuentoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configuración de relaciones para los nuevos campos de dominio en Actividad
+        modelBuilder.Entity<Actividad>(entity =>
+        {
+            entity.HasOne(a => a.Asignatura)
+                  .WithMany()
+                  .HasForeignKey(a => a.AsignaturaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.DisciplinaRelacionada)
+                  .WithMany()
+                  .HasForeignKey(a => a.DisciplinaRelacionadaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.IdiomaImparticion)
+                  .WithMany()
+                  .HasForeignKey(a => a.IdiomaImparticionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.TiposCertificacion)
+                  .WithMany()
+                  .HasForeignKey(a => a.TiposCertificacionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.MateriaDisciplina)
+                  .WithMany()
+                  .HasForeignKey(a => a.MateriaDisciplinaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.AmbitoFormacion)
+                  .WithMany()
+                  .HasForeignKey(a => a.AmbitoFormacionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.TiposFinanciacion)
+                  .WithMany()
+                  .HasForeignKey(a => a.TiposFinanciacionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(a => a.TiposInscripcion)
+                  .WithMany()
+                  .HasForeignKey(a => a.TiposInscripcionId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo de Trabajo - Unidad Gestora IDP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+        .user-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .user-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+        .user-card p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e8f4f8;
+        }
+        .status-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .status-box {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+            margin: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .status-box.borrador { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+        .status-box.enviada { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .status-box.en-revision { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .status-box.validacion { background: linear-gradient(135deg, #1abc9c, #16a085); }
+        .status-box.definicion { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .status-box.revision-admin { background: linear-gradient(135deg, #fd7e14, #e55a00); }
+        .status-box.publicada { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .arrow {
+            color: #3498db;
+            font-size: 1.5em;
+            margin: 0 10px;
+        }
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .permission-card {
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .permission-card h4 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .can-do {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .cannot-do {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .special-transitions {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .special-transitions h3 {
+            color: white;
+            margin-top: 0;
+        }
+        .flow-example {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .flow-example h4 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .step {
+            background: white;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .summary-box {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .summary-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+        @media (max-width: 768px) {
+            .status-flow {
+                flex-direction: column;
+            }
+            .arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+            .permissions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Flujo de Trabajo - Unidad Gestora IDP</h1>
+        
+        <div class="summary-box">
+            <h3>📋 Sistema de Gestión de Estados Completamente Funcional</h3>
+            <p>Este documento describe el flujo completo de trabajo para la unidad gestora IDP, incluyendo usuarios, permisos, transiciones y responsabilidades de cada rol.</p>
+        </div>
+
+        <h2>👥 Usuarios de IDP</h2>
+        <div class="permissions-grid">
+            <div class="user-card">
+                <h4>📝 docente.idp</h4>
+                <p><strong>Rol:</strong> Docente/Dinamizador</p>
+                <p><strong>Password:</strong> 1234</p>
+                <p><strong>Unidad:</strong> IDP</p>
+            </div>
+            <div class="user-card">
+                <h4>🔧 tecnico.idp</h4>
+                <p><strong>Rol:</strong> Técnico de Formación</p>
+                <p><strong>Password:</strong> 1234</p>
+                <p><strong>Unidad:</strong> IDP</p>
+            </div>
+            <div class="user-card">
+                <h4>📋 coord.idp</h4>
+                <p><strong>Rol:</strong> Coordinador de Formación</p>
+                <p><strong>Password:</strong> 1234</p>
+                <p><strong>Unidad:</strong> IDP</p>
+            </div>
+            <div class="user-card">
+                <h4>👑 resp.idp</h4>
+                <p><strong>Rol:</strong> Responsable de Unidad</p>
+                <p><strong>Password:</strong> 1234</p>
+                <p><strong>Unidad:</strong> IDP</p>
+            </div>
+            <div class="user-card">
+                <h4>⚙️ soporte.idp</h4>
+                <p><strong>Rol:</strong> Soporte Administrativo</p>
+                <p><strong>Password:</strong> 1234</p>
+                <p><strong>Unidad:</strong> IDP</p>
+            </div>
+            <div class="user-card">
+                <h4>🔓 Admin</h4>
+                <p><strong>Rol:</strong> Administrador</p>
+                <p><strong>Password:</strong> Admin</p>
+                <p><strong>Unidad:</strong> Global</p>
+            </div>
+        </div>
+
+        <h2>🚦 Flujo de Estados</h2>
+        <div class="status-flow">
+            <div class="status-box borrador">BORRADOR</div>
+            <div class="arrow">→</div>
+            <div class="status-box enviada">ENVIADA</div>
+            <div class="arrow">→</div>
+            <div class="status-box en-revision">EN_REVISION</div>
+            <div class="arrow">→</div>
+            <div class="status-box validacion">VALIDACION_UNIDAD</div>
+            <div class="arrow">→</div>
+            <div class="status-box definicion">DEFINICION</div>
+            <div class="arrow">→</div>
+            <div class="status-box revision-admin">REVISION_ADMINISTRATIVA</div>
+            <div class="arrow">→</div>
+            <div class="status-box publicada">PUBLICADA</div>
+        </div>
+
+        <h2>📊 Flujo Completo de Estados (CONFIGURACIÓN REAL)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Estado</th>
+                    <th>Descripción</th>
+                    <th>Responsable</th>
+                    <th>Transiciones Permitidas</th>
+                    <th>Siguiente Responsable</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>BORRADOR</strong></td>
+                    <td>Edición por proponente</td>
+                    <td>docente.idp o tecnico.idp</td>
+                    <td><strong>BORRADOR → ENVIADA</strong> (Docente/Técnico)<br><strong>BORRADOR → CANCELADA</strong> (Admin)<br><strong>BORRADOR → RECHAZADA</strong> (Admin)</td>
+                    <td>coord.idp</td>
+                </tr>
+                <tr>
+                    <td><strong>ENVIADA</strong></td>
+                    <td>Registrada para revisión</td>
+                    <td>coord.idp</td>
+                    <td><strong>ENVIADA → EN_REVISION</strong> (Coordinador)<br><strong>ENVIADA → CANCELADA</strong> (Admin)<br><strong>ENVIADA → RECHAZADA</strong> (Admin)</td>
+                    <td>coord.idp</td>
+                </tr>
+                <tr>
+                    <td><strong>EN_REVISION</strong></td>
+                    <td>Revisión por Coordinador</td>
+                    <td>coord.idp</td>
+                    <td><strong>EN_REVISION → VALIDACION_UNIDAD</strong> (Coordinador)<br><strong>EN_REVISION → BORRADOR</strong> (Coordinador)<br><strong>EN_REVISION → CANCELADA</strong> (Admin)<br><strong>EN_REVISION → RECHAZADA</strong> (Admin)</td>
+                    <td>resp.idp o creador original</td>
+                </tr>
+                <tr>
+                    <td><strong>VALIDACION_UNIDAD</strong></td>
+                    <td>Revisión por Responsable</td>
+                    <td>resp.idp</td>
+                    <td><strong>VALIDACION_UNIDAD → DEFINICION</strong> (Responsable)<br><strong>VALIDACION_UNIDAD → EN_REVISION</strong> (Responsable)<br><strong>VALIDACION_UNIDAD → CANCELADA</strong> (Admin)<br><strong>VALIDACION_UNIDAD → RECHAZADA</strong> (Admin)</td>
+                    <td>tecnico.idp o coord.idp</td>
+                </tr>
+                <tr>
+                    <td><strong>DEFINICION</strong></td>
+                    <td>Definición académico-docente</td>
+                    <td>tecnico.idp</td>
+                    <td><strong>DEFINICION → REVISION_ADMINISTRATIVA</strong> (Técnico)<br><strong>DEFINICION → CANCELADA</strong> (Admin)<br><strong>DEFINICION → RECHAZADA</strong> (Admin)</td>
+                    <td>soporte.idp</td>
+                </tr>
+                <tr>
+                    <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                    <td>Control final</td>
+                    <td>soporte.idp</td>
+                    <td><strong>REVISION_ADMINISTRATIVA → PUBLICADA</strong> (Soporte)<br><strong>REVISION_ADMINISTRATIVA → DEFINICION</strong> (Soporte)<br><strong>REVISION_ADMINISTRATIVA → CANCELADA</strong> (Admin)<br><strong>REVISION_ADMINISTRATIVA → RECHAZADA</strong> (Admin)</td>
+                    <td>soporte.idp o tecnico.idp</td>
+                </tr>
+                <tr>
+                    <td><strong>PUBLICADA</strong></td>
+                    <td>Visible en catálogo</td>
+                    <td>soporte.idp</td>
+                    <td><strong>PUBLICADA → CANCELADA</strong> (Admin)<br><strong>PUBLICADA → RECHAZADA</strong> (Admin)</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><strong>CANCELADA</strong></td>
+                    <td>Actividad cancelada</td>
+                    <td>Admin</td>
+                    <td><strong>CANCELADA → BORRADOR</strong> (Admin/Docente)</td>
+                    <td>creador original</td>
+                </tr>
+                <tr>
+                    <td><strong>RECHAZADA</strong></td>
+                    <td>Actividad rechazada</td>
+                    <td>Admin</td>
+                    <td><strong>RECHAZADA → BORRADOR</strong> (Admin/Docente)</td>
+                    <td>creador original</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🔐 Permisos Detallados por Rol</h2>
+        
+        <h3>📝 DOCENTE (docente.idp)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Docente</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ <strong>Crear, editar, adjuntar, enviar (BORRADOR → ENVIADA)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ Ver, responder aclaraciones</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ Ver, responder</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ <strong>Reabrir (CANCELADA → BORRADOR)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ <strong>Reabrir (RECHAZADA → BORRADOR)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>🔧 TÉCNICO (tecnico.idp)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Técnico</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ <strong>Crear, editar, adjuntar, enviar (BORRADOR → ENVIADA)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ Ver, responder aclaraciones</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ Ver, responder</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ <strong>Completar definición, enviar a revisión (DEFINICION → REVISION_ADMIN)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>📋 COORDINADOR (coord.idp)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Coordinador</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Editar, cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ <strong>Recibir para revisión (ENVIADA → EN_REVISION)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ <strong>Aprobar (EN_REVISION → VALIDACION_UNIDAD), devolver (EN_REVISION → BORRADOR)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ Ver (si se devuelve)</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>👑 RESPONSABLE (resp.idp)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Responsable</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Editar, cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ <strong>Aprobar (VALIDACION_UNIDAD → DEFINICION), devolver (VALIDACION_UNIDAD → EN_REVISION)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>⚙️ SOPORTE (soporte.idp)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Soporte</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Editar, cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ <strong>Publicar (REVISION_ADMIN → PUBLICADA), devolver (REVISION_ADMIN → DEFINICION)</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ <strong>Gestionar publicación</strong></td>
+                        <td class="cannot-do">❌ Cambiar a otros estados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ Ver</td>
+                        <td class="cannot-do">❌ Cambiar estado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>🔓 ADMIN (Admin)</h3>
+        <div class="permission-card">
+            <h4>Capacidades del Administrador</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Puede Hacer</th>
+                        <th>No Puede Hacer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BORRADOR</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (BORRADOR → CANCELADA), rechazar (BORRADOR → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENVIADA</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (ENVIADA → CANCELADA), rechazar (ENVIADA → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EN_REVISION</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (EN_REVISION → CANCELADA), rechazar (EN_REVISION → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VALIDACION_UNIDAD</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (VALIDACION_UNIDAD → CANCELADA), rechazar (VALIDACION_UNIDAD → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEFINICION</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (DEFINICION → CANCELADA), rechazar (DEFINICION → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (REVISION_ADMIN → CANCELADA), rechazar (REVISION_ADMIN → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PUBLICADA</strong></td>
+                        <td class="can-do">✅ <strong>Cancelar (PUBLICADA → CANCELADA), rechazar (PUBLICADA → RECHAZADA)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td class="can-do">✅ <strong>Reabrir (CANCELADA → BORRADOR)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td class="can-do">✅ <strong>Reabrir (RECHAZADA → BORRADOR)</strong></td>
+                        <td class="cannot-do">❌ Editar contenido</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>🔄 Flujo Típico de una Actividad</h2>
+        <div class="flow-example">
+            <h4>Ejemplo de Flujo Completo</h4>
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>CREACIÓN:</strong> docente.idp o tecnico.idp crean actividad en estado BORRADOR
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>ENVÍO:</strong> BORRADOR → ENVIADA (docente.idp o tecnico.idp)
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>REVISIÓN INICIAL:</strong> ENVIADA → EN_REVISION (coord.idp)
+            </div>
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>DECISIÓN DEL COORDINADOR:</strong> 
+                <ul>
+                    <li>EN_REVISION → VALIDACION_UNIDAD (aprobar)</li>
+                    <li>EN_REVISION → BORRADOR (devolver)</li>
+                </ul>
+            </div>
+            <div class="step">
+                <span class="step-number">5</span>
+                <strong>VALIDACIÓN DE UNIDAD:</strong>
+                <ul>
+                    <li>VALIDACION_UNIDAD → DEFINICION (aprobar)</li>
+                    <li>VALIDACION_UNIDAD → EN_REVISION (devolver)</li>
+                </ul>
+            </div>
+            <div class="step">
+                <span class="step-number">6</span>
+                <strong>DEFINICIÓN TÉCNICA:</strong> DEFINICION → REVISION_ADMINISTRATIVA (tecnico.idp)
+            </div>
+            <div class="step">
+                <span class="step-number">7</span>
+                <strong>PUBLICACIÓN:</strong>
+                <ul>
+                    <li>REVISION_ADMINISTRATIVA → PUBLICADA (publicar)</li>
+                    <li>REVISION_ADMINISTRATIVA → DEFINICION (devolver)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="special-transitions">
+            <h3>⚠️ Transiciones Especiales (Solo Admin)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Desde</th>
+                        <th>Hacia</th>
+                        <th>Acción</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cualquier estado</strong></td>
+                        <td><strong>CANCELADA</strong></td>
+                        <td>Cancelar</td>
+                        <td>Problemas técnicos, cambios de plan</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cualquier estado</strong></td>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td>Rechazar</td>
+                        <td>No cumple criterios</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CANCELADA</strong></td>
+                        <td><strong>BORRADOR</strong></td>
+                        <td>Reabrir</td>
+                        <td>Corregir problemas</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECHAZADA</strong></td>
+                        <td><strong>BORRADOR</strong></td>
+                        <td>Reabrir</td>
+                        <td>Corregir y reintentar</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>🧪 Información para Testers</h2>
+        <div class="flow-example">
+            <h4>Acceso a la Aplicación</h4>
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>URL Pública:</strong> <a href="https://ceac0fa523d1.ngrok-free.app" target="_blank">https://ceac0fa523d1.ngrok-free.app</a>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Login:</strong> Usar cualquiera de los usuarios de IDP listados arriba
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Probar flujo:</strong> Crear actividad → Enviar → Seguir el flujo según el rol
+            </div>
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>Reportar:</strong> Cualquier problema o comportamiento inesperado
+            </div>
+        </div>
+
+        <div class="special-transitions">
+            <h3>🔍 Casos de Prueba Recomendados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Caso de Prueba</th>
+                        <th>Resultado Esperado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>docente.idp</strong></td>
+                        <td>Crear actividad y enviar</td>
+                        <td>BORRADOR → ENVIADA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>coord.idp</strong></td>
+                        <td>Recibir actividad enviada</td>
+                        <td>ENVIADA → EN_REVISION</td>
+                    </tr>
+                    <tr>
+                        <td><strong>coord.idp</strong></td>
+                        <td>Aprobar en revisión</td>
+                        <td>EN_REVISION → VALIDACION_UNIDAD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>resp.idp</strong></td>
+                        <td>Aprobar validación</td>
+                        <td>VALIDACION_UNIDAD → DEFINICION</td>
+                    </tr>
+                    <tr>
+                        <td><strong>tecnico.idp</strong></td>
+                        <td>Completar definición</td>
+                        <td>DEFINICION → REVISION_ADMINISTRATIVA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>soporte.idp</strong></td>
+                        <td>Publicar actividad</td>
+                        <td>REVISION_ADMINISTRATIVA → PUBLICADA</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary-box">
+            <h3>✅ Sistema Completamente Funcional</h3>
+            <p>El sistema de gestión de estados para la unidad gestora IDP está completamente operativo. Todos los roles tienen sus permisos correctamente configurados y las transiciones funcionan según el flujo de trabajo establecido.</p>
+            <p><strong>🌐 URL Pública (ngrok):</strong> <a href="https://ceac0fa523d1.ngrok-free.app" target="_blank" style="color: #fff; text-decoration: underline;">https://ceac0fa523d1.ngrok-free.app</a></p>
+            <p><strong>🏠 URL Local:</strong> http://localhost:8080</p>
+            <p><strong>🔧 Backend API:</strong> http://localhost:5001</p>
+            <p><strong>📊 Panel ngrok:</strong> <a href="http://localhost:4040" target="_blank" style="color: #fff; text-decoration: underline;">http://localhost:4040</a></p>
+        </div>
+    </div>
+</body>
+</html>

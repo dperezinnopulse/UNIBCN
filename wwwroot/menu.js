@@ -22,7 +22,7 @@
     <a class="nav-link" href="historico.html">
       <i class="bi bi-clock-history"></i> <span class="link-text">Histórico</span>
     </a>
-    <a class="nav-link" href="index.html">
+    <a class="nav-link" href="CrearActividad.html">
       <i class="bi bi-plus-square"></i> <span class="link-text">Crear nuevo</span>
     </a>
     <a class="nav-link" href="mensajes.html">
@@ -48,10 +48,16 @@
     container.innerHTML = menuHTML;
     const sidebar = container.querySelector('#appSidebar');
     const toggleBtn = container.querySelector('#sidebarToggle');
+    
     // Configuramos el botón de alternancia
     if (toggleBtn && sidebar) {
       toggleBtn.addEventListener('click', function(){
         sidebar.classList.toggle('collapsed');
+        // También manejar el contenido principal
+        const mainContent = document.querySelector('.main-content-wrapper');
+        if (mainContent) {
+          mainContent.classList.toggle('sidebar-expanded');
+        }
       });
     }
     // Resaltamos el enlace activo basándonos en el nombre de archivo

@@ -16,7 +16,7 @@ namespace UB.Actividad1.API.DTOs
         public DateTime? FechaFin { get; set; }
         
         public string? Lugar { get; set; }
-        public int UnidadGestionId { get; set; }
+        public int? UnidadGestionId { get; set; }
         public bool? ActividadPago { get; set; }
         
         // Campos adicionales para actividades formativas
@@ -24,6 +24,7 @@ namespace UB.Actividad1.API.DTOs
         public string? LineaEstrategica { get; set; }
         public string? ObjetivoEstrategico { get; set; }
         public string? CodigoRelacionado { get; set; }
+        public int? ActividadReservada { get; set; }
         public DateTime? FechaActividad { get; set; }
         public string? MotivoCierre { get; set; }
         public string? PersonaSolicitante { get; set; }
@@ -51,10 +52,8 @@ namespace UB.Actividad1.API.DTOs
         public string? Horario { get; set; }
         public string? RequisitosPrevios { get; set; }
         public string? Objetivos { get; set; }
-        public string? Metodologia { get; set; }
         public string? Evaluacion { get; set; }
         public string? Certificacion { get; set; }
-        public string? Observaciones { get; set; }
         
         // Campos específicos por unidad de gestión
         public string? CoordinadorCentreUnitat { get; set; }
@@ -87,14 +86,15 @@ namespace UB.Actividad1.API.DTOs
         public decimal? ProgramaDuracion { get; set; }
         public DateTime? ProgramaInicio { get; set; }
         public DateTime? ProgramaFin { get; set; }
-        public string? TipusEstudiSAE { get; set; }
-        public string? CategoriaSAE { get; set; }
+    public string? TipusEstudiSAE { get; set; }
+    public string? CategoriaSAE { get; set; }
         public string? CompetenciesSAE { get; set; }
         
         // Entidades organizadoras
         public List<EntidadOrganizadoraDto>? EntidadesOrganizadoras { get; set; }
         
         // Importes y descuentos
+        public string? TipoImpuesto { get; set; }
         public List<ImporteDescuentoDto>? ImportesDescuentos { get; set; }
         
         // Participantes
@@ -102,5 +102,42 @@ namespace UB.Actividad1.API.DTOs
         
         // Subactividades
         public List<SubactividadDto>? Subactividades { get; set; }
+        
+        // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+        public bool? Preinscripcion { get; set; }
+        public string? EstadoActividad { get; set; }
+        public int? AsignaturaId { get; set; }
+        public string? GrupoAsignatura { get; set; }
+        public int? DisciplinaRelacionadaId { get; set; }
+        
+        // NUEVOS CAMPOS - PROGRAMA
+        public string? Metodologia { get; set; }
+        public string? SistemaEvaluacion { get; set; }
+        public string? HorarioYCalendario { get; set; }
+        public int? IdiomaImparticionId { get; set; }
+        public int? TiposCertificacionId { get; set; }
+        public string? Observaciones { get; set; }
+        public int? MateriaDisciplinaId { get; set; }
+        public string? EspacioImparticion { get; set; }
+        public string? LugarImparticion { get; set; }
+        public string? OtrasUbicaciones { get; set; }
+        public string? UrlPlataformaVirtual { get; set; }
+        public string? UrlCuestionarioSatisfaccion { get; set; }
+        public int? AmbitoFormacionId { get; set; }
+        
+        // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+        public decimal? CosteEstimadoActividad { get; set; }
+        public int? TiposFinanciacionId { get; set; }
+        public int? AnoInicialFinanciacion { get; set; }
+        public int? AnoFinalFinanciacion { get; set; }
+        public int? PlazasAfectadasDescuento { get; set; }
+        public List<int>? DenominacionDescuentoIds { get; set; } // Para selección múltiple
+        
+        // NUEVOS CAMPOS - INSCRIPCIÓN
+        public DateTime? FechaLimitePago { get; set; }
+        public bool? TPV { get; set; }
+        public string? Remesa { get; set; }
+        public int? TiposInscripcionId { get; set; }
+        public DateTime? FechaAdjudicacionPreinscripcion { get; set; }
     }
 } 

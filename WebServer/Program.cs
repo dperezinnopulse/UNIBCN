@@ -26,7 +26,8 @@ app.UseCors(policy => policy
 app.Map("/api/{**path}", async (HttpContext context, IHttpClientFactory httpClientFactory) =>
 {
     var path = context.Request.Path.Value?.Replace("/api/", "");
-    var backendUrl = $"http://localhost:5001/api/{path}";
+    var queryString = context.Request.QueryString.Value;
+    var backendUrl = $"http://localhost:5001/api/{path}{queryString}";
     
     using var client = httpClientFactory.CreateClient();
     
@@ -104,20 +105,26 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 // Servir imágenes del manual desde test-artifacts/manual bajo /manual/assets
-app.UseStaticFiles(new StaticFileOptions
+var manualAssetsPath = Path.Combine(contentRoot, "..", "test-artifacts", "manual");
+if (Directory.Exists(manualAssetsPath))
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(contentRoot, "..", "test-artifacts", "manual")),
-    RequestPath = "/manual/assets"
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(manualAssetsPath),
+        RequestPath = "/manual/assets"
+    });
+}
 
 // Servir capturas generales (raíz de test-artifacts) bajo /manual/assets-root
-app.UseStaticFiles(new StaticFileOptions
+var testArtifactsPath = Path.Combine(contentRoot, "..", "test-artifacts");
+if (Directory.Exists(testArtifactsPath))
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(contentRoot, "..", "test-artifacts")),
-    RequestPath = "/manual/assets-root"
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(testArtifactsPath),
+        RequestPath = "/manual/assets-root"
+    });
+}
 
 // Redirigir la raíz a index.html
 app.MapGet("/", () => Results.Redirect("/index.html"));

@@ -193,6 +193,16 @@ app.MapGet("/api/test", () =>
     });
 });
 
+// Endpoint de health check
+app.MapGet("/api/health", () =>
+{
+    return Results.Ok(new { 
+        status = "healthy", 
+        timestamp = DateTime.Now,
+        version = "1.6.0"
+    });
+});
+
 // Endpoint de prueba para detalle público (sin base de datos)
 app.MapGet("/api/actividades/publicas-test", () =>
 {
@@ -353,9 +363,36 @@ app.MapGet("/api/actividades", async (UbFormacionContext context, HttpContext ht
 
         Console.WriteLine($"🔍 DEBUG: Usuario autenticado - ID: {currentUserId}, Rol: {currentUserRole}");
 
-        // Consulta con manejo correcto de valores nulos
-        var actividades = await context.Actividades
-            .AsNoTracking()
+        // Obtener la unidad gestora del usuario si no es Admin
+        int? userUnidadGestionId = null;
+        if (currentUserRole != "Admin" && currentUserId.HasValue)
+        {
+            var usuario = await context.Usuarios.FindAsync(currentUserId.Value);
+            userUnidadGestionId = usuario?.UnidadGestionId;
+            Console.WriteLine($"🔒 DEBUG: Usuario no-Admin - Unidad gestora: {userUnidadGestionId}");
+        }
+
+        // Consulta base con filtro por unidad gestora si no es Admin
+        var query = context.Actividades.AsNoTracking();
+        
+        // Filtrar por unidad gestora del usuario si no es Admin
+        if (currentUserRole != "Admin" && userUnidadGestionId.HasValue)
+        {
+            query = query.Where(a => a.UnidadGestionId == userUnidadGestionId.Value);
+            Console.WriteLine($"🔒 DEBUG: Aplicando filtro de unidad gestora: {userUnidadGestionId}");
+        }
+        else if (currentUserRole != "Admin" && !userUnidadGestionId.HasValue)
+        {
+            // Si el usuario no tiene unidad gestora, solo ver sus propias actividades
+            query = query.Where(a => a.UsuarioAutorId == currentUserId.Value);
+            Console.WriteLine($"🔒 DEBUG: Usuario sin unidad gestora - Solo sus propias actividades");
+        }
+        else
+        {
+            Console.WriteLine($"👑 DEBUG: Usuario Admin - Mostrando todas las actividades");
+        }
+
+        var actividades = await query
             .OrderByDescending(a => a.FechaCreacion)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -656,19 +693,215 @@ app.MapGet("/api/actividades/publicas/{id}", async (int id, UbFormacionContext c
     }
 });
 
+// Endpoint de prueba para verificar la tabla Localidades
+app.MapGet("/api/localidades-test", async (UbFormacionContext context) =>
+{
+    try
+    {
+        Console.WriteLine("🔍 TEST: Verificando tabla Localidades...");
+        
+        // Verificar si la tabla existe
+        var totalLocalidades = await context.Localidades.CountAsync();
+        Console.WriteLine($"📊 Total de localidades en BD: {totalLocalidades}");
+        
+        // Obtener algunos registros de ejemplo
+        var ejemplos = await context.Localidades
+            .AsNoTracking()
+            .Take(3)
+            .Select(l => new { l.Id, l.CodigoPostal, Localidad = l.NombreLocalidad, Provincia = l.ProvinciaCod })
+            .ToListAsync();
+            
+        Console.WriteLine($"✅ Ejemplos encontrados: {ejemplos.Count}");
+        return Results.Ok(new { total = totalLocalidades, ejemplos });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR EN TEST: {ex.Message}");
+        Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+        return Results.Problem($"Error en test: {ex.Message}");
+    }
+});
+
+// Endpoint público para obtener localidades por código postal
+app.MapGet("/api/localidades", async (string codigoPostal, UbFormacionContext context) =>
+{
+    try
+    {
+        Console.WriteLine($"🔍 DEBUG /api/localidades - Código postal recibido: '{codigoPostal}'");
+        
+        if (string.IsNullOrEmpty(codigoPostal) || codigoPostal.Length != 5)
+        {
+            Console.WriteLine($"❌ Código postal inválido: '{codigoPostal}'");
+            return Results.BadRequest("El código postal debe tener 5 dígitos");
+        }
+
+        Console.WriteLine($"🔍 Consultando localidades para CP: {codigoPostal}");
+        
+        // Primero verificar si hay registros en la tabla
+        var totalLocalidades = await context.Localidades.CountAsync();
+        Console.WriteLine($"📊 Total de localidades en BD: {totalLocalidades}");
+        
+        // Verificar si existe el código postal
+        var existeCP = await context.Localidades.AnyAsync(l => l.CodigoPostal == codigoPostal);
+        Console.WriteLine($"🔍 ¿Existe CP {codigoPostal}?: {existeCP}");
+        
+        var localidades = await context.Localidades
+            .AsNoTracking()
+            .Where(l => l.CodigoPostal == codigoPostal)
+            .Select(l => new { l.Id, Localidad = l.NombreLocalidad, l.CodigoPostal, Provincia = l.ProvinciaCod })
+            .OrderBy(l => l.Localidad)
+            .ToListAsync();
+
+        Console.WriteLine($"✅ Localidades encontradas: {localidades.Count}");
+        return Results.Ok(localidades);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR EN /api/localidades: {ex.Message}");
+        Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+        return Results.Problem($"Error interno: {ex.Message}\nStack: {ex.StackTrace}");
+    }
+});
+
 // Endpoint público para obtener actividades publicadas por Unidad Gestora
 // Eliminado duplicado de /api/actividades/publicas
 
 app.MapGet("/api/actividades/{id}", async (int id, UbFormacionContext context) =>
 {
-    var actividad = await context.Actividades
-        .Include(a => a.UsuarioAutor)
-        .FirstOrDefaultAsync(a => a.Id == id);
+    try
+    {
+        Console.WriteLine($"🔍 DEBUG: Buscando actividad con ID: {id}");
+        
+        var actividad = await context.Actividades
+            .Include(a => a.UsuarioAutor)
+            .Include(a => a.Estado)
+            .Include(a => a.UnidadGestion)
+            .Include(a => a.DenominacionesDescuento)
+                .ThenInclude(dd => dd.DenominacionDescuento)
+            .FirstOrDefaultAsync(a => a.Id == id);
 
-    if (actividad == null)
-        return Results.NotFound();
+        Console.WriteLine($"🔍 DEBUG: Actividad encontrada: {(actividad != null ? "SÍ" : "NO")}");
+        
+        if (actividad == null)
+        {
+            Console.WriteLine($"❌ DEBUG: Actividad con ID {id} no encontrada");
+            return Results.NotFound();
+        }
 
-    return Results.Ok(actividad);
+        Console.WriteLine($"✅ DEBUG: Actividad encontrada - Título: {actividad.Titulo}");
+        
+        // Crear objeto de respuesta con denominacionDescuentoIds incluido
+        var respuesta = new
+        {
+            actividad.Id,
+            actividad.Codigo,
+            actividad.Titulo,
+            actividad.Descripcion,
+            actividad.TipoActividad,
+            actividad.UnidadGestionId,
+            actividad.CondicionesEconomicas,
+            actividad.AnioAcademico,
+            actividad.LineaEstrategica,
+            actividad.ObjetivoEstrategico,
+            actividad.CodigoRelacionado,
+            actividad.ActividadReservada,
+            actividad.FechaActividad,
+            actividad.MotivoCierre,
+            actividad.PersonaSolicitante,
+            actividad.Coordinador,
+            actividad.JefeUnidadGestora,
+            actividad.GestorActividad,
+            actividad.FacultadDestinataria,
+            actividad.DepartamentoDestinatario,
+            actividad.CentroUnidadUBDestinataria,
+            actividad.OtrosCentrosInstituciones,
+            actividad.PlazasTotales,
+            actividad.HorasTotales,
+            actividad.CentroTrabajoRequerido,
+            actividad.ModalidadGestion,
+            actividad.FechaInicioImparticion,
+            actividad.FechaFinImparticion,
+            actividad.ActividadPago,
+            actividad.FechaInicio,
+            actividad.FechaFin,
+            actividad.Lugar,
+            actividad.CoordinadorCentreUnitat,
+            actividad.CentreTreballeAlumne,
+            actividad.CreditosTotalesCRAI,
+            actividad.CreditosTotalesSAE,
+            actividad.CreditosMinimosSAE,
+            actividad.CreditosMaximosSAE,
+            actividad.TipusEstudiSAE,
+            actividad.CategoriaSAE,
+            actividad.CompetenciesSAE,
+            actividad.InscripcionInicio,
+            actividad.InscripcionFin,
+            actividad.InscripcionPlazas,
+            actividad.InscripcionListaEspera,
+            actividad.InscripcionModalidad,
+            actividad.InscripcionRequisitosES,
+            actividad.InscripcionRequisitosCA,
+            actividad.InscripcionRequisitosEN,
+            actividad.ProgramaDescripcionES,
+            actividad.ProgramaDescripcionCA,
+            actividad.ProgramaDescripcionEN,
+            actividad.ProgramaContenidosES,
+            actividad.ProgramaContenidosCA,
+            actividad.ProgramaContenidosEN,
+            actividad.ProgramaObjetivosES,
+            actividad.ProgramaObjetivosCA,
+            actividad.ProgramaObjetivosEN,
+            actividad.ProgramaDuracion,
+            actividad.ProgramaInicio,
+            actividad.ProgramaFin,
+            actividad.EstadoId,
+            actividad.FechaCreacion,
+            actividad.FechaModificacion,
+            actividad.UsuarioAutorId,
+            actividad.Preinscripcion,
+            actividad.EstadoActividad,
+            actividad.AsignaturaId,
+            actividad.GrupoAsignatura,
+            actividad.DisciplinaRelacionadaId,
+            actividad.CosteEstimadoActividad,
+            actividad.TiposFinanciacionId,
+            actividad.AnoInicialFinanciacion,
+            actividad.AnoFinalFinanciacion,
+            actividad.PlazasAfectadasDescuento,
+            actividad.FechaLimitePago,
+            actividad.TPV,
+            actividad.Remesa,
+            actividad.TiposInscripcionId,
+            actividad.FechaAdjudicacionPreinscripcion,
+            actividad.Metodologia,
+            actividad.SistemaEvaluacion,
+            actividad.HorarioYCalendario,
+            actividad.IdiomaImparticionId,
+            actividad.TiposCertificacionId,
+            actividad.MateriaDisciplinaId,
+            actividad.AmbitoFormacionId,
+            actividad.Observaciones,
+            actividad.EspacioImparticion,
+            actividad.LugarImparticion,
+            actividad.OtrasUbicaciones,
+            actividad.UrlPlataformaVirtual,
+            actividad.UrlCuestionarioSatisfaccion,
+            // Incluir denominacionDescuentoIds como array de IDs
+            denominacionDescuentoIds = actividad.DenominacionesDescuento?.Select(dd => dd.DenominacionDescuentoId).ToArray() ?? new int[0],
+            // Incluir objetos relacionados
+            usuarioAutor = actividad.UsuarioAutor,
+            estado = actividad.Estado,
+            unidadGestion = actividad.UnidadGestion
+        };
+        
+        return Results.Ok(respuesta);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR en /api/actividades/{id}: {ex.Message}");
+        Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+        return Results.Problem($"Error interno: {ex.Message}\nStack: {ex.StackTrace}");
+    }
 }).RequireAuthorization();
 
 // Endpoint para guardar borrador
@@ -742,6 +975,7 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         LineaEstrategica = dto.LineaEstrategica,
         ObjetivoEstrategico = dto.ObjetivoEstrategico,
         CodigoRelacionado = dto.CodigoRelacionado,
+        ActividadReservada = dto.ActividadReservada.HasValue && dto.ActividadReservada.Value > 0,
         FechaActividad = dto.FechaActividad,
         MotivoCierre = dto.MotivoCierre,
         PersonaSolicitante = dto.PersonaSolicitante,
@@ -795,6 +1029,42 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         CategoriaSAE = dto.CategoriaSAE,
         CompetenciesSAE = dto.CompetenciesSAE,
 
+        // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+        Preinscripcion = dto.Preinscripcion,
+        EstadoActividad = dto.EstadoActividad,
+        AsignaturaId = dto.AsignaturaId,
+        GrupoAsignatura = dto.GrupoAsignatura,
+        DisciplinaRelacionadaId = dto.DisciplinaRelacionadaId,
+
+        // NUEVOS CAMPOS - PROGRAMA
+        Metodologia = dto.Metodologia,
+        SistemaEvaluacion = dto.SistemaEvaluacion,
+        HorarioYCalendario = dto.HorarioYCalendario,
+        IdiomaImparticionId = dto.IdiomaImparticionId,
+        TiposCertificacionId = dto.TiposCertificacionId,
+        Observaciones = dto.Observaciones,
+        MateriaDisciplinaId = dto.MateriaDisciplinaId,
+        EspacioImparticion = dto.EspacioImparticion,
+        LugarImparticion = dto.LugarImparticion,
+        OtrasUbicaciones = dto.OtrasUbicaciones,
+        UrlPlataformaVirtual = dto.UrlPlataformaVirtual,
+        UrlCuestionarioSatisfaccion = dto.UrlCuestionarioSatisfaccion,
+        AmbitoFormacionId = dto.AmbitoFormacionId,
+
+        // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+        CosteEstimadoActividad = dto.CosteEstimadoActividad,
+        TiposFinanciacionId = dto.TiposFinanciacionId,
+        AnoInicialFinanciacion = dto.AnoInicialFinanciacion,
+        AnoFinalFinanciacion = dto.AnoFinalFinanciacion,
+        PlazasAfectadasDescuento = dto.PlazasAfectadasDescuento,
+
+        // NUEVOS CAMPOS - INSCRIPCIÓN
+        FechaLimitePago = dto.FechaLimitePago,
+        TPV = dto.TPV,
+        Remesa = dto.Remesa,
+        TiposInscripcionId = dto.TiposInscripcionId,
+        FechaAdjudicacionPreinscripcion = dto.FechaAdjudicacionPreinscripcion,
+
         EstadoId = estadoBorradorId_Create,
         UsuarioAutorId = usuarioAutorId,
         FechaCreacion = DateTime.UtcNow,
@@ -805,15 +1075,39 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
     context.Actividades.Add(actividad);
     await context.SaveChangesAsync();
 
+    // Manejar selección múltiple de denominaciones de descuento
+    if (dto.DenominacionDescuentoIds != null && dto.DenominacionDescuentoIds.Any())
+    {
+        var denominacionesDescuento = dto.DenominacionDescuentoIds.Select(id => new ActividadDenominacionDescuento
+        {
+            ActividadId = actividad.Id,
+            DenominacionDescuentoId = id,
+            FechaCreacion = DateTime.UtcNow
+        }).ToList();
+
+        context.ActividadDenominacionDescuentos.AddRange(denominacionesDescuento);
+        await context.SaveChangesAsync();
+    }
+
     return Results.Created($"/api/actividades/{actividad.Id}", actividad);
 }).RequireAuthorization();
 
-app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFormacionContext context) =>
+app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFormacionContext context, ILogger<Program> logger) =>
 {
-    var actividad = await context.Actividades.FindAsync(id);
+    try
+    {
+        logger.LogInformation("=== INICIO ACTUALIZACIÓN ACTIVIDAD {Id} ===", id);
+        logger.LogInformation("DTO recibido: {@Dto}", dto);
+        
+        var actividad = await context.Actividades.FindAsync(id);
 
-    if (actividad == null)
-        return Results.NotFound();
+        if (actividad == null)
+        {
+            logger.LogWarning("Actividad {Id} no encontrada", id);
+            return Results.NotFound();
+        }
+        
+        logger.LogInformation("Actividad encontrada: {@Actividad}", actividad);
 
     // Actualizar campos principales
     if (dto.Titulo != null) actividad.Titulo = dto.Titulo;
@@ -828,8 +1122,8 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
     if (dto.CodigoRelacionado != null) actividad.CodigoRelacionado = dto.CodigoRelacionado;
     if (dto.ActividadReservada != null) 
     {
-        // Convertir "S"/"N" a boolean
-        actividad.ActividadReservada = dto.ActividadReservada.ToUpper() == "S" || dto.ActividadReservada.ToUpper() == "SÍ" || dto.ActividadReservada.ToUpper() == "SI";
+        // Convertir ID a boolean
+        actividad.ActividadReservada = dto.ActividadReservada.HasValue && dto.ActividadReservada.Value > 0;
     }
     if (dto.FechaActividad != null) actividad.FechaActividad = dto.FechaActividad;
     if (dto.MotivoCierre != null) actividad.MotivoCierre = dto.MotivoCierre;
@@ -894,6 +1188,44 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
     if (dto.ProgramaDuracion != null) actividad.ProgramaDuracion = dto.ProgramaDuracion;
     if (dto.ProgramaInicio != null) actividad.ProgramaInicio = dto.ProgramaInicio;
     if (dto.ProgramaFin != null) actividad.ProgramaFin = dto.ProgramaFin;
+    
+    // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+    if (dto.Preinscripcion.HasValue) actividad.Preinscripcion = dto.Preinscripcion.Value;
+    if (dto.EstadoActividad != null) actividad.EstadoActividad = dto.EstadoActividad;
+    if (dto.AsignaturaId.HasValue) actividad.AsignaturaId = dto.AsignaturaId.Value;
+    if (dto.GrupoAsignatura != null) actividad.GrupoAsignatura = dto.GrupoAsignatura;
+    if (dto.DisciplinaRelacionadaId.HasValue) actividad.DisciplinaRelacionadaId = dto.DisciplinaRelacionadaId.Value;
+
+    // NUEVOS CAMPOS - PROGRAMA
+    if (dto.Metodologia != null) actividad.Metodologia = dto.Metodologia;
+    if (dto.SistemaEvaluacion != null) actividad.SistemaEvaluacion = dto.SistemaEvaluacion;
+    if (dto.HorarioYCalendario != null) actividad.HorarioYCalendario = dto.HorarioYCalendario;
+    if (dto.IdiomaImparticionId.HasValue) actividad.IdiomaImparticionId = dto.IdiomaImparticionId.Value;
+    if (dto.TiposCertificacionId.HasValue) actividad.TiposCertificacionId = dto.TiposCertificacionId.Value;
+    if (dto.Observaciones != null) actividad.Observaciones = dto.Observaciones;
+    if (dto.MateriaDisciplinaId.HasValue) actividad.MateriaDisciplinaId = dto.MateriaDisciplinaId.Value;
+    if (dto.EspacioImparticion != null) actividad.EspacioImparticion = dto.EspacioImparticion;
+    if (dto.LugarImparticion != null) actividad.LugarImparticion = dto.LugarImparticion;
+    if (dto.OtrasUbicaciones != null) actividad.OtrasUbicaciones = dto.OtrasUbicaciones;
+    if (dto.UrlPlataformaVirtual != null) actividad.UrlPlataformaVirtual = dto.UrlPlataformaVirtual;
+    if (dto.UrlCuestionarioSatisfaccion != null) actividad.UrlCuestionarioSatisfaccion = dto.UrlCuestionarioSatisfaccion;
+    if (dto.AmbitoFormacionId.HasValue) actividad.AmbitoFormacionId = dto.AmbitoFormacionId.Value;
+
+    // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+    if (dto.CosteEstimadoActividad.HasValue) actividad.CosteEstimadoActividad = dto.CosteEstimadoActividad.Value;
+    if (dto.TiposFinanciacionId.HasValue) actividad.TiposFinanciacionId = dto.TiposFinanciacionId.Value;
+    if (dto.AnoInicialFinanciacion.HasValue) actividad.AnoInicialFinanciacion = dto.AnoInicialFinanciacion.Value;
+    if (dto.AnoFinalFinanciacion.HasValue) actividad.AnoFinalFinanciacion = dto.AnoFinalFinanciacion.Value;
+    if (dto.PlazasAfectadasDescuento.HasValue) actividad.PlazasAfectadasDescuento = dto.PlazasAfectadasDescuento.Value;
+
+    // NUEVOS CAMPOS - INSCRIPCIÓN
+    if (dto.FechaLimitePago.HasValue) actividad.FechaLimitePago = dto.FechaLimitePago.Value;
+    if (dto.TPV.HasValue) actividad.TPV = dto.TPV.Value;
+    if (dto.Remesa != null) actividad.Remesa = dto.Remesa;
+    if (dto.TiposInscripcionId.HasValue) {
+        actividad.TiposInscripcionId = dto.TiposInscripcionId.Value;
+    }
+    if (dto.FechaAdjudicacionPreinscripcion.HasValue) actividad.FechaAdjudicacionPreinscripcion = dto.FechaAdjudicacionPreinscripcion.Value;
     
     // Campos de traducción del título se manejan en la tabla Internacionalizacion
     // TODO: Implementar actualización de internacionalización si es necesario
@@ -1002,9 +1334,43 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
         }
     }
     
-    await context.SaveChangesAsync();
+    // Manejar actualización de denominaciones de descuento
+    if (dto.DenominacionDescuentoIds != null)
+    {
+        // Eliminar denominaciones existentes
+        var denominacionesExistentes = await context.ActividadDenominacionDescuentos
+            .Where(dd => dd.ActividadId == id)
+            .ToListAsync();
+        context.ActividadDenominacionDescuentos.RemoveRange(denominacionesExistentes);
+        
+        // Agregar nuevas denominaciones
+        if (dto.DenominacionDescuentoIds.Any())
+        {
+            var nuevasDenominaciones = dto.DenominacionDescuentoIds.Select(denominacionId => new ActividadDenominacionDescuento
+            {
+                ActividadId = id,
+                DenominacionDescuentoId = denominacionId,
+                FechaCreacion = DateTime.UtcNow
+            }).ToList();
+
+            context.ActividadDenominacionDescuentos.AddRange(nuevasDenominaciones);
+        }
+    }
     
-    return Results.Ok(actividad);
+        await context.SaveChangesAsync();
+        
+        logger.LogInformation("Actividad {Id} actualizada exitosamente", id);
+        return Results.Ok(actividad);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error al actualizar actividad {Id}: {Message}", id, ex.Message);
+        logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+        return Results.Problem(
+            detail: $"Error interno del servidor: {ex.Message}",
+            statusCode: 500
+        );
+    }
 }).RequireAuthorization();
 
 app.MapPatch("/api/actividades/{id}/estado", async (int id, PatchEstadoDto dto, UbFormacionContext context) =>
@@ -1227,7 +1593,7 @@ app.MapGet("/api/dominios/{nombreDominio}/valores", async (string nombreDominio,
         var valores = await context.ValoresDominio
             .Where(v => v.DominioId == dominio.Id && v.Activo)
             .OrderBy(v => v.Orden)
-            .Select(v => new { v.Valor, v.Descripcion })
+            .Select(v => new { v.Id, v.Valor, v.Descripcion })
             .ToListAsync();
 
         return Results.Ok(valores);
@@ -2546,8 +2912,11 @@ app.MapGet("/api/actividades/{id}/transiciones", async (int id, HttpContext http
     }
     else
     {
+        // Mapear el rol normalizado al rol original usado en las transiciones
+        var rolOriginal = MapNormalizedRoleToOriginal(rolNormalizado.Codigo);
+        
         destinosCod = await context.TransicionesEstado
-            .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.RolPermitidoId == rolNormalizado.Id)
+            .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.RolPermitido == rolOriginal)
             .Select(t => t.EstadoDestinoCodigo)
             .Distinct()
             .ToListAsync();
@@ -2614,14 +2983,68 @@ static string NormalizeRole(string? rol)
 
 static async Task<bool> IsAllowedDb(UbFormacionContext context, string fromCodigo, string toCodigo, string userRole)
 {
+    Console.WriteLine($"🔍 DEBUG: IsAllowedDb - fromCodigo: '{fromCodigo}', toCodigo: '{toCodigo}', userRole: '{userRole}'");
+    
     // Admin tiene permiso para todas las transiciones
     if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase) || string.Equals(userRole, "ADMIN", StringComparison.OrdinalIgnoreCase))
     {
+        Console.WriteLine($"🔍 DEBUG: Usuario Admin - permitido");
         return true;
     }
-    // Globales (CANCELADA/RECHAZADA) se insertaron para todos los orígenes en la tabla
-    return await context.TransicionesEstado
-        .AnyAsync(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo && t.EstadoDestinoCodigo == toCodigo && t.RolPermitido == userRole);
+    
+    // Normalizar el rol del usuario
+    var normalizedUserRole = await NormalizeRoleAsync(userRole, context);
+    Console.WriteLine($"🔍 DEBUG: Rol normalizado: '{normalizedUserRole}'");
+    
+    // Buscar transiciones usando RolPermitido (string) directamente
+    // Mapear el rol normalizado al rol original usado en las transiciones
+    var rolOriginal = MapNormalizedRoleToOriginal(normalizedUserRole);
+    
+    // Verificar si existe la transición
+    var transicionExiste = await context.TransicionesEstado
+        .AnyAsync(t => t.Activo && 
+                      t.EstadoOrigenCodigo == fromCodigo && 
+                      t.EstadoDestinoCodigo == toCodigo && 
+                      t.RolPermitido == rolOriginal);
+    
+    Console.WriteLine($"🔍 DEBUG: Transición existe: {transicionExiste}");
+    
+    // Si no existe, mostrar todas las transiciones disponibles para debug
+    if (!transicionExiste)
+    {
+        var transicionesDisponibles = await context.TransicionesEstado
+            .Where(t => t.Activo && t.EstadoOrigenCodigo == fromCodigo)
+            .Select(t => new { t.EstadoDestinoCodigo, t.RolPermitido })
+            .ToListAsync();
+        
+        Console.WriteLine($"🔍 DEBUG: Transiciones disponibles desde '{fromCodigo}':");
+        foreach (var t in transicionesDisponibles)
+        {
+            Console.WriteLine($"  - {fromCodigo} → {t.EstadoDestinoCodigo} (Rol: {t.RolPermitido})");
+        }
+    }
+    
+    return transicionExiste;
+}
+
+// Función para mapear rol normalizado al rol original usado en transiciones
+static string MapNormalizedRoleToOriginal(string normalizedRole)
+{
+    Console.WriteLine($"🔍 DEBUG: Mapeando rol normalizado '{normalizedRole}' a rol original");
+    
+    var rolOriginal = normalizedRole switch
+    {
+        "DOCENTE" => "Docente",
+        "TECNICO" => "TecnicoFormacion", 
+        "COORDINADOR" => "CoordinadorFormacion",
+        "RESPONSABLE" => "ResponsableUnidad",
+        "SOPORTE" => "SoporteAdmin",
+        "ADMIN" => "Admin",
+        _ => normalizedRole // Si no se encuentra mapeo, usar el rol tal como está
+    };
+    
+    Console.WriteLine($"🔍 DEBUG: Rol original mapeado: '{rolOriginal}'");
+    return rolOriginal;
 }
 
 // Función para determinar el siguiente rol implicado según el estado destino
@@ -2721,6 +3144,64 @@ app.MapFallback(async context =>
         }
     }
 });
+
+// Endpoint temporal para ejecutar SQL y agregar campos nuevos
+app.MapPost("/api/admin/execute-sql", async (HttpContext context, UbFormacionContext dbContext) =>
+{
+    try
+    {
+        Console.WriteLine("🔧 DEBUG: Ejecutando SQL para agregar campos nuevos...");
+        
+        // SQL para agregar campos nuevos a la tabla Actividades
+        var sqlCommands = new[]
+        {
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'Metodologia') ALTER TABLE [dbo].[Actividades] ADD [Metodologia] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'SistemaEvaluacion') ALTER TABLE [dbo].[Actividades] ADD [SistemaEvaluacion] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'HorarioYCalendario') ALTER TABLE [dbo].[Actividades] ADD [HorarioYCalendario] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'Observaciones') ALTER TABLE [dbo].[Actividades] ADD [Observaciones] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'EspacioImparticion') ALTER TABLE [dbo].[Actividades] ADD [EspacioImparticion] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'LugarImparticion') ALTER TABLE [dbo].[Actividades] ADD [LugarImparticion] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'OtrasUbicaciones') ALTER TABLE [dbo].[Actividades] ADD [OtrasUbicaciones] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'UrlPlataformaVirtual') ALTER TABLE [dbo].[Actividades] ADD [UrlPlataformaVirtual] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'UrlCuestionarioSatisfaccion') ALTER TABLE [dbo].[Actividades] ADD [UrlCuestionarioSatisfaccion] NVARCHAR(MAX) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'CosteEstimadoActividad') ALTER TABLE [dbo].[Actividades] ADD [CosteEstimadoActividad] DECIMAL(18, 2) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'EstadoActividad') ALTER TABLE [dbo].[Actividades] ADD [EstadoActividad] NVARCHAR(50) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'Remesa') ALTER TABLE [dbo].[Actividades] ADD [Remesa] NVARCHAR(50) NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'TiposInscripcionId') ALTER TABLE [dbo].[Actividades] ADD [TiposInscripcionId] INT NULL;",
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Actividades') AND name = 'FechaAdjudicacionPreinscripcion') ALTER TABLE [dbo].[Actividades] ADD [FechaAdjudicacionPreinscripcion] DATE NULL;"
+        };
+        
+        var results = new List<string>();
+        
+        foreach (var sql in sqlCommands)
+        {
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(sql);
+                var fieldName = sql.Split('\'')[1]; // Extraer nombre del campo
+                results.Add($"✅ Campo {fieldName} agregado exitosamente");
+                Console.WriteLine($"✅ Campo {fieldName} agregado exitosamente");
+            }
+            catch (Exception ex)
+            {
+                var fieldName = sql.Split('\'')[1];
+                results.Add($"⚠️ Campo {fieldName}: {ex.Message}");
+                Console.WriteLine($"⚠️ Campo {fieldName}: {ex.Message}");
+            }
+        }
+        
+        return Results.Ok(new { 
+            success = true, 
+            message = "Script SQL ejecutado", 
+            results = results 
+        });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ ERROR ejecutando SQL: {ex.Message}");
+        return Results.Problem($"Error ejecutando SQL: {ex.Message}");
+    }
+}).RequireAuthorization();
 
 app.Run();
 

@@ -18,6 +18,11 @@
         min-height: 100vh;
         transition: width 0.25s ease;
         overflow-x: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
       }
         .sidebar.collapsed { width: 72px !important; }
       .sidebar .nav-link {
@@ -41,6 +46,24 @@
       }
         .sidebar.collapsed .nav-link { justify-content: center; }
         .sidebar.collapsed .link-text { display: none !important; }
+        
+        /* Ajustar contenido principal para sidebar flotante */
+        .main-content-wrapper {
+          margin-left: 72px;
+          transition: margin-left 0.25s ease;
+        }
+        .main-content-wrapper.sidebar-expanded {
+          margin-left: 260px;
+        }
+        
+        /* Header sticky */
+        header {
+          position: sticky;
+          top: 0;
+          z-index: 999;
+          background: #fff;
+          border-bottom: 1px solid #ddd;
+        }
         
         .form-section { 
             background: #fff; 
@@ -66,6 +89,41 @@
         .ug-idp { border-left-color: #f39c12; }
         .ug-crai { border-left-color: #3498db; }
         .ug-sae { border-left-color: #27ae60; }
+        
+        /* Estilos específicos para campos por UG */
+        div[data-ug="IDP"] input.form-control, 
+        div[data-ug="IDP"] select.form-control, 
+        div[data-ug="IDP"] select.form-select, 
+        div[data-ug="IDP"] textarea.form-control {
+            border: 2px solid #f39c12 !important;
+            box-shadow: 0 0 8px rgba(243, 156, 18, 0.3) !important;
+            transition: all 0.3s ease;
+        }
+        
+        div[data-ug="IDP"] input.form-control:focus, 
+        div[data-ug="IDP"] select.form-control:focus, 
+        div[data-ug="IDP"] select.form-select:focus, 
+        div[data-ug="IDP"] textarea.form-control:focus {
+            border-color: #e67e22 !important;
+            box-shadow: 0 0 12px rgba(243, 156, 18, 0.5) !important;
+        }
+        
+        div[data-ug="CRAI"] input.form-control, 
+        div[data-ug="CRAI"] select.form-control, 
+        div[data-ug="CRAI"] select.form-select, 
+        div[data-ug="CRAI"] textarea.form-control {
+            border: 2px solid #3498db !important;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3) !important;
+            transition: all 0.3s ease;
+        }
+        
+        div[data-ug="CRAI"] input.form-control:focus, 
+        div[data-ug="CRAI"] select.form-control:focus, 
+        div[data-ug="CRAI"] select.form-select:focus, 
+        div[data-ug="CRAI"] textarea.form-control:focus {
+            border-color: #2980b9 !important;
+            box-shadow: 0 0 12px rgba(52, 152, 219, 0.5) !important;
+        }
         
         .traduccion { 
             background: #f8f9fa; 
@@ -128,7 +186,7 @@
 <div id="sidebarContainer"></div>
         
         <!-- Main Content -->
-<div class="flex-grow-1">
+<div class="flex-grow-1 main-content-wrapper">
             <!-- Header -->
 <div id="headerContainer"></div>
             
@@ -361,26 +419,43 @@
 </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Fechas -->
-                <div class="form-section">
-                    <h3><i class="bi bi-calendar-range me-2"></i>Fechas</h3>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Fecha de inicio *</label>
-                            <input class="form-control" id="fechaInicio" type="date" required/>
+                    <!-- NUEVOS CAMPOS - INFORMACIÓN GENERAL -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-3">
+                            <label class="form-label d-block">Preinscripción</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" id="preinscripcion" type="checkbox"/>
+                                <label class="form-check-label" for="preinscripcion">Activar</label>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Fecha de fin *</label>
-                            <input class="form-control" id="fechaFin" type="date" required/>
+                        <div class="col-md-3">
+                            <label class="form-label">Estado actividad</label>
+                            <select class="form-select" id="estadoActividad">
+                                <option value="">Selecciona</option>
+                                <option value="Abierta">Abierta</option>
+                                <option value="Cerrada">Cerrada</option>
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Lugar</label>
-                            <input class="form-control" id="lugar" type="text"/>
+                        <div class="col-md-3" data-ug="CRAI">
+                            <label class="form-label">Asignatura (CRAI)</label>
+                            <select class="form-select" id="asignaturaId">
+                                <option value="">Selecciona</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" data-ug="CRAI">
+                            <label class="form-label">Grupo Asignatura (CRAI)</label>
+                            <input class="form-control" id="grupoAsignatura" type="text" maxlength="150"/>
+                        </div>
+                        <div class="col-md-3" data-ug="CRAI">
+                            <label class="form-label">Disciplina relacionada (CRAI)</label>
+                            <select class="form-select" id="disciplinaRelacionadaId">
+                                <option value="">Selecciona</option>
+                            </select>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Campos específicos por UG -->
                 <div class="form-section ug-specific" id="ugSpecificFields">
@@ -508,6 +583,40 @@
                                 </div>
 </div>
 </div>
+
+                        <!-- NUEVOS CAMPOS - INSCRIPCIÓN -->
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Límite de Pago</label>
+                                <input class="form-control" id="fechaLimitePago" type="date"/>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label d-block">TPV</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" id="tpv" type="checkbox"/>
+                                    <label class="form-check-label" for="tpv">Activar</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Remesa</label>
+                                <select class="form-select" id="remesa">
+                                    <option value="">Selecciona</option>
+                                    <option value="Remesa1">Remesa1</option>
+                                    <option value="Remesa2">Remesa2</option>
+                                    <option value="Remesa3">Remesa3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipos de Inscripción</label>
+                                <select class="form-select" id="tiposInscripcionId">
+                                    <option value="">Selecciona</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha Adjudicación Preinscripción</label>
+                                <input class="form-control" id="fechaAdjudicacionPreinscripcion" type="date"/>
+                            </div>
+                        </div>
 </div>
 </div>
 
@@ -589,6 +698,70 @@
 <div class="col-md-4">
 <label class="form-label">Fecha de fin</label>
                             <input class="form-control" id="programaFin" type="date"/>
+                        </div>
+                    </div>
+
+                    <!-- NUEVOS CAMPOS - PROGRAMA -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="form-label">Metodología</label>
+                            <textarea class="form-control" id="metodologia" rows="3" placeholder="Metodología de la actividad"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Sistema de Evaluación</label>
+                            <textarea class="form-control" id="sistemaEvaluacion" rows="3" placeholder="Sistema de evaluación"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Horario y Calendario</label>
+                            <textarea class="form-control" id="horarioYCalendario" rows="3" placeholder="Horario y calendario de la actividad"></textarea>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Idioma de Impartición</label>
+                            <select class="form-select" id="idiomaImparticionId">
+                                <option value="">Selecciona</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipos de Certificación</label>
+                            <select class="form-select" id="tiposCertificacionId">
+                                <option value="">Selecciona</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Materia / Disciplina</label>
+                            <select class="form-select" id="materiaDisciplinaId">
+                                <option value="">Selecciona</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" data-ug="IDP">
+                            <label class="form-label">Ámbito de formación (IDP)</label>
+                            <select class="form-select" id="ambitoFormacionId">
+                                <option value="">Selecciona</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" rows="3" placeholder="Observaciones adicionales"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Espacio de Impartición</label>
+                            <textarea class="form-control" id="espacioImparticion" rows="3" placeholder="Espacio donde se imparte la actividad"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Lugar de Impartición</label>
+                            <textarea class="form-control" id="lugarImparticion" rows="3" placeholder="Lugar específico de impartición"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Otras Ubicaciones</label>
+                            <textarea class="form-control" id="otrasUbicaciones" rows="3" placeholder="Otras ubicaciones relacionadas"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL plataforma virtual</label>
+                            <input class="form-control" id="urlPlataformaVirtual" type="url" placeholder="https://..."/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL cuestionario de satisfacción</label>
+                            <input class="form-control" id="urlCuestionarioSatisfaccion" type="text" placeholder="URL del cuestionario"/>
                         </div>
                     </div>
                 </div>
@@ -678,6 +851,38 @@
 </div>
 </div>
 </div>
+
+                        <!-- NUEVOS CAMPOS - IMPORTE Y DESCUENTOS -->
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-3">
+                                <label class="form-label">Coste estimado de la actividad (€)</label>
+                                <input class="form-control" id="costeEstimadoActividad" min="0" step="0.01" type="number" inputmode="decimal"/>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipos de financiación</label>
+                                <select class="form-select" id="tiposFinanciacionId">
+                                    <option value="">Selecciona</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Año inicial de financiación</label>
+                                <input class="form-control" id="anoInicialFinanciacion" type="number" min="2000" max="2100"/>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Año final de financiación</label>
+                                <input class="form-control" id="anoFinalFinanciacion" type="number" min="2000" max="2100"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Denominación del Descuento</label>
+                                <select class="form-select" id="denominacionDescuentoIds" multiple>
+                                    <option value="">Selecciona</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Plazas afectadas por el descuento</label>
+                                <input class="form-control" id="plazasAfectadasDescuento" type="number" min="0"/>
+                            </div>
+                        </div>
           </div>
         </div>
 

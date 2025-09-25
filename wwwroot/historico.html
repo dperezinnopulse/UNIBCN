@@ -19,6 +19,51 @@
   <link href="css/styles.css" rel="stylesheet"/>
   <style>
     body { background-color: #f5f7fa; }
+    
+    /* Estilos del menú flotante */
+    .sidebar {
+      background-color: #f7f7f7;
+      width: 260px;
+      min-height: 100vh;
+      transition: width 0.25s ease;
+      overflow-x: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+      .sidebar.collapsed { width: 72px !important; }
+    .sidebar .nav-link {
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e7effb;
+      color: #0366d6;
+      font-weight: 600;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #e6e6e6;
+      color: #0366d6;
+    }
+      .sidebar.collapsed .nav-link { justify-content: center; }
+      .sidebar.collapsed .link-text { display: none !important; }
+      
+      /* Ajustar contenido principal para sidebar flotante */
+      .main-content-wrapper {
+        margin-left: 72px;
+        transition: margin-left 0.25s ease;
+      }
+      .main-content-wrapper.sidebar-expanded {
+        margin-left: 260px;
+      }
     /* Contenedor para diferenciar secciones */
     .section-title {
       margin-bottom: 1rem;
@@ -186,7 +231,7 @@
 <!-- Contenedor para el menú lateral cargado dinámicamente -->
 <div id="sidebarContainer"></div>
 <!-- Contenido principal -->
-<div class="flex-grow-1">
+<div class="flex-grow-1 main-content-wrapper">
 <!-- Contenedor de la cabecera (se insertará dinámicamente) -->
 <div id="headerContainer"></div>
 <!-- Contenido -->
@@ -758,19 +803,6 @@
     });
   </script>
   
-  <!-- Scripts para menú y funcionalidad -->
-  <script src="auth.js"></script>
-  <script src="menu.js"></script>
-  <script src="header.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      loadSidebarMenu('sidebarContainer');
-      loadHeader('headerContainer');
-      
-      // Requiere login
-      if (typeof Auth !== 'undefined') { Auth.requireAuth(); }
-    });
-  </script>
 </main>
 </div>
 </div>

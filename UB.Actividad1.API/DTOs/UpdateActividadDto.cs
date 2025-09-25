@@ -35,7 +35,7 @@ public class UpdateActividadDto
     [MaxLength(100)]
     public string? CodigoRelacionado { get; set; }
     
-    public string? ActividadReservada { get; set; }
+    public int? ActividadReservada { get; set; }
     
     public DateTime? FechaActividad { get; set; }
     
@@ -104,10 +104,8 @@ public class UpdateActividadDto
     
     public decimal? CreditosMaximosSAE { get; set; }
     
-    [MaxLength(100)]
     public string? TipusEstudiSAE { get; set; }
     
-    [MaxLength(100)]
     public string? CategoriaSAE { get; set; }
     
     [MaxLength(500)]
@@ -186,6 +184,80 @@ public class UpdateActividadDto
     public List<UpdateColaboradoraDto>? Colaboradoras { get; set; }
     
     public List<UpdateImporteDto>? Importes { get; set; }
+    
+    // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+    public bool? Preinscripcion { get; set; }
+    
+    [MaxLength(50)]
+    public string? EstadoActividad { get; set; }
+    
+    public int? AsignaturaId { get; set; }
+    
+    [MaxLength(150)]
+    public string? GrupoAsignatura { get; set; }
+    
+    public int? DisciplinaRelacionadaId { get; set; }
+
+    // NUEVOS CAMPOS - PROGRAMA
+    [MaxLength(2000)]
+    public string? Metodologia { get; set; }
+    
+    [MaxLength(2000)]
+    public string? SistemaEvaluacion { get; set; }
+    
+    [MaxLength(2000)]
+    public string? HorarioYCalendario { get; set; }
+    
+    public int? IdiomaImparticionId { get; set; }
+    
+    public int? TiposCertificacionId { get; set; }
+    
+    [MaxLength(2000)]
+    public string? Observaciones { get; set; }
+    
+    public int? MateriaDisciplinaId { get; set; }
+    
+    [MaxLength(2000)]
+    public string? EspacioImparticion { get; set; }
+    
+    [MaxLength(2000)]
+    public string? LugarImparticion { get; set; }
+    
+    [MaxLength(2000)]
+    public string? OtrasUbicaciones { get; set; }
+    
+    [MaxLength(500)]
+    public string? UrlPlataformaVirtual { get; set; }
+    
+    [MaxLength(500)]
+    public string? UrlCuestionarioSatisfaccion { get; set; }
+    
+    public int? AmbitoFormacionId { get; set; }
+
+    // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+    public decimal? CosteEstimadoActividad { get; set; }
+    
+    public int? TiposFinanciacionId { get; set; }
+    
+    public int? AnoInicialFinanciacion { get; set; }
+    
+    public int? AnoFinalFinanciacion { get; set; }
+    
+    public int? PlazasAfectadasDescuento { get; set; }
+    
+    public List<int>? DenominacionDescuentoIds { get; set; }
+
+    // NUEVOS CAMPOS - INSCRIPCIÓN
+    public DateTime? FechaLimitePago { get; set; }
+    
+    public bool? TPV { get; set; }
+    
+    [MaxLength(50)]
+    public string? Remesa { get; set; }
+    
+    public int? TiposInscripcionId { get; set; }
+    
+    public DateTime? FechaAdjudicacionPreinscripcion { get; set; }
     
     // Campo para borrador
     public bool? EsBorrador { get; set; }

@@ -26,6 +26,23 @@ namespace UB.Actividad1.API.DTOs
         [Required(ErrorMessage = "El teléfono es obligatorio")]
         public string Telefono { get; set; } = string.Empty;
 
+        public DateTime? FechaNacimiento { get; set; }
+
+        public string? CodigoPostal { get; set; }
+
+        public string? Localidad { get; set; }
+
+        public string? Poblacion { get; set; }
+
+        [EmailAddress(ErrorMessage = "Formato de email alternativo inválido")]
+        public string? EmailAlternativo { get; set; }
+
+        public string? OtroTelefono { get; set; }
+
+        public string? Genero { get; set; }
+
+        public string? Observaciones { get; set; }
+
         [Required(ErrorMessage = "El ID de actividad es obligatorio")]
         public int ActividadId { get; set; }
     }

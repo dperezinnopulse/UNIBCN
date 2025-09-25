@@ -22,7 +22,12 @@ class UBActividadAPI {
 
         console.log('🚀 DEBUG: makeRequest - Versión del script: scripts.js?v=1.0.6');
         console.log('🚀 DEBUG: makeRequest - URL completa:', url);
-        console.log('🚀 DEBUG: makeRequest - Puerto:', new URL(url).port);
+        // Solo mostrar puerto si la URL es absoluta
+        if (url.startsWith('http')) {
+            console.log('🚀 DEBUG: makeRequest - Puerto:', new URL(url).port);
+        } else {
+            console.log('🚀 DEBUG: makeRequest - URL relativa:', url);
+        }
         console.log('🚀 DEBUG: makeRequest - Método:', options.method || 'GET');
         if (options.body) {
             console.log('🚀 DEBUG: makeRequest - Datos a enviar:', options.body);
@@ -273,9 +278,11 @@ async function loadValoresDominio(selectElement, nombreDominio) {
                 let opcionesAgregadas = 0;
                 valores.forEach(valor => {
                     const option = document.createElement('option');
-                    // Usar las propiedades correctas con mayúsculas
-                    option.value = valor.Valor || valor.valor || valor.value || valor.Value;
-                    option.textContent = valor.Valor || valor.valor || valor.value || valor.Value;
+                    
+                    // Usar siempre ID para todos los campos de dominio
+                    option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+                    option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+                    
                     selectElement.appendChild(option);
                     opcionesAgregadas++;
                 });
@@ -417,8 +424,15 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
             let opcionesAgregadas = 0;
             valores.forEach(valor => {
                 const option = document.createElement('option');
-                option.value = valor.Valor || valor.valor || valor.value || valor.Value;
-                option.textContent = valor.Valor || valor.valor || valor.value || valor.Value;
+                
+                // Usar valor.valor para campos SAE, ID para el resto
+                if (selectElement.id === 'tipusEstudiSAE' || selectElement.id === 'categoriaSAE') {
+                    option.value = valor.valor || valor.Valor || valor.value || valor.Value;
+                } else {
+                    option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+                }
+                option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+                
                 selectElement.appendChild(option);
                 opcionesAgregadas++;
             });
@@ -465,7 +479,19 @@ async function cargarDominios() {
             { elementId: 'actividadUnidadGestion', dominio: 'UNIDADES_GESTION' },
             { elementId: 'centroTrabajoRequerido', dominio: 'OPCIONES_SI_NO' },
             { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
-            { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' }
+            { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
+            // NUEVOS DOMINIOS
+            { elementId: 'asignaturaId', dominio: 'Asignatura' },
+            { elementId: 'disciplinaRelacionadaId', dominio: 'DisciplinaRelacionada' },
+            { elementId: 'idiomaImparticionId', dominio: 'IdiomaImparticion' },
+            { elementId: 'tiposCertificacionId', dominio: 'TiposCertificacion' },
+            { elementId: 'materiaDisciplinaId', dominio: 'MateriaDisciplina' },
+            { elementId: 'ambitoFormacionId', dominio: 'AmbitoFormacion' },
+            { elementId: 'tiposFinanciacionId', dominio: 'TiposFinanciacion' },
+            { elementId: 'tiposInscripcionId', dominio: 'TiposInscripcion' },
+            { elementId: 'denominacionDescuentoIds', dominio: 'DenominacionDescuento' },
+            { elementId: 'estadoActividad', dominio: 'EstadoActividad' },
+            { elementId: 'remesa', dominio: 'Remesa' }
         ];
 
         let elementosEncontrados = 0;
@@ -544,6 +570,9 @@ async function cargarDominios() {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
         
+        // Auto-seleccionar unidad gestora después de cargar todos los dominios
+        await autoSeleccionarUnidadGestion();
+        
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
     }
@@ -605,21 +634,43 @@ async function guardarActividad() {
     
     try {
         // Recopilar datos del formulario - Formato PascalCase para CreateActividadDto
-        const ugRaw = (document.getElementById('actividadUnidadGestion')?.value || '').toString().toUpperCase();
-        const ugMap = { 'IDP': 1, 'CRAI': 2, 'SAE': 3 };
+        const ugRaw = document.getElementById('actividadUnidadGestion')?.value || '';
+        console.log('🔍 DEBUG: guardarActividad - ugRaw:', ugRaw);
+        
+        // Mapear los IDs del dominio a los IDs reales de la tabla UnidadesGestion
+        let unidadGestionId = null;
+        if (ugRaw && !isNaN(parseInt(ugRaw))) {
+            // Mapear IDs del dominio (35, 36, 37) a IDs reales (1, 2, 3)
+            const dominioToRealMap = { '35': 1, '36': 2, '37': 3 };
+            unidadGestionId = dominioToRealMap[ugRaw] || null;
+            console.log('🔍 DEBUG: guardarActividad - Mapeo dominio a real:', ugRaw, '->', unidadGestionId);
+        } else {
+            // Mapear códigos de texto (compatibilidad con versión anterior)
+            const ugMap = { 'IDP': 1, 'CRAI': 2, 'SAE': 3 };
+            unidadGestionId = ugMap[ugRaw.toUpperCase()] || null;
+            console.log('🔍 DEBUG: guardarActividad - Mapeo de código:', ugRaw, '->', unidadGestionId);
+        }
         const formData = {
             // Básicos
             Codigo: document.getElementById('actividadCodigo')?.value || '',
             Titulo: limpiarCaracteresEspeciales(document.getElementById('actividadTitulo')?.value) || '',
             Descripcion: limpiarCaracteresEspeciales(document.getElementById('descripcion')?.value) || '',
             AnioAcademico: document.getElementById('actividadAnioAcademico')?.value || '',
-            UnidadGestionId: ugMap[ugRaw] || null,
+            UnidadGestionId: unidadGestionId,
 
             // Información general
             TipoActividad: limpiarCaracteresEspeciales(document.getElementById('tipoActividad')?.value) || '',
             LineaEstrategica: document.getElementById('lineaEstrategica')?.value || '',
             ObjetivoEstrategico: document.getElementById('objetivoEstrategico')?.value || '',
             CodigoRelacionado: document.getElementById('codigoRelacionado')?.value || '',
+            ActividadReservada: (() => {
+                const valor = document.getElementById('actividadReservada')?.value;
+                console.log('🔍 DEBUG: ActividadReservada - valor raw:', valor);
+                const resultado = valor ? parseInt(valor) : null;
+                console.log('🔍 DEBUG: ActividadReservada - valor final:', resultado);
+                return resultado;
+            })(),
+            ActividadPago: document.getElementById('actividadPago')?.checked ?? false,
             FechaActividad: document.getElementById('fechaActividad')?.value ? new Date(document.getElementById('fechaActividad').value).toISOString() : null,
             MotivoCierre: document.getElementById('motivoCierre')?.value || '',
             PersonaSolicitante: document.getElementById('personaSolicitante')?.value || '',
@@ -645,8 +696,8 @@ async function guardarActividad() {
             CreditosTotalesSAE: parseFloat(document.getElementById('creditosTotalesSAE')?.value) || null,
             CreditosMinimosSAE: parseFloat(document.getElementById('creditosMinimosSAE')?.value) || null,
             CreditosMaximosSAE: parseFloat(document.getElementById('creditosMaximosSAE')?.value) || null,
-            TipusEstudiSAE: limpiarCaracteresEspeciales(document.getElementById('tipusEstudiSAE')?.value) || '',
-            CategoriaSAE: limpiarCaracteresEspeciales(document.getElementById('categoriaSAE')?.value) || '',
+            TipusEstudiSAE: document.getElementById('tipusEstudiSAE')?.value || null,
+            CategoriaSAE: document.getElementById('categoriaSAE')?.value || null,
             CompetenciesSAE: limpiarCaracteresEspeciales(document.getElementById('competenciesSAE')?.value) || '',
 
             // Inscripción
@@ -671,12 +722,51 @@ async function guardarActividad() {
             ProgramaObjetivosEN: limpiarCaracteresEspeciales(document.getElementById('programa_objetivos_en')?.value) || '',
             ProgramaDuracion: parseFloat(document.getElementById('programa_duracion')?.value) || null,
             ProgramaInicio: document.getElementById('programa_inicio')?.value ? new Date(document.getElementById('programa_inicio').value).toISOString() : null,
-            ProgramaFin: document.getElementById('programa_fin')?.value ? new Date(document.getElementById('programa_fin').value).toISOString() : null
+            ProgramaFin: document.getElementById('programa_fin')?.value ? new Date(document.getElementById('programa_fin').value).toISOString() : null,
+
+            // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+            Preinscripcion: document.getElementById('preinscripcion')?.checked || false,
+            EstadoActividad: limpiarCaracteresEspeciales(document.getElementById('estadoActividad')?.value) || '',
+            AsignaturaId: document.getElementById('asignaturaId')?.value ? parseInt(document.getElementById('asignaturaId').value) : null,
+            GrupoAsignatura: limpiarCaracteresEspeciales(document.getElementById('grupoAsignatura')?.value) || '',
+            DisciplinaRelacionadaId: document.getElementById('disciplinaRelacionadaId')?.value ? parseInt(document.getElementById('disciplinaRelacionadaId').value) : null,
+
+            // NUEVOS CAMPOS - PROGRAMA
+            Metodologia: limpiarCaracteresEspeciales(document.getElementById('metodologia')?.value) || '',
+            SistemaEvaluacion: limpiarCaracteresEspeciales(document.getElementById('sistemaEvaluacion')?.value) || '',
+            HorarioYCalendario: limpiarCaracteresEspeciales(document.getElementById('horarioYCalendario')?.value) || '',
+            IdiomaImparticionId: document.getElementById('idiomaImparticionId')?.value ? parseInt(document.getElementById('idiomaImparticionId').value) : null,
+            TiposCertificacionId: document.getElementById('tiposCertificacionId')?.value ? parseInt(document.getElementById('tiposCertificacionId').value) : null,
+            Observaciones: limpiarCaracteresEspeciales(document.getElementById('observaciones')?.value) || '',
+            MateriaDisciplinaId: document.getElementById('materiaDisciplinaId')?.value ? parseInt(document.getElementById('materiaDisciplinaId').value) : null,
+            EspacioImparticion: limpiarCaracteresEspeciales(document.getElementById('espacioImparticion')?.value) || '',
+            LugarImparticion: limpiarCaracteresEspeciales(document.getElementById('lugarImparticion')?.value) || '',
+            OtrasUbicaciones: limpiarCaracteresEspeciales(document.getElementById('otrasUbicaciones')?.value) || '',
+            UrlPlataformaVirtual: limpiarCaracteresEspeciales(document.getElementById('urlPlataformaVirtual')?.value) || '',
+            UrlCuestionarioSatisfaccion: limpiarCaracteresEspeciales(document.getElementById('urlCuestionarioSatisfaccion')?.value) || '',
+            AmbitoFormacionId: document.getElementById('ambitoFormacionId')?.value ? parseInt(document.getElementById('ambitoFormacionId').value) : null,
+
+            // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+            TipoImpuesto: document.getElementById('imp_tipo')?.value || null,
+            CosteEstimadoActividad: document.getElementById('costeEstimadoActividad')?.value ? parseFloat(document.getElementById('costeEstimadoActividad').value) : null,
+            TiposFinanciacionId: document.getElementById('tiposFinanciacionId')?.value ? parseInt(document.getElementById('tiposFinanciacionId').value) : null,
+            AnoInicialFinanciacion: document.getElementById('anoInicialFinanciacion')?.value ? parseInt(document.getElementById('anoInicialFinanciacion').value) : null,
+            AnoFinalFinanciacion: document.getElementById('anoFinalFinanciacion')?.value ? parseInt(document.getElementById('anoFinalFinanciacion').value) : null,
+            PlazasAfectadasDescuento: document.getElementById('plazasAfectadasDescuento')?.value ? parseInt(document.getElementById('plazasAfectadasDescuento').value) : null,
+            DenominacionDescuentoIds: obtenerDenominacionDescuentoIds(),
+
+            // NUEVOS CAMPOS - INSCRIPCIÓN
+            FechaLimitePago: document.getElementById('fechaLimitePago')?.value ? new Date(document.getElementById('fechaLimitePago').value).toISOString() : null,
+            TPV: document.getElementById('tpv')?.checked || false,
+            Remesa: limpiarCaracteresEspeciales(document.getElementById('remesa')?.value) || '',
+            TiposInscripcionId: document.getElementById('tiposInscripcionId')?.value ? parseInt(document.getElementById('tiposInscripcionId').value) : null,
+            FechaAdjudicacionPreinscripcion: document.getElementById('fechaAdjudicacionPreinscripcion')?.value ? new Date(document.getElementById('fechaAdjudicacionPreinscripcion').value).toISOString() : null
         };
 
         // Nota: Participantes y subactividades se manejarán en futuras versiones
 
         console.log('🚀 DEBUG: guardarActividad - Datos recopilados:', formData);
+        console.log('🔍 DEBUG: guardarActividad - UnidadGestionId específico:', formData.UnidadGestionId);
 
         // Determinar si es crear o actualizar
         const actividadId = document.getElementById('actividadId')?.value;
@@ -771,6 +861,14 @@ function obtenerSubactividadesFormulario() {
         }
     });
     return subacts;
+}
+
+function obtenerDenominacionDescuentoIds() {
+    const select = document.getElementById('denominacionDescuentoIds');
+    if (!select) return [];
+    
+    const selectedOptions = Array.from(select.selectedOptions);
+    return selectedOptions.map(option => parseInt(option.value)).filter(id => !isNaN(id));
 }
 
 function obtenerEntidadesFormulario() {
@@ -868,10 +966,8 @@ async function initializePage() {
             await loadEstados(estadosSelect);
         }
         
-        if (unidadesSelect) {
-            console.log('🚀 DEBUG: initializePage - Cargando unidades de gestión...');
-            await loadUnidadesGestion(unidadesSelect);
-        }
+        // Las unidades de gestión se cargan automáticamente en cargarDominios()
+        // No es necesario cargarlas aquí
 
         // Verificar si hay un ID en la URL para cargar actividad existente
         const urlParams = new URLSearchParams(window.location.search);
@@ -1021,6 +1117,33 @@ window.restaurarBorrador = restaurarBorrador;
 window.vaciarBorrador = vaciarBorrador;
 window.rellenarConDatosPrueba = rellenarConDatosPrueba;
 
+// Función de prueba para aplicar todos los estilos de Admin
+function testAdminStyles() {
+    console.log('🔧 DEBUG: testAdminStyles - Aplicando estilos de Admin...');
+    
+        // Los estilos CSS se encargan de los bordes
+    
+    // CRAI - Azul
+    document.querySelectorAll('[data-ug="CRAI"]').forEach(element => {
+        element.style.display = 'block';
+    });
+    
+    // IDP - Amarillento
+    document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+        element.style.display = 'block';
+    });
+    
+    // SAE - Verde
+    document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+        element.style.display = 'block';
+    });
+    
+    console.log('🔧 DEBUG: testAdminStyles - Estilos aplicados');
+}
+
+// Hacer la función disponible globalmente
+window.testAdminStyles = testAdminStyles;
+
 // Funciones para gestión de borradores
 function guardarBorrador() {
     console.log('🚀 DEBUG: guardarBorrador - Versión del script: scripts.js?v=1.0.6');
@@ -1111,6 +1234,106 @@ function vaciarBorrador() {
     }
 }
 
+// Función para actualizar campos específicos por UG
+function actualizarCamposUG() {
+    console.log('🔧 DEBUG: actualizarCamposUG - Iniciando función...');
+    
+    // Verificar si es Admin (desde sessionStorage)
+    let userData = JSON.parse(sessionStorage.getItem('ub_user_data') || '{}');
+    
+    // Si no hay datos del usuario, intentar obtenerlos del header
+    if (!userData.rol) {
+        // Buscar en el DOM si hay información del usuario
+        const userInfoElement = document.querySelector('[data-user-info]');
+        if (userInfoElement) {
+            try {
+                userData = JSON.parse(userInfoElement.dataset.userInfo);
+            } catch (e) {
+                console.log('🔧 DEBUG: No se pudo parsear userInfo del DOM');
+            }
+        }
+    }
+    
+    const isAdmin = userData.rol === 'Admin';
+    console.log('🔧 DEBUG: actualizarCamposUG - Es Admin:', isAdmin);
+    console.log('🔧 DEBUG: actualizarCamposUG - UserData:', userData);
+    
+    // Si no tenemos datos del usuario, usar función de prueba directa
+    if (!userData.rol) {
+        console.log('🔧 DEBUG: No hay datos del usuario, usando función de prueba directa...');
+        testAdminStyles();
+        return;
+    }
+    
+    const unidadGestionId = document.getElementById('actividadUnidadGestion');
+    if (!unidadGestionId) {
+        console.log('❌ DEBUG: actualizarCamposUG - No se encontró actividadUnidadGestion');
+        return;
+    }
+    
+    const value = unidadGestionId.value;
+    console.log('🔧 DEBUG: actualizarCamposUG - Valor seleccionado:', value);
+    
+    // Si es Admin, mostrar todos los campos con sus colores
+    if (isAdmin) {
+        console.log('🔧 DEBUG: actualizarCamposUG - Modo Admin: mostrando todos los campos con colores');
+        
+        // Aplicar estilo gris a todos los inputs comunes (sin data-ug)
+        document.querySelectorAll('.col-md-3:not([data-ug]) input, .col-md-3:not([data-ug]) select, .col-md-3:not([data-ug]) textarea, .col-md-4:not([data-ug]) input, .col-md-4:not([data-ug]) select, .col-md-4:not([data-ug]) textarea, .col-md-6:not([data-ug]) input, .col-md-6:not([data-ug]) select, .col-md-6:not([data-ug]) textarea, .col-md-12:not([data-ug]) input, .col-md-12:not([data-ug]) select, .col-md-12:not([data-ug]) textarea').forEach(input => {
+            input.style.borderColor = '#6b7280';
+            input.style.borderWidth = '2px';
+        });
+        
+        // Mostrar y colorear todos los campos específicos
+        // CRAI - Azul
+        document.querySelectorAll('[data-ug="CRAI"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        // IDP - Amarillento
+        document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        // SAE - Verde
+        document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        return; // Salir de la función para Admin
+    }
+    
+    // Los estilos CSS se encargan de los bordes
+    
+    // Ocultar todos los campos específicos primero
+    document.querySelectorAll('[data-ug]').forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    // Mostrar campos según la unidad de gestión seleccionada
+    if (value === '1') { // IDP
+        document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+            element.style.display = 'block';
+        });
+    }
+    
+    if (value === '2') { // CRAI
+        console.log('🔧 DEBUG: actualizarCamposUG - Aplicando estilos CRAI...');
+        const craiElements = document.querySelectorAll('[data-ug="CRAI"]');
+        console.log('🔧 DEBUG: actualizarCamposUG - Elementos CRAI encontrados:', craiElements.length);
+        
+        craiElements.forEach(element => {
+            element.style.display = 'block';
+        });
+    }
+    
+    if (value === '3') { // SAE
+        document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+            element.style.display = 'block';
+        });
+    }
+}
+
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DEBUG: DOMContentLoaded - Versión del script: scripts.js?v=1.0.6');
@@ -1152,6 +1375,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnVaciarBorrador) {
         btnVaciarBorrador.addEventListener('click', vaciarBorrador);
         console.log('✅ DEBUG: DOMContentLoaded - Evento click configurado para btnVaciarBorrador');
+    }
+    
+    // Event listener para cambio de unidad de gestión
+    const unidadGestionSelect = document.getElementById('actividadUnidadGestion');
+    if (unidadGestionSelect) {
+        unidadGestionSelect.addEventListener('change', function() {
+            actualizarCamposUG();
+        });
+        console.log('✅ DEBUG: DOMContentLoaded - Evento change configurado para actividadUnidadGestion');
+        
+        // Llamar inicialmente para aplicar estilos
+        actualizarCamposUG();
     }
 });
 
@@ -1468,9 +1703,11 @@ async function loadValoresDominio(elementId, nombreDominio) {
         // Agregar opciones
         valores.forEach(valor => {
             const option = document.createElement('option');
-            // Usar las propiedades correctas con mayúsculas
-            option.value = valor.Valor || valor.valor || valor.value || valor.Value;
-            option.textContent = valor.Valor || valor.valor || valor.value || valor.Value;
+            
+            // Usar siempre ID para todos los campos de dominio
+            option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+            option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+            
             element.appendChild(option);
         });
         
@@ -3279,3 +3516,82 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
     }
 });
+
+// Función para auto-seleccionar la unidad gestora del usuario logueado
+async function autoSeleccionarUnidadGestion() {
+    console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Iniciando auto-selección...');
+    
+    try {
+        // Obtener información del usuario desde sessionStorage
+        const userInfo = JSON.parse(sessionStorage.getItem('ub_user') || '{}');
+        console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - User info:', userInfo);
+        
+        // Buscar UnidadGestionId en camelCase o PascalCase
+        const unidadGestionId = userInfo.unidadGestionId || userInfo.UnidadGestionId;
+        
+        if (!unidadGestionId) {
+            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - No se encontró unidadGestionId en userInfo');
+            return;
+        }
+        
+        // Mapear ID a código
+        const ugMap = { 1: 'IDP', 2: 'CRAI', 3: 'SAE' };
+        const ugCodigo = ugMap[unidadGestionId];
+        
+        if (!ugCodigo) {
+            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Código UG no encontrado para ID:', unidadGestionId);
+            return;
+        }
+        
+        console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Código UG:', ugCodigo);
+        
+        // Esperar a que se cargue el select
+        let intentos = 0;
+        const maxIntentos = 20;
+        
+        while (intentos < maxIntentos) {
+            const select = document.getElementById('actividadUnidadGestion');
+            if (select && select.options.length > 1) {
+                console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Select encontrado, opciones:', select.options.length);
+                
+                // Buscar y seleccionar la opción
+                for (let option of select.options) {
+                    if (option.value === ugCodigo || option.text === ugCodigo) {
+                        // Primero seleccionar la opción usando select.value
+                        select.value = ugCodigo;
+                        
+                        // Luego deshabilitar el select
+                        select.disabled = true;
+                        select.style.backgroundColor = '#f8f9fa';
+                        select.style.cursor = 'not-allowed';
+                        
+                        // Añadir texto explicativo
+                        const label = document.querySelector('label[for="actividadUnidadGestion"]');
+                        if (label && !label.querySelector('.text-muted')) {
+                            const explicacion = document.createElement('small');
+                            explicacion.className = 'text-muted ms-2';
+                            explicacion.textContent = '(Auto-asignado según tu unidad)';
+                            label.appendChild(explicacion);
+                        }
+                        
+                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada:', ugCodigo);
+                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Valor seleccionado:', select.value);
+                        return;
+                    }
+                }
+                
+                console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Opción no encontrada en el select');
+                break;
+            }
+            
+            console.log(`🎯 DEBUG: autoSeleccionarUnidadGestion - Esperando select... intento ${intentos + 1}/${maxIntentos}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            intentos++;
+        }
+        
+        console.log('❌ DEBUG: autoSeleccionarUnidadGestion - No se pudo encontrar o cargar el select');
+        
+    } catch (error) {
+        console.error('❌ DEBUG: autoSeleccionarUnidadGestion - Error:', error);
+    }
+}

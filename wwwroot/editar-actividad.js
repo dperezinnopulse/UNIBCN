@@ -368,12 +368,27 @@ async function cargarDominios() {
         const mapeoDominios = {
             'lineaEstrategica': 'LINEAS_ESTRATEGICAS',
             'objetivoEstrategico': 'OBJETIVOS_ESTRATEGICOS',
-            // ActividadReservada es boolean en backend → usar Sí/No
-            'actividadReservada': 'OPCIONES_SI_NO',
+            // ActividadReservada usa dominio ACTIVIDADES_RESERVADAS
+            'actividadReservada': 'ACTIVIDADES_RESERVADAS',
             'centroUnidadUBDestinataria': 'CENTROS_UB',
             'centroTrabajoRequerido': 'OPCIONES_SI_NO',
             'tipoActividad': 'TIPOS_ACTIVIDAD',
-            'modalidadGestion': 'MODALIDADES_GESTION'
+            'modalidadGestion': 'MODALIDADES_GESTION',
+            // NUEVOS DOMINIOS
+            'asignaturaId': 'Asignatura',
+            'disciplinaRelacionadaId': 'DisciplinaRelacionada',
+            'idiomaImparticionId': 'IdiomaImparticion',
+            'tiposCertificacionId': 'TiposCertificacion',
+            'materiaDisciplinaId': 'MateriaDisciplina',
+            'ambitoFormacionId': 'AmbitoFormacion',
+            'tiposFinanciacionId': 'TiposFinanciacion',
+            'tiposInscripcionId': 'TiposInscripcion',
+            'denominacionDescuentoIds': 'DenominacionDescuento',
+            'estadoActividad': 'EstadoActividad',
+            'remesa': 'Remesa',
+            'tipusEstudiSAE': 'TIPUS_ESTUDI_SAE',
+            'categoriaSAE': 'CATEGORIAS_SAE',
+            'imp_tipo': 'TIPOS_IMPUESTO'
         };
         
         // Cargar cada dominio
@@ -519,10 +534,15 @@ async function poblarSelect(campoId, valores) {
     // Agregar opciones del dominio
     valores.forEach((valor, index) => {
         const option = document.createElement('option');
-        option.value = valor.valor;
-        option.textContent = valor.descripcion || valor.valor;
+        
+        // Usar los valores reales de la base de datos
+        // Los valores vienen con estructura: { id: 123, valor: "ValorReal", descripcion: "Descripción" }
+        option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+        option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+        
+        Utils.log(`  Opción ${index + 1}: ${option.value} - ${option.textContent}`);
+        
         select.appendChild(option);
-        Utils.log(`  Opción ${index + 1}: ${valor.valor} - ${valor.descripcion || valor.valor}`);
     });
     
     Utils.log(`Select ${campoId} poblado con ${valores.length + 1} opciones (incluyendo "Seleccionar...")`);
@@ -565,6 +585,33 @@ async function guardarActividad() {
         
         // Log de datos que se van a enviar
         Utils.log('Datos que se van a enviar al backend:', datosActividad);
+        
+        // DEBUG: Validar campos problemáticos antes de enviar
+        console.log('[EditarActividad] === VALIDACIÓN PRE-ENVÍO ===');
+        const camposProblematicos = [
+            'tiposInscripcionId', 'idiomaImparticionId', 'tiposCertificacionId', 
+            'materiaDisciplinaId', 'ambitoFormacionId', 'asignaturaId', 
+            'disciplinaRelacionadaId', 'tiposFinanciacionId'
+        ];
+        
+        camposProblematicos.forEach(campo => {
+            let valor = datosActividad[campo];
+            console.log(`[EditarActividad] ${campo}: "${valor}" (tipo: ${typeof valor})`);
+            
+            // Convertir "undefined" a null
+            if (valor === 'undefined' || valor === undefined || valor === null || valor === '') {
+                datosActividad[campo] = null;
+                console.log(`[EditarActividad] ${campo} convertido de "${valor}" a null`);
+            }
+            // Si el campo no existe en datosActividad, agregarlo como null
+            else if (!(campo in datosActividad)) {
+                datosActividad[campo] = null;
+                console.log(`[EditarActividad] ${campo} agregado como null (campo faltante)`);
+            }
+            else if (valor && typeof valor === 'string' && isNaN(parseInt(valor, 10))) {
+                console.warn(`[EditarActividad] ⚠️ Campo ${campo} tiene valor de texto no numérico: "${valor}"`);
+            }
+        });
         
         // Log completo de la llamada API
         const url = `${CONFIG.API_BASE_URL}/actividades/${actividadId}`;
@@ -884,7 +931,44 @@ async function aplicarDatosReales(actividad) {
         'objetivoEstrategico': 'objetivoEstrategico',
         'centroUnidadUBDestinataria': 'centroUnidadUBDestinataria',
         'centroTrabajoRequerido': 'centroTrabajoRequerido',
-        'unidadGestionId': 'actividadUnidadGestion'
+        'unidadGestionId': 'actividadUnidadGestion',
+        
+        // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+        'preinscripcion': 'preinscripcion',
+        'estadoActividad': 'estadoActividad',
+        'asignaturaId': 'asignaturaId',
+        'grupoAsignatura': 'grupoAsignatura',
+        'disciplinaRelacionadaId': 'disciplinaRelacionadaId',
+        
+        // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+        'costeEstimadoActividad': 'costeEstimadoActividad',
+        'tiposFinanciacionId': 'tiposFinanciacionId',
+        'anoInicialFinanciacion': 'anoInicialFinanciacion',
+        'anoFinalFinanciacion': 'anoFinalFinanciacion',
+        'denominacionDescuentoIds': 'denominacionDescuentoIds',
+        'plazasAfectadasDescuento': 'plazasAfectadasDescuento',
+        
+        // NUEVOS CAMPOS - INSCRIPCIÓN
+        'fechaLimitePago': 'fechaLimitePago',
+        'tpv': 'tpv',
+        'remesa': 'remesa',
+        'tiposInscripcionId': 'tiposInscripcionId',
+        'fechaAdjudicacionPreinscripcion': 'fechaAdjudicacionPreinscripcion',
+        
+        // NUEVOS CAMPOS - PROGRAMA
+        'metodologia': 'metodologia',
+        'sistemaEvaluacion': 'sistemaEvaluacion',
+        'horarioYCalendario': 'horarioYCalendario',
+        'idiomaImparticionId': 'idiomaImparticionId',
+        'tiposCertificacionId': 'tiposCertificacionId',
+        'materiaDisciplinaId': 'materiaDisciplinaId',
+        'ambitoFormacionId': 'ambitoFormacionId',
+        'observaciones': 'observaciones',
+        'espacioImparticion': 'espacioImparticion',
+        'lugarImparticion': 'lugarImparticion',
+        'otrasUbicaciones': 'otrasUbicaciones',
+        'urlPlataformaVirtual': 'urlPlataformaVirtual',
+        'urlCuestionarioSatisfaccion': 'urlCuestionarioSatisfaccion'
     };
     
     // Aplicar cada campo del backend al formulario
@@ -898,71 +982,98 @@ async function aplicarDatosReales(actividad) {
                 if (elemento.type === 'checkbox') {
                     elemento.checked = Boolean(valor);
                 } else if (elemento.tagName === 'SELECT') {
-                    // Para selects, buscar la opción que coincida con el valor
-                    const opciones = Array.from(elemento.options);
-                    
-                    // Convertir valor a string para comparación
-                    let valorComparar = valor;
-                    if (typeof valor === 'boolean') {
-                        valorComparar = valor ? 'S' : 'N'; // Convertir True/False a S/N
-                    } else if (valor === null || valor === undefined) {
-                        valorComparar = ''; // Dejar en "Seleccionar..."
-                    } else {
-                        // Caso especial: estadoId -> IDs 6..9
-                        if (campoFormulario === 'actividadEstadoId') {
-                            valorComparar = String(parseInt(valor, 10));
+                    // Manejo especial para select múltiple
+                    if (campoFormulario === 'denominacionDescuentoIds' && elemento.multiple) {
+                        // Para select múltiple, valor debe ser un array de IDs
+                        if (Array.isArray(valor) && valor.length > 0) {
+                            // Deseleccionar todas las opciones primero
+                            Array.from(elemento.options).forEach(option => option.selected = false);
+                            
+                            // Seleccionar las opciones que coincidan con los IDs
+                            valor.forEach(id => {
+                                const opcion = Array.from(elemento.options).find(opt => 
+                                    opt.value === String(id) || opt.value === id
+                                );
+                                if (opcion) {
+                                    opcion.selected = true;
+                                    Utils.log(`  Opción seleccionada: ${opcion.value} - ${opcion.textContent}`);
+                                } else {
+                                    Utils.log(`  Opción no encontrada para ID: ${id}`);
+                                }
+                            });
+                            Utils.log(`Select múltiple ${campoFormulario} configurado con ${valor.length} valores seleccionados`);
                         } else {
-                            valorComparar = valor.toString();
+                            // Si no hay valores, deseleccionar todo
+                            Array.from(elemento.options).forEach(option => option.selected = false);
+                            Utils.log(`Select múltiple ${campoFormulario} deseleccionado (sin valores)`);
                         }
-                    }
-                    
-                    Utils.log(`Buscando opción para select ${campoFormulario}: valor=${valor}, valorComparar=${valorComparar}`);
-                    
-                                         // Búsqueda más flexible: por valor exacto, por texto, y por coincidencia parcial
-                     const opcionEncontrada = opciones.find(opcion => {
-                         // Opción 1: Para booleanos, buscar "Sí"/"No" o "S"/"N" (excluir "Seleccionar...") - PRIORIDAD ALTA
-                         if (typeof valor === 'boolean') {
-                             const textoOpcion = opcion.textContent.toLowerCase();
-                             // Solo buscar en opciones que no sean "Seleccionar..."
-                             if (opcion.value !== '' && opcion.textContent !== 'Seleccionar...') {
-                                 const buscaS = valor && (textoOpcion.includes('sí') || textoOpcion.includes('si') || textoOpcion.includes('s'));
-                                 const buscaN = !valor && (textoOpcion.includes('no') || textoOpcion.includes('n'));
-                                 if (buscaS || buscaN) {
-                                     Utils.log(`  Opción encontrada por booleano: "${opcion.textContent}" para valor ${valor}`);
-                                     return true;
-                                 }
-                             }
-                         }
-                         
-                         // Opción 2: Valor exacto
-                         if (opcion.value === valorComparar) {
-                             Utils.log(`  Opción encontrada por valor exacto: "${opcion.value}"`);
-                             return true;
-                         }
-                         
-                         // Opción 3: Texto exacto
-                         if (opcion.textContent === valorComparar) {
-                             Utils.log(`  Opción encontrada por texto exacto: "${opcion.textContent}"`);
-                             return true;
-                         }
-                         
-                         // Opción 4: Incluye el valor (PRIORIDAD BAJA - solo si no es booleano)
-                         if (typeof valor !== 'boolean' && opcion.textContent.includes(valorComparar)) {
-                             Utils.log(`  Opción encontrada por inclusión: "${opcion.textContent}" incluye "${valorComparar}"`);
-                             return true;
-                         }
-                         
-                         return false;
-                     });
-                    
-                    if (opcionEncontrada) {
-                        elemento.value = opcionEncontrada.value;
-                        Utils.log(`Select ${campoFormulario} configurado con valor: ${valor} -> ${opcionEncontrada.value} ("${opcionEncontrada.textContent}")`);
                     } else {
-                        // Si no se encuentra, dejar en "Seleccionar..." y loggear
-                        elemento.value = '';
-                        Utils.log(`Valor no encontrado en select ${campoFormulario}: ${valor} (tipo: ${typeof valor})`);
-                        Utils.log(`Opciones disponibles:`, opciones.map(op => ({ value: op.value, text: op.textContent })));
+                        // Para selects normales, buscar la opción que coincida con el valor
+                        const opciones = Array.from(elemento.options);
+                        
+                        // Convertir valor a string para comparación
+                        let valorComparar = valor;
+                        if (typeof valor === 'boolean') {
+                            valorComparar = valor ? 'S' : 'N'; // Convertir True/False a S/N
+                        } else if (valor === null || valor === undefined) {
+                            valorComparar = ''; // Dejar en "Seleccionar..."
+                        } else {
+                            // Caso especial: estadoId -> IDs 6..9
+                            if (campoFormulario === 'actividadEstadoId') {
+                                valorComparar = String(parseInt(valor, 10));
+                            } else {
+                                valorComparar = valor.toString();
+                            }
+                        }
+                        
+                        Utils.log(`Buscando opción para select ${campoFormulario}: valor=${valor}, valorComparar=${valorComparar}`);
+                        
+                        // Búsqueda más flexible: por valor exacto, por texto, y por coincidencia parcial
+                        const opcionEncontrada = opciones.find(opcion => {
+                            // Opción 1: Para booleanos, buscar "Sí"/"No" o "S"/"N" (excluir "Seleccionar...") - PRIORIDAD ALTA
+                            if (typeof valor === 'boolean') {
+                                const textoOpcion = opcion.textContent.toLowerCase();
+                                // Solo buscar en opciones que no sean "Seleccionar..."
+                                if (opcion.value !== '' && opcion.textContent !== 'Seleccionar...') {
+                                    const buscaS = valor && (textoOpcion.includes('sí') || textoOpcion.includes('si') || textoOpcion.includes('s'));
+                                    const buscaN = !valor && (textoOpcion.includes('no') || textoOpcion.includes('n'));
+                                    if (buscaS || buscaN) {
+                                        Utils.log(`  Opción encontrada por booleano: "${opcion.textContent}" para valor ${valor}`);
+                                        return true;
+                                    }
+                                }
+                            }
+                            
+                            // Opción 2: Valor exacto
+                            if (opcion.value === valorComparar) {
+                                Utils.log(`  Opción encontrada por valor exacto: "${opcion.value}"`);
+                                return true;
+                            }
+                            
+                            // Opción 3: Texto exacto
+                            if (opcion.textContent === valorComparar) {
+                                Utils.log(`  Opción encontrada por texto exacto: "${opcion.textContent}"`);
+                                return true;
+                            }
+                            
+                            // Opción 4: Incluye el valor (PRIORIDAD BAJA - solo si no es booleano)
+                            if (typeof valor !== 'boolean' && opcion.textContent.includes(valorComparar)) {
+                                Utils.log(`  Opción encontrada por inclusión: "${opcion.textContent}" incluye "${valorComparar}"`);
+                                return true;
+                            }
+                            
+                            return false;
+                        });
+                        
+                        if (opcionEncontrada) {
+                            elemento.value = opcionEncontrada.value;
+                            Utils.log(`Select ${campoFormulario} configurado con valor: ${valor} -> ${opcionEncontrada.value} ("${opcionEncontrada.textContent}")`);
+                        } else {
+                            // Si no se encuentra, dejar en "Seleccionar..." y loggear
+                            elemento.value = '';
+                            Utils.log(`Valor no encontrado en select ${campoFormulario}: ${valor} (tipo: ${typeof valor})`);
+                            Utils.log(`Opciones disponibles:`, opciones.map(op => ({ value: op.value, text: op.textContent })));
+                        }
                     }
                 } else if (elemento.type === 'date' && valor) {
                     // Convertir fechas ISO a formato yyyy-MM-dd para inputs de tipo date
@@ -1128,24 +1239,65 @@ async function aplicarDatosReales(actividad) {
 function normalizeRoleForWorkflow(rol) {
     if (!rol) return '';
     switch (rol) {
-        case 'Admin': return 'Admin';
-        case 'Gestor': return 'Coordinador/Técnico';
-        case 'Usuario': return 'Docente/Dinamizador';
+        case 'Admin': return 'ADMIN';
+        case 'Gestor': return 'COORDINADOR';
+        case 'Usuario': return 'DOCENTE';
+        case 'Docente': return 'DOCENTE';
+        case 'TecnicoFormacion': return 'TECNICO';
+        case 'CoordinadorFormacion': return 'COORDINADOR';
+        case 'ResponsableUnidad': return 'RESPONSABLE';
+        case 'SoporteAdmin': return 'SOPORTE';
         default: return rol;
     }
 }
 
 function canEditByRoleAndState(normalizedRole, estadoCodigo) {
     if (!normalizedRole) return false;
-    if (normalizedRole === 'Admin') return true;
+    if (normalizedRole === 'ADMIN') return true; // Admin puede editar en cualquier estado
+    
     if (!estadoCodigo) return false;
-    if (estadoCodigo === 'BORRADOR') {
-        return normalizedRole === 'Docente/Dinamizador' || normalizedRole === 'Coordinador/Técnico';
+    
+    // Permisos de edición basados en transiciones y lógica de negocio
+    switch (estadoCodigo) {
+        case 'BORRADOR':
+            // En borrador: Docente y Técnico pueden editar y enviar
+            return normalizedRole === 'DOCENTE' || normalizedRole === 'TECNICO';
+            
+        case 'ENVIADA':
+            // Enviada: Solo lectura, no se puede editar
+            return false;
+            
+        case 'EN_REVISION':
+            // En revisión: Solo lectura, no se puede editar
+            return false;
+            
+        case 'VALIDACION_UNIDAD':
+            // Validación unidad: Solo lectura, no se puede editar
+            return false;
+            
+        case 'DEFINICION':
+            // En definición: Técnico puede editar para completar detalles
+            return normalizedRole === 'TECNICO';
+            
+        case 'REVISION_ADMINISTRATIVA':
+            // Revisión administrativa: Solo lectura, no se puede editar
+            return false;
+            
+        case 'PUBLICADA':
+            // Publicada: Solo lectura, no se puede editar
+            return false;
+            
+        case 'CANCELADA':
+            // Cancelada: Docente puede reabrir (editar y cambiar estado a BORRADOR)
+            return normalizedRole === 'DOCENTE';
+            
+        case 'RECHAZADA':
+            // Rechazada: Docente puede reabrir (editar y cambiar estado a BORRADOR)
+            return normalizedRole === 'DOCENTE';
+            
+        default:
+            return false;
     }
-    if (estadoCodigo === 'DEFINICION') {
-        return normalizedRole === 'Coordinador/Técnico';
-    }
-    return false;
 }
 
 async function aplicarPermisosEdicion(normalizedRole, estadoCodigo) {
@@ -1493,7 +1645,44 @@ function recogerDatosFormulario() {
         // Campos de traducción del título
         'actividadTituloCA': 'tituloCA',
         'actividadTituloES': 'tituloES',
-        'actividadTituloEN': 'tituloEN'
+        'actividadTituloEN': 'tituloEN',
+        
+        // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+        'preinscripcion': 'preinscripcion',
+        'estadoActividad': 'estadoActividad',
+        'asignaturaId': 'asignaturaId',
+        'grupoAsignatura': 'grupoAsignatura',
+        'disciplinaRelacionadaId': 'disciplinaRelacionadaId',
+        
+        // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+        'costeEstimadoActividad': 'costeEstimadoActividad',
+        'tiposFinanciacionId': 'tiposFinanciacionId',
+        'anoInicialFinanciacion': 'anoInicialFinanciacion',
+        'anoFinalFinanciacion': 'anoFinalFinanciacion',
+        'denominacionDescuentoIds': 'denominacionDescuentoIds',
+        'plazasAfectadasDescuento': 'plazasAfectadasDescuento',
+        
+        // NUEVOS CAMPOS - INSCRIPCIÓN
+        'fechaLimitePago': 'fechaLimitePago',
+        'tpv': 'tpv',
+        'remesa': 'remesa',
+        'tiposInscripcionId': 'tiposInscripcionId',
+        'fechaAdjudicacionPreinscripcion': 'fechaAdjudicacionPreinscripcion',
+        
+        // NUEVOS CAMPOS - PROGRAMA
+        'metodologia': 'metodologia',
+        'sistemaEvaluacion': 'sistemaEvaluacion',
+        'horarioYCalendario': 'horarioYCalendario',
+        'idiomaImparticionId': 'idiomaImparticionId',
+        'tiposCertificacionId': 'tiposCertificacionId',
+        'materiaDisciplinaId': 'materiaDisciplinaId',
+        'ambitoFormacionId': 'ambitoFormacionId',
+        'observaciones': 'observaciones',
+        'espacioImparticion': 'espacioImparticion',
+        'lugarImparticion': 'lugarImparticion',
+        'otrasUbicaciones': 'otrasUbicaciones',
+        'urlPlataformaVirtual': 'urlPlataformaVirtual',
+        'urlCuestionarioSatisfaccion': 'urlCuestionarioSatisfaccion'
     };
     
     // Recoger datos de campos principales
@@ -1512,22 +1701,76 @@ function recogerDatosFormulario() {
                     campoBackend === 'inscripcionListaEspera') {
                     valor = valor ? 'S' : 'N';
                 }
+                
+                // Mantener campos booleanos como boolean (no convertir a S/N)
+                if (campoBackend === 'preinscripcion' || campoBackend === 'tpv') {
+                    valor = valor === true || valor === 'true' || valor === 'S';
+                }
             } else if (elemento.tagName === 'SELECT') {
-                valor = elemento.value || null;
+                valor = elemento.value;
+                // Convertir strings "undefined" y vacíos a null
+                if (valor === 'undefined' || valor === '' || !valor) {
+                    valor = null;
+                }
                 
                 // Convertir campos booleanos de "S"/"N" a "S"/"N" (mantener como string)
-                if (campoBackend === 'actividadReservada' || 
-                    campoBackend === 'actividadPago' || 
+                if (campoBackend === 'actividadPago' || 
                     campoBackend === 'inscripcionListaEspera') {
                     // Normalizar: Sí/Si/true -> 'S'; No/false -> 'N'; vacío -> 'N'
                     if (valor === 'true' || valor === 'Si' || valor === 'Sí' || valor === 'S') valor = 'S';
                     else if (valor === 'false' || valor === 'No' || valor === 'N') valor = 'N';
                     else if (!valor) valor = 'N';
                 }
+                
+    // Manejo especial para campos de dominio que usan IDs numéricos
+    if (campoBackend === 'asignaturaId' ||
+        campoBackend === 'disciplinaRelacionadaId' ||
+        campoBackend === 'tiposFinanciacionId' ||
+        campoBackend === 'tiposInscripcionId' ||
+        campoBackend === 'idiomaImparticionId' ||
+        campoBackend === 'tiposCertificacionId' ||
+        campoBackend === 'materiaDisciplinaId' ||
+        campoBackend === 'ambitoFormacionId' ||
+        campoBackend === 'actividadReservada') {
+                    
+                    // Si el valor es undefined, null, vacío o "undefined", enviar null
+                    if (valor === undefined || valor === null || valor === '' || valor === 'undefined') {
+                        valor = null;
+                        console.log(`[EditarActividad] Campo ${campoBackend} enviado como null (valor vacío)`);
+                    }
+                    // Si el valor es un número (ID real), mantenerlo como número
+                    else if (typeof valor === 'string' && !isNaN(parseInt(valor, 10))) {
+                        valor = parseInt(valor, 10);
+                        console.log(`[EditarActividad] Campo ${campoBackend} convertido a número: ${valor}`);
+                    }
+                    // Si el valor es un string de texto, enviar null (no debería pasar ahora)
+                    else if (typeof valor === 'string' && isNaN(parseInt(valor, 10))) {
+                        console.log(`[EditarActividad] Campo ${campoBackend} tiene valor de texto: "${valor}" - enviando null`);
+                        valor = null;
+                    }
+                }
+                
+                // Manejo especial para select múltiple
+                if (campoBackend === 'denominacionDescuentoIds') {
+                    const opcionesSeleccionadas = Array.from(elemento.selectedOptions);
+                    if (opcionesSeleccionadas.length === 0) {
+                        valor = null;
+                    } else {
+                        valor = opcionesSeleccionadas.map(option => {
+                            const val = option.value;
+                            return isNaN(parseInt(val, 10)) ? null : parseInt(val, 10);
+                        }).filter(v => v !== null);
+                        if (valor.length === 0) valor = null;
+                    }
+                }
             } else if (elemento.type === 'date') {
                 valor = elemento.value || null;
             } else {
-                valor = elemento.value || null;
+                valor = elemento.value;
+                // Convertir strings "undefined" y vacíos a null
+                if (valor === 'undefined' || valor === '' || !valor) {
+                    valor = null;
+                }
             }
             
             // Conversión de tipos numéricos antes de asignar
@@ -1535,7 +1778,18 @@ function recogerDatosFormulario() {
                 // Campos enteros
                 if (campoBackend === 'plazasTotales' ||
                     campoBackend === 'inscripcionPlazas' ||
-                    campoBackend === 'unidadGestionId') {
+                    campoBackend === 'unidadGestionId' ||
+                    campoBackend === 'asignaturaId' ||
+                    campoBackend === 'disciplinaRelacionadaId' ||
+                    campoBackend === 'tiposFinanciacionId' ||
+                    campoBackend === 'anoInicialFinanciacion' ||
+                    campoBackend === 'anoFinalFinanciacion' ||
+                    campoBackend === 'plazasAfectadasDescuento' ||
+                    campoBackend === 'tiposInscripcionId' ||
+                    campoBackend === 'idiomaImparticionId' ||
+                    campoBackend === 'tiposCertificacionId' ||
+                    campoBackend === 'materiaDisciplinaId' ||
+                    campoBackend === 'ambitoFormacionId') {
                     const n = parseInt(valor, 10);
                     if (!isNaN(n)) {
                         valor = n;
@@ -1547,7 +1801,8 @@ function recogerDatosFormulario() {
                          campoBackend === 'creditosTotalesSAE' ||
                          campoBackend === 'creditosMinimosSAE' ||
                          campoBackend === 'creditosMaximosSAE' ||
-                         campoBackend === 'programaDuracion') {
+                         campoBackend === 'programaDuracion' ||
+                         campoBackend === 'costeEstimadoActividad') {
                     // Convertir coma a punto para parseFloat
                     let valorNumerico = valor;
                     if (typeof valor === 'string' && valor.includes(',')) {
@@ -1760,11 +2015,136 @@ function limpiarFormulario() {
 
 // Función para actualizar campos específicos por UG
 function actualizarCamposUG() {
+    console.log('🔧 DEBUG: actualizarCamposUG - Iniciando función...');
+    
+    // Verificar si es Admin (desde sessionStorage)
+    let userData = JSON.parse(sessionStorage.getItem('ub_user_data') || '{}');
+    
+    // Si no hay datos del usuario, intentar obtenerlos del header
+    if (!userData.rol) {
+        // Buscar en el DOM si hay información del usuario
+        const userInfoElement = document.querySelector('[data-user-info]');
+        if (userInfoElement) {
+            try {
+                userData = JSON.parse(userInfoElement.dataset.userInfo);
+            } catch (e) {
+                console.log('🔧 DEBUG: No se pudo parsear userInfo del DOM');
+            }
+        }
+    }
+    
+    const isAdmin = userData.rol === 'Admin';
+    console.log('🔧 DEBUG: actualizarCamposUG - Es Admin:', isAdmin);
+    console.log('🔧 DEBUG: actualizarCamposUG - UserData:', userData);
+    
+    // Si no tenemos datos del usuario, usar función de prueba directa
+    if (!userData.rol) {
+        console.log('🔧 DEBUG: No hay datos del usuario, usando función de prueba directa...');
+        testAdminStyles();
+        return;
+    }
+    
     const unidadGestionId = document.getElementById('actividadUnidadGestion');
-    if (!unidadGestionId) return;
+    if (!unidadGestionId) {
+        console.log('❌ DEBUG: actualizarCamposUG - No se encontró actividadUnidadGestion');
+        return;
+    }
     
     const value = unidadGestionId.value;
+    console.log('🔧 DEBUG: actualizarCamposUG - Valor seleccionado:', value);
     
+    // Si es Admin, mostrar todos los campos con sus colores
+    if (isAdmin) {
+        console.log('🔧 DEBUG: actualizarCamposUG - Modo Admin: mostrando todos los campos con colores');
+        
+        // Aplicar estilo gris a todos los inputs comunes (sin data-ug)
+        document.querySelectorAll('.col-md-3:not([data-ug]) input, .col-md-3:not([data-ug]) select, .col-md-3:not([data-ug]) textarea, .col-md-4:not([data-ug]) input, .col-md-4:not([data-ug]) select, .col-md-4:not([data-ug]) textarea, .col-md-6:not([data-ug]) input, .col-md-6:not([data-ug]) select, .col-md-6:not([data-ug]) textarea, .col-md-12:not([data-ug]) input, .col-md-12:not([data-ug]) select, .col-md-12:not([data-ug]) textarea').forEach(input => {
+            input.style.borderColor = '#6b7280';
+            input.style.borderWidth = '2px';
+        });
+        
+        // Mostrar y colorear todos los campos específicos
+        // CRAI - Azul
+        const craiElements = document.querySelectorAll('[data-ug="CRAI"]');
+        console.log('🔧 DEBUG: Elementos CRAI encontrados:', craiElements.length);
+        
+        craiElements.forEach(element => {
+            element.style.display = 'block';
+            const inputs = element.querySelectorAll('input, select, textarea');
+            console.log('🔧 DEBUG: Inputs en elemento CRAI:', inputs.length);
+            
+            inputs.forEach(input => {
+                input.style.borderColor = '#0d6efd';
+                input.style.borderWidth = '2px';
+                console.log('🔧 DEBUG: Aplicado borde azul a:', input.id, 'Color:', input.style.borderColor);
+            });
+        });
+        
+        // IDP - Amarillento
+        document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+            element.style.display = 'block';
+            element.querySelectorAll('input, select, textarea').forEach(input => {
+                input.style.borderColor = '#ffc107';
+                input.style.borderWidth = '2px';
+            });
+        });
+        
+        // SAE - Verde
+        document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+            element.style.display = 'block';
+            element.querySelectorAll('input, select, textarea').forEach(input => {
+                input.style.borderColor = '#198754';
+                input.style.borderWidth = '2px';
+            });
+        });
+        
+        return; // Salir de la función para Admin
+    }
+    
+    // Función de prueba para aplicar borde azul al campo grupoAsignatura
+    function testGrupoAsignatura() {
+        const grupoAsignatura = document.getElementById('grupoAsignatura');
+        if (grupoAsignatura) {
+            grupoAsignatura.style.borderColor = '#0d6efd';
+            grupoAsignatura.style.borderWidth = '2px';
+            console.log('🔧 DEBUG: Borde azul aplicado a grupoAsignatura');
+        } else {
+            console.log('❌ DEBUG: No se encontró grupoAsignatura');
+        }
+    }
+    
+    // Hacer la función disponible globalmente para testing
+    window.testGrupoAsignatura = testGrupoAsignatura;
+    
+    // Función de prueba para aplicar todos los estilos de Admin
+    function testAdminStyles() {
+        console.log('🔧 DEBUG: testAdminStyles - Mostrando campos de Admin...');
+        
+        // Solo mostrar los campos, los estilos CSS se encargan del resto
+        document.querySelectorAll('[data-ug="CRAI"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+            element.style.display = 'block';
+        });
+        
+        console.log('🔧 DEBUG: testAdminStyles - Campos mostrados');
+    }
+    
+    // Hacer la función disponible globalmente
+    window.testAdminStyles = testAdminStyles;
+    
+    // Ocultar todos los campos específicos primero
+    document.querySelectorAll('[data-ug]').forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    // Mostrar campos según la unidad de gestión seleccionada
     if (value === '1') { // IDP
         document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
             element.style.display = 'block';
@@ -1772,7 +2152,11 @@ function actualizarCamposUG() {
     }
     
     if (value === '2') { // CRAI
-        document.querySelectorAll('[data-ug="CRAI"]').forEach(element => {
+        console.log('🔧 DEBUG: actualizarCamposUG - Mostrando campos CRAI...');
+        const craiElements = document.querySelectorAll('[data-ug="CRAI"]');
+        console.log('🔧 DEBUG: actualizarCamposUG - Elementos CRAI encontrados:', craiElements.length);
+        
+        craiElements.forEach(element => {
             element.style.display = 'block';
         });
     }
@@ -1816,6 +2200,9 @@ document.addEventListener('DOMContentLoaded', function() {
         unidadGestionSelect.addEventListener('change', function() {
             actualizarCamposUG();
         });
+        
+        // Llamar inicialmente para aplicar estilos
+        actualizarCamposUG();
     }
     
     // Toggle de campos de importe según actividad de pago

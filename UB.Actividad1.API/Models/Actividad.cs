@@ -155,14 +155,84 @@ public class Actividad
     public DateTime? ProgramaInicio { get; set; }
     public DateTime? ProgramaFin { get; set; }
     
-    [MaxLength(50)]
     public string? TipusEstudiSAE { get; set; }
     
-    [MaxLength(50)]
     public string? CategoriaSAE { get; set; }
     
     [MaxLength(500)]
     public string? CompetenciesSAE { get; set; }
+    
+    // NUEVOS CAMPOS - INFORMACIÓN GENERAL
+    public bool? Preinscripcion { get; set; }
+    
+    [MaxLength(50)]
+    public string? EstadoActividad { get; set; }
+    
+    public int? AsignaturaId { get; set; }
+    
+    [MaxLength(150)]
+    public string? GrupoAsignatura { get; set; }
+    
+    public int? DisciplinaRelacionadaId { get; set; }
+    
+    // NUEVOS CAMPOS - PROGRAMA
+    [MaxLength(4000)]
+    public string? Metodologia { get; set; }
+    
+    [MaxLength(4000)]
+    public string? SistemaEvaluacion { get; set; }
+    
+    [MaxLength(4000)]
+    public string? HorarioYCalendario { get; set; }
+    
+    public int? IdiomaImparticionId { get; set; }
+    
+    public int? TiposCertificacionId { get; set; }
+    
+    [MaxLength(4000)]
+    public string? Observaciones { get; set; }
+    
+    public int? MateriaDisciplinaId { get; set; }
+    
+    [MaxLength(4000)]
+    public string? EspacioImparticion { get; set; }
+    
+    [MaxLength(4000)]
+    public string? LugarImparticion { get; set; }
+    
+    [MaxLength(4000)]
+    public string? OtrasUbicaciones { get; set; }
+    
+    [MaxLength(500)]
+    public string? UrlPlataformaVirtual { get; set; }
+    
+    [MaxLength(500)]
+    public string? UrlCuestionarioSatisfaccion { get; set; }
+    
+    public int? AmbitoFormacionId { get; set; }
+    
+    // NUEVOS CAMPOS - IMPORTE Y DESCUENTOS
+    public decimal? CosteEstimadoActividad { get; set; }
+    
+    public int? TiposFinanciacionId { get; set; }
+    
+    public int? AnoInicialFinanciacion { get; set; }
+    
+    public int? AnoFinalFinanciacion { get; set; }
+    
+    public int? PlazasAfectadasDescuento { get; set; }
+    
+    // NUEVOS CAMPOS - INSCRIPCIÓN
+    public DateTime? FechaLimitePago { get; set; }
+    
+    public bool? TPV { get; set; }
+    
+    [MaxLength(50)]
+    public string? Remesa { get; set; }
+    
+    public int? TiposInscripcionId { get; set; }
+    
+    public DateTime? FechaAdjudicacionPreinscripcion { get; set; }
     
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
@@ -179,4 +249,17 @@ public class Actividad
     public virtual ICollection<Internacionalizacion> Internacionalizaciones { get; set; } = new List<Internacionalizacion>();
     public virtual ICollection<EntidadOrganizadora> EntidadesOrganizadoras { get; set; } = new List<EntidadOrganizadora>();
     public virtual ICollection<ImporteDescuento> ImportesDescuentos { get; set; } = new List<ImporteDescuento>();
+    
+    // NUEVAS NAVIGATION PROPERTIES PARA DOMINIOS
+    public virtual ValorDominio? Asignatura { get; set; }
+    public virtual ValorDominio? DisciplinaRelacionada { get; set; }
+    public virtual ValorDominio? IdiomaImparticion { get; set; }
+    public virtual ValorDominio? TiposCertificacion { get; set; }
+    public virtual ValorDominio? MateriaDisciplina { get; set; }
+    public virtual ValorDominio? AmbitoFormacion { get; set; }
+    public virtual ValorDominio? TiposFinanciacion { get; set; }
+    public virtual ValorDominio? TiposInscripcion { get; set; }
+    
+    // Navigation property para selección múltiple de denominaciones de descuento
+    public virtual ICollection<ActividadDenominacionDescuento> DenominacionesDescuento { get; set; } = new List<ActividadDenominacionDescuento>();
 } 
