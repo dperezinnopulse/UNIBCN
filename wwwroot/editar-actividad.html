@@ -297,10 +297,6 @@
                             <textarea class="form-control" id="descripcion" rows="3" placeholder="Descripción de la actividad"></textarea>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Condiciones económicas</label>
-                            <input class="form-control" id="condicionesEconomicas" type="text"/>
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label">Año académico *</label>
                             <input class="form-control" id="actividadAnioAcademico" placeholder="2025-2026" type="text" required/>
                         </div>
@@ -338,7 +334,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Fecha de actividad</label>
+                            <label class="form-label">Fecha Cierre de actividad</label>
                             <input class="form-control" id="fechaActividad" type="date"/>
                         </div>
                         <div class="col-md-4">
@@ -350,24 +346,28 @@
                             <input class="form-control" id="personaSolicitante" type="text"/>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Coordinador/a</label>
-                            <input class="form-control" id="coordinador" type="text"/>
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label">Jefe/a unidad gestora</label>
-                            <input class="form-control" id="jefeUnidadGestora" type="text"/>
+                            <select class="form-select" id="jefeUnidadGestora">
+                                <option value="">Seleccionar...</option>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Gestor/a de la actividad</label>
-                            <input class="form-control" id="gestorActividad" type="text"/>
+                            <select class="form-select" id="gestorActividad">
+                                <option value="">Seleccionar...</option>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Facultad destinataria</label>
-                            <input class="form-control" id="facultadDestinataria" type="text"/>
+                            <select class="form-select" id="facultadDestinataria">
+                                <option value="">Seleccionar...</option>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Departamento destinatario</label>
-                            <input class="form-control" id="departamentoDestinatario" type="text"/>
+                            <select class="form-select" id="departamentoDestinatario">
+                                <option value="">Seleccionar...</option>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Centro/unidad UB destinataria</label>
@@ -386,14 +386,6 @@
                         <div class="col-md-4">
                             <label class="form-label">Horas totales</label>
                             <input class="form-control" id="horasTotales" type="number" min="0" step="0.5" inputmode="decimal"/>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Centro de trabajo requerido</label>
-                            <select class="form-select" id="centroTrabajoRequerido">
-                                <option value="">Seleccionar...</option>
-                                <option value="Sí">Sí</option>
-                                <option value="No">No</option>
-                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Modalidad de gestión</label>
@@ -467,7 +459,9 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Coordinador/a de centre/unitat</label>
-<input class="form-control" id="coordinadorCentreUnitat" placeholder="Nombre y apellidos"/>
+<select class="form-select" id="coordinadorCentreUnitat">
+                                    <option value="">Seleccionar...</option>
+                                </select>
 </div>
                             <div class="col-md-6">
                                 <label class="form-label">Centre de treball de l'alumne</label>
@@ -688,10 +682,6 @@
 </div>
 </div>
 <div class="col-md-4">
-<label class="form-label">Duración (horas)</label>
-                            <input class="form-control" id="programaDuracion" min="0" step="0.5" type="number"/>
-</div>
-<div class="col-md-4">
 <label class="form-label">Fecha de inicio</label>
                             <input class="form-control" id="programaInicio" type="date"/>
 </div>
@@ -813,22 +803,8 @@
                             <input class="form-control" id="imp_base" min="0" step="0.01" type="number"/>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Impuesto</label>
-                            <select class="form-select" id="imp_tipo">
-                                <option value="">Selecciona</option>
-                                <option value="IVA 21%">IVA 21%</option>
-                                <option value="IVA 10%">IVA 10%</option>
-                                <option value="IVA 4%">IVA 4%</option>
-                                <option value="Exento">Exento</option>
-</select>
-</div>
-                        <div class="col-md-3">
                             <label class="form-label">Descuento (%)</label>
                             <input class="form-control" id="imp_descuento_pct" max="100" min="0" step="1" type="number"/>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Código promocional</label>
-                            <input class="form-control" id="imp_codigo" type="text"/>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Condiciones</label>

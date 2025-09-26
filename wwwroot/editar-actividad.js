@@ -194,6 +194,40 @@ function addSubactividad() {
                     <label class="form-label">Docente/s</label>
                     <input class="form-control" id="${subactividadId}_docente"/>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha inicio</label>
+                    <input type="date" class="form-control" id="${subactividadId}_fechaInicio"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha fin</label>
+                    <input type="date" class="form-control" id="${subactividadId}_fechaFin"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Hora inicio</label>
+                    <input type="time" class="form-control" id="${subactividadId}_horaInicio"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Hora fin</label>
+                    <input type="time" class="form-control" id="${subactividadId}_horaFin"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Duración (h)</label>
+                    <input type="number" step="0.5" class="form-control" id="${subactividadId}_duracion"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ubicación / Aula</label>
+                    <input class="form-control" id="${subactividadId}_ubicacion"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Aforo</label>
+                    <input type="number" min="0" class="form-control" id="${subactividadId}_aforo"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Idioma</label>
+                    <select class="form-select" id="${subactividadId}_idioma">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
                 <div class="col-12">
                     <label class="form-label">Descripción</label>
                     <textarea class="form-control" rows="2" id="${subactividadId}_descripcion"></textarea>
@@ -203,6 +237,9 @@ function addSubactividad() {
     `;
     
     container.appendChild(subactividadDiv);
+    
+    // Cargar idiomas en el nuevo select
+    cargarIdiomasEnSelect(`${subactividadId}_idioma`);
 }
 
 function addParticipante() {
@@ -322,6 +359,7 @@ function duplicarSubactividad(button) {
         const newId = `subactividad_${Date.now()}`;
         
         newCard.querySelectorAll('[id]').forEach(element => {
+            // Reemplazar cualquier ID que contenga subactividad_ seguido de números
             element.id = element.id.replace(/subactividad_\d+/, newId);
         });
         
@@ -374,7 +412,13 @@ async function cargarDominios() {
             'centroTrabajoRequerido': 'OPCIONES_SI_NO',
             'tipoActividad': 'TIPOS_ACTIVIDAD',
             'modalidadGestion': 'MODALIDADES_GESTION',
-            // NUEVOS DOMINIOS
+            // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
+            'jefeUnidadGestora': 'JEFES_UNIDAD_GESTORA',
+            'gestorActividad': 'GESTORES_ACTIVIDAD',
+            'facultadDestinataria': 'FACULTADES_DESTINATARIAS',
+            'departamentoDestinatario': 'DEPARTAMENTOS_DESTINATARIOS',
+            'coordinadorCentreUnitat': 'COORDINADORES_CENTRE_UNITAT_IDP',
+            // OTROS DOMINIOS
             'asignaturaId': 'Asignatura',
             'disciplinaRelacionadaId': 'DisciplinaRelacionada',
             'idiomaImparticionId': 'IdiomaImparticion',
@@ -416,9 +460,68 @@ async function cargarDominios() {
         
         Utils.log('Dominios cargados correctamente');
         
+        // Cargar dominio de idiomas en las subactividades
+        await cargarIdiomasSubactividades();
+        
     } catch (error) {
         Utils.error('Error cargando dominios:', error);
     }
+}
+
+// Función para cargar el dominio de idiomas en todos los selects de subactividades
+async function cargarIdiomasSubactividades() {
+    try {
+        Utils.log('Cargando dominio de idiomas para subactividades...');
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/IdiomaImparticion/valores`);
+        if (response.ok) {
+            const idiomas = await response.json();
+            Utils.log(`Idiomas recibidos:`, idiomas);
+            
+            // Poblar todos los selects de idioma de subactividades
+            const selectsIdioma = document.querySelectorAll('select[id*="_idioma"]');
+            selectsIdioma.forEach(select => {
+                cargarIdiomasEnSelectElement(select, idiomas);
+            });
+            
+            Utils.log(`Idiomas cargados en ${selectsIdioma.length} selects de subactividades`);
+        } else {
+            Utils.log(`Error HTTP cargando idiomas: ${response.status}`);
+        }
+    } catch (error) {
+        Utils.error('Error cargando idiomas para subactividades:', error);
+    }
+}
+
+// Función para cargar idiomas en un select específico por ID
+async function cargarIdiomasEnSelect(selectId) {
+    try {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/IdiomaImparticion/valores`);
+        if (response.ok) {
+            const idiomas = await response.json();
+            cargarIdiomasEnSelectElement(select, idiomas);
+        }
+    } catch (error) {
+        Utils.error('Error cargando idiomas en select:', error);
+    }
+}
+
+// Función auxiliar para poblar un select con idiomas
+function cargarIdiomasEnSelectElement(select, idiomas) {
+    // Limpiar opciones existentes (excepto "Seleccionar...")
+    while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+    }
+    
+    // Agregar opciones de idiomas
+    idiomas.forEach(idioma => {
+        const option = document.createElement('option');
+        option.value = idioma.id || idioma.Id || idioma.valor || idioma.Valor || idioma.value || idioma.Value;
+        option.textContent = idioma.descripcion || idioma.Descripcion || idioma.valor || idioma.Valor || idioma.value || idioma.Value;
+        select.appendChild(option);
+    });
 }
 
 // Cargar estados (para uso interno del badge) - sin renderizar select
@@ -1031,6 +1134,12 @@ async function aplicarDatosReales(actividad) {
                         // Para selects normales, buscar la opción que coincida con el valor
                         const opciones = Array.from(elemento.options);
                         
+                        // NUEVOS DOMINIOS: Campos que se guardan como texto pero necesitan buscar por texto
+                        const nuevosDominios = [
+                            'jefeUnidadGestora', 'gestorActividad', 'facultadDestinataria', 
+                            'departamentoDestinatario', 'coordinadorCentreUnitat'
+                        ];
+                        
                         // Convertir valor a string para comparación
                         let valorComparar = valor;
                         if (typeof valor === 'boolean') {
@@ -1061,6 +1170,17 @@ async function aplicarDatosReales(actividad) {
                                         Utils.log(`  Opción encontrada por booleano: "${opcion.textContent}" para valor ${valor}`);
                                         return true;
                                     }
+                                }
+                            }
+                            
+                            // NUEVOS DOMINIOS: Buscar por texto (nombres guardados en BD)
+                            if (nuevosDominios.includes(campoFormulario)) {
+                                // Para nuevos dominios, buscar por texto exacto o parcial
+                                if (opcion.textContent === valorComparar || 
+                                    opcion.textContent.includes(valorComparar) ||
+                                    valorComparar.includes(opcion.textContent)) {
+                                    Utils.log(`  Opción encontrada por texto (nuevo dominio): "${opcion.textContent}" para valor "${valorComparar}"`);
+                                    return true;
                                 }
                             }
                             
@@ -1484,11 +1604,16 @@ async function cargarEntidadesRelacionadasReales(actividadId) {
 // Funciones auxiliares para aplicar entidades relacionadas reales
 async function aplicarSubactividadesReales(subactividades) {
     const container = document.getElementById('subactividadesContainer');
-    if (!container) return;
+    if (!container) {
+        console.log('❌ DEBUG: aplicarSubactividadesReales - Container no encontrado');
+        return;
+    }
     
+    console.log('🔍 DEBUG: aplicarSubactividadesReales - Subactividades recibidas:', subactividades);
     container.innerHTML = '';
     
-    subactividades.forEach(subactividad => {
+    subactividades.forEach((subactividad, index) => {
+        console.log(`🔍 DEBUG: Aplicando subactividad ${index + 1}:`, subactividad);
         const subactividadId = `subactividad_${subactividad.id || Date.now()}`;
         const subactividadDiv = document.createElement('div');
         subactividadDiv.className = 'card-dynamic mb-3';
@@ -1523,6 +1648,40 @@ async function aplicarSubactividadesReales(subactividades) {
                         <label class="form-label">Docente/s</label>
                         <input class="form-control" id="${subactividadId}_docente" value="${subactividad.docente || ''}"/>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha inicio</label>
+                        <input type="date" class="form-control" id="${subactividadId}_fechaInicio" value="${subactividad.fechaInicio || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha fin</label>
+                        <input type="date" class="form-control" id="${subactividadId}_fechaFin" value="${subactividad.fechaFin || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Hora inicio</label>
+                        <input type="time" class="form-control" id="${subactividadId}_horaInicio" value="${subactividad.horaInicio || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Hora fin</label>
+                        <input type="time" class="form-control" id="${subactividadId}_horaFin" value="${subactividad.horaFin || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Duración (h)</label>
+                        <input type="number" step="0.5" class="form-control" id="${subactividadId}_duracion" value="${subactividad.duracion || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ubicación / Aula</label>
+                        <input class="form-control" id="${subactividadId}_ubicacion" value="${subactividad.ubicacion || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Aforo</label>
+                        <input type="number" min="0" class="form-control" id="${subactividadId}_aforo" value="${subactividad.aforo || ''}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Idioma</label>
+                        <select class="form-select" id="${subactividadId}_idioma">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                    </div>
                     <div class="col-12">
                         <label class="form-label">Descripción</label>
                         <textarea class="form-control" rows="2" id="${subactividadId}_descripcion">${subactividad.descripcion || ''}</textarea>
@@ -1532,8 +1691,27 @@ async function aplicarSubactividadesReales(subactividades) {
         `;
         
         container.appendChild(subactividadDiv);
+        console.log(`✅ DEBUG: Subactividad ${index + 1} agregada al DOM`);
+        
+        // Cargar idiomas y seleccionar el valor correcto
+        cargarIdiomasEnSelect(`${subactividadId}_idioma`).then(() => {
+            if (subactividad.idioma) {
+                const selectIdioma = document.getElementById(`${subactividadId}_idioma`);
+                if (selectIdioma) {
+                    // Buscar la opción que coincida con el texto del idioma
+                    const opciones = selectIdioma.querySelectorAll('option');
+                    for (let opcion of opciones) {
+                        if (opcion.textContent === subactividad.idioma) {
+                            opcion.selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
     });
     
+    console.log(`🔍 DEBUG: Total subactividades aplicadas: ${subactividades.length}`);
     Utils.log(`Subactividades cargadas: ${subactividades.length}`);
 }
 
@@ -1970,21 +2148,42 @@ function recogerSubactividades() {
     const subactividades = [];
     const container = document.getElementById('subactividadesContainer');
     
+    console.log('🔍 DEBUG: recogerSubactividades - Container encontrado:', !!container);
+    
     if (container) {
-        container.querySelectorAll('.card-dynamic').forEach(card => {
+        const cards = container.querySelectorAll('.card-dynamic');
+        console.log('🔍 DEBUG: recogerSubactividades - Cards encontradas:', cards.length);
+        
+        cards.forEach((card, index) => {
+            console.log(`🔍 DEBUG: Procesando card ${index + 1}:`, card);
+            
             const subactividad = {
                 titulo: card.querySelector('[id*="_titulo"]')?.value || '',
                 modalidad: card.querySelector('[id*="_modalidad"]')?.value || '',
                 docente: card.querySelector('[id*="_docente"]')?.value || '',
+                fechaInicio: card.querySelector('[id*="_fechaInicio"]')?.value || '',
+                fechaFin: card.querySelector('[id*="_fechaFin"]')?.value || '',
+                horaInicio: card.querySelector('[id*="_horaInicio"]')?.value || '',
+                horaFin: card.querySelector('[id*="_horaFin"]')?.value || '',
+                duracion: card.querySelector('[id*="_duracion"]')?.value || '',
+                ubicacion: card.querySelector('[id*="_ubicacion"]')?.value || '',
+                aforo: card.querySelector('[id*="_aforo"]')?.value || '',
+                idioma: card.querySelector('[id*="_idioma"]')?.selectedOptions[0]?.textContent || '',
                 descripcion: card.querySelector('[id*="_descripcion"]')?.value || ''
             };
             
+            console.log(`🔍 DEBUG: Subactividad ${index + 1} recogida:`, subactividad);
+            
             if (subactividad.titulo.trim()) {
                 subactividades.push(subactividad);
+                console.log(`✅ DEBUG: Subactividad ${index + 1} agregada (tiene título)`);
+            } else {
+                console.log(`⚠️ DEBUG: Subactividad ${index + 1} ignorada (sin título)`);
             }
         });
     }
     
+    console.log('🔍 DEBUG: Total subactividades recogidas:', subactividades.length);
     return subactividades;
 }
 

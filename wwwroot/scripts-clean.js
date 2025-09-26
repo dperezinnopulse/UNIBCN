@@ -480,6 +480,12 @@ async function cargarDominios() {
             { elementId: 'centroTrabajoRequerido', dominio: 'OPCIONES_SI_NO' },
             { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
             { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
+            // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
+            { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
+            { elementId: 'gestorActividad', dominio: 'GESTORES_ACTIVIDAD' },
+            { elementId: 'facultadDestinataria', dominio: 'FACULTADES_DESTINATARIAS' },
+            { elementId: 'departamentoDestinatario', dominio: 'DEPARTAMENTOS_DESTINATARIOS' },
+            { elementId: 'coordinadorCentreUnitat', dominio: 'COORDINADORES_CENTRE_UNITAT_IDP' },
             // NUEVOS DOMINIOS
             { elementId: 'asignaturaId', dominio: 'Asignatura' },
             { elementId: 'disciplinaRelacionadaId', dominio: 'DisciplinaRelacionada' },
@@ -572,6 +578,9 @@ async function cargarDominios() {
         
         // Auto-seleccionar unidad gestora después de cargar todos los dominios
         await autoSeleccionarUnidadGestion();
+        
+        // Auto-rellenar persona solicitante con el nombre del usuario
+        await autoRellenarPersonaSolicitante();
         
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
@@ -856,8 +865,29 @@ function obtenerSubactividadesFormulario() {
         const modalidad = (document.getElementById(baseId + '_modalidad')?.value || '').trim();
         const docente = (document.getElementById(baseId + '_docente')?.value || '').trim();
         const descripcion = (document.getElementById(baseId + '_descripcion')?.value || '').trim();
+        const fechaInicio = (document.getElementById(baseId + '_fechaInicio')?.value || '').trim();
+        const fechaFin = (document.getElementById(baseId + '_fechaFin')?.value || '').trim();
+        const horaInicio = (document.getElementById(baseId + '_horaInicio')?.value || '').trim();
+        const horaFin = (document.getElementById(baseId + '_horaFin')?.value || '').trim();
+        const duracion = (document.getElementById(baseId + '_duracion')?.value || '').trim();
+        const ubicacion = (document.getElementById(baseId + '_ubicacion')?.value || '').trim();
+        const aforo = (document.getElementById(baseId + '_aforo')?.value || '').trim();
+        const idioma = (document.getElementById(baseId + '_idioma')?.selectedOptions[0]?.textContent || '').trim();
         if (titulo) {
-            subacts.push({ Titulo: titulo, Modalidad: modalidad || null, Docente: docente || null, Descripcion: descripcion || null });
+            subacts.push({ 
+                Titulo: titulo, 
+                Modalidad: modalidad || null, 
+                Docente: docente || null, 
+                Descripcion: descripcion || null,
+                FechaInicio: fechaInicio || null,
+                FechaFin: fechaFin || null,
+                HoraInicio: horaInicio || null,
+                HoraFin: horaFin || null,
+                Duracion: duracion ? parseFloat(duracion) : null,
+                Ubicacion: ubicacion || null,
+                Aforo: aforo ? parseInt(aforo) : null,
+                Idioma: idioma || null
+            });
         }
     });
     return subacts;
@@ -3624,5 +3654,97 @@ async function autoSeleccionarUnidadGestion() {
         
     } catch (error) {
         console.error('❌ DEBUG: autoSeleccionarUnidadGestion - Error:', error);
+    }
+}
+
+// Función para auto-rellenar el campo Persona solicitante con el nombre del usuario
+async function autoRellenarPersonaSolicitante() {
+    console.log('👤 DEBUG: autoRellenarPersonaSolicitante - Iniciando auto-relleno...');
+    
+    try {
+        // Obtener información del usuario desde sessionStorage
+        const userInfo = JSON.parse(sessionStorage.getItem('ub_user') || '{}');
+        console.log('👤 DEBUG: autoRellenarPersonaSolicitante - User info:', userInfo);
+        
+        // Construir el nombre completo del usuario
+        let nombreCompleto = '';
+        
+        // Intentar obtener los campos de nombre y apellidos
+        const nombre = userInfo.nombre || userInfo.Nombre || '';
+        const apellido1 = userInfo.apellido1 || userInfo.Apellido1 || '';
+        const apellido2 = userInfo.apellido2 || userInfo.Apellido2 || '';
+        
+        // Si tenemos los campos individuales, construir el nombre completo
+        if (nombre || apellido1 || apellido2) {
+            const partes = [nombre, apellido1, apellido2].filter(parte => parte && parte.trim());
+            nombreCompleto = partes.join(' ');
+            console.log('👤 DEBUG: autoRellenarPersonaSolicitante - Nombre construido desde campos individuales:', nombreCompleto);
+        } else {
+            // Fallback: usar el username si no hay campos de nombre
+            nombreCompleto = userInfo.username || userInfo.Username || '';
+            console.log('👤 DEBUG: autoRellenarPersonaSolicitante - Usando username como fallback:', nombreCompleto);
+        }
+        
+        if (!nombreCompleto) {
+            console.log('⚠️ DEBUG: autoRellenarPersonaSolicitante - No se encontró información del usuario para rellenar');
+            return;
+        }
+        
+        // Buscar el campo Persona solicitante
+        let intentos = 0;
+        const maxIntentos = 20;
+        
+        while (intentos < maxIntentos) {
+            const campoPersonaSolicitante = document.getElementById('personaSolicitante');
+            if (campoPersonaSolicitante) {
+                console.log('👤 DEBUG: autoRellenarPersonaSolicitante - Campo encontrado, rellenando con:', nombreCompleto);
+                
+                // Solo rellenar si el campo está vacío
+                if (!campoPersonaSolicitante.value || campoPersonaSolicitante.value.trim() === '') {
+                    campoPersonaSolicitante.value = nombreCompleto;
+                    console.log('✅ DEBUG: autoRellenarPersonaSolicitante - Campo rellenado correctamente');
+                } else {
+                    console.log('ℹ️ DEBUG: autoRellenarPersonaSolicitante - Campo ya tiene valor, no se modifica');
+                }
+                return;
+            }
+            
+            console.log(`👤 DEBUG: autoRellenarPersonaSolicitante - Esperando campo... intento ${intentos + 1}/${maxIntentos}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            intentos++;
+        }
+        
+        console.log('❌ DEBUG: autoRellenarPersonaSolicitante - No se pudo encontrar el campo personaSolicitante');
+        
+    } catch (error) {
+        console.error('❌ DEBUG: autoRellenarPersonaSolicitante - Error:', error);
+    }
+}
+
+// Función para cargar idiomas en un select específico (para CrearActividad)
+async function cargarIdiomasEnSelectCrear(selectId) {
+    try {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        const response = await fetch(`${API_BASE_URL}/api/dominios/IdiomaImparticion/valores`);
+        if (response.ok) {
+            const idiomas = await response.json();
+            
+            // Limpiar opciones existentes (excepto "Seleccionar...")
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+            
+            // Agregar opciones de idiomas
+            idiomas.forEach(idioma => {
+                const option = document.createElement('option');
+                option.value = idioma.id || idioma.Id || idioma.valor || idioma.Valor || idioma.value || idioma.Value;
+                option.textContent = idioma.descripcion || idioma.Descripcion || idioma.valor || idioma.Valor || idioma.value || idioma.Value;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando idiomas en select:', error);
     }
 }

@@ -1261,7 +1261,15 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
                 Titulo = subDto.Titulo,
                 Modalidad = subDto.Modalidad,
                 Docente = subDto.Docente,
-                Descripcion = subDto.Descripcion
+                Descripcion = subDto.Descripcion,
+                FechaInicio = subDto.FechaInicio,
+                FechaFin = subDto.FechaFin,
+                HoraInicio = subDto.HoraInicio,
+                HoraFin = subDto.HoraFin,
+                Duracion = subDto.Duracion,
+                Ubicacion = subDto.Ubicacion,
+                Aforo = subDto.Aforo,
+                Idioma = subDto.Idioma
             };
             context.Subactividades.Add(subactividad);
         }
