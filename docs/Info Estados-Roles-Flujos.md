@@ -34,7 +34,11 @@ Las acciones que permiten pasar de un estado a otro son:
 
 - **BORRADOR → ENVIADA**  
   Acción: Enviar propuesta.  
-  Roles: Docente/Dinamizador, Coordinador/Técnico.  
+  Roles: Docente/Dinamizador, Coordinador/Técnico, Coordinador de Formación.
+
+- **BORRADOR → VALIDACIÓN_UNIDAD**  
+  Acción: Enviar directo a validación.  
+  Roles: Coordinador/Técnico.  
 
 - **ENVIADA → EN_REVISIÓN**  
   Acción: Entrada en revisión.  
@@ -42,10 +46,18 @@ Las acciones que permiten pasar de un estado a otro son:
 
 - **EN_REVISIÓN → VALIDACIÓN_UNIDAD**  
   Acción: Aprobar.  
-  Roles: Coordinador de Formación.  
+  Roles: Coordinador de Formación, Coordinador/Técnico.  
 
 - **EN_REVISIÓN → BORRADOR**  
   Acción: Devolver para corrección.  
+  Roles: Coordinador de Formación.
+
+- **EN_REVISIÓN → RECHAZADA**  
+  Acción: Rechazar propuesta.  
+  Roles: Coordinador de Formación, Coordinador/Técnico.
+
+- **EN_REVISIÓN → ENVIADA**  
+  Acción: Devolver a estado anterior.  
   Roles: Coordinador de Formación.  
 
 - **VALIDACIÓN_UNIDAD → DEFINICIÓN**  
@@ -53,7 +65,11 @@ Las acciones que permiten pasar de un estado a otro son:
   Roles: Responsable de Unidad.  
 
 - **VALIDACIÓN_UNIDAD → EN_REVISIÓN**  
-  Acción: Rechazar o devolver.  
+  Acción: Devolver.  
+  Roles: Responsable de Unidad.
+
+- **VALIDACIÓN_UNIDAD → RECHAZADA**  
+  Acción: Rechazar.  
   Roles: Responsable de Unidad.  
 
 - **DEFINICIÓN → REVISIÓN_ADMINISTRATIVA**  
@@ -82,14 +98,14 @@ Las acciones que permiten pasar de un estado a otro son:
 
 | Estado                  | Docente/Dinamizador      | Coordinador/Técnico        | Coord. Formación         | Resp. Unidad          | Soporte Administrativo       | Admin   |
 |--------------------------|--------------------------|-----------------------------|--------------------------|-----------------------|------------------------------|---------|
-| **BORRADOR**            | Crear, editar, adjuntar  | Crear, editar, adjuntar     | Ver                      | Ver                   | Ver                          | Todo    |
+| **BORRADOR**            | Crear, editar, adjuntar  | Crear, editar, adjuntar     | Crear, editar, adjuntar  | Ver                   | Ver                          | Todo    |
 | **ENVIADA**             | Ver, responder aclarac.  | Ver, responder aclarac.     | Revisar, aprobar/rechazar| Ver                   | Ver                          | Todo    |
-| **EN_REVISIÓN**         | Ver, responder           | Ver, responder              | Revisar, aprobar/rechazar| Ver                   | Ver                          | Todo    |
-| **VALIDACIÓN_UNIDAD**   | Ver                      | Ver                         | Ver                      | Aprobar/rechazar      | Ver                          | Todo    |
+| **EN_REVISIÓN**         | Ver, responder           | Ver, responder              | Revisar, aprobar/rechazar/devolver| Ver                   | Ver                          | Todo    |
+| **VALIDACIÓN_UNIDAD**   | Ver                      | Ver                         | Ver                      | Aprobar/devolver/rechazar | Ver                          | Todo    |
 | **DEFINICIÓN**          | Ver                      | Editar definición, subacts. | Ver                      | Ver                   | Ver                          | Todo    |
 | **REVISIÓN_ADMINISTRATIVA** | Ver                  | Ver                         | Ver                      | Ver                   | Revisar, aprobar/rechazar, publicar | Todo |
-| **PUBLICADA**           | Ver                      | Ver                         | Ver                      | Ver                   | Gestionar publicación        | Todo    |
-| **CANCELADA/RECHAZADA** | Ver                      | Ver                         | Ver                      | Ver                   | Ver                          | Todo    |
+| **PUBLICADA**           | Ver                      | Ver                         | Ver                      | Ver                   | Gestionar publicación, editar | Todo    |
+| **CANCELADA/RECHAZADA** | Ver, reabrir             | Ver, reabrir                | Ver                      | Ver                   | Ver                          | Todo    |
 
 ---
 

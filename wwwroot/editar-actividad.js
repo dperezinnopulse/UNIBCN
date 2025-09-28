@@ -1400,8 +1400,8 @@ function canEditByRoleAndState(normalizedRole, estadoCodigo) {
     // Permisos de edición basados en transiciones y lógica de negocio
     switch (estadoCodigo) {
         case 'BORRADOR':
-            // En borrador: Docente y Técnico pueden editar y enviar
-            return normalizedRole === 'DOCENTE' || normalizedRole === 'TECNICO';
+            // En borrador: Docente, Técnico y Coordinador pueden editar y enviar
+            return normalizedRole === 'DOCENTE' || normalizedRole === 'TECNICO' || normalizedRole === 'COORDINADOR';
             
         case 'ENVIADA':
             // Enviada: Solo lectura, no se puede editar
@@ -1424,16 +1424,16 @@ function canEditByRoleAndState(normalizedRole, estadoCodigo) {
             return false;
             
         case 'PUBLICADA':
-            // Publicada: Solo lectura, no se puede editar
-            return false;
+            // Publicada: Solo Soporte puede editar para gestionar publicación
+            return normalizedRole === 'SOPORTE';
             
         case 'CANCELADA':
-            // Cancelada: Docente puede reabrir (editar y cambiar estado a BORRADOR)
-            return normalizedRole === 'DOCENTE';
+            // Cancelada: Docente y Técnico pueden reabrir (editar y cambiar estado a BORRADOR)
+            return normalizedRole === 'DOCENTE' || normalizedRole === 'TECNICO';
             
         case 'RECHAZADA':
-            // Rechazada: Docente puede reabrir (editar y cambiar estado a BORRADOR)
-            return normalizedRole === 'DOCENTE';
+            // Rechazada: Docente y Técnico pueden reabrir (editar y cambiar estado a BORRADOR)
+            return normalizedRole === 'DOCENTE' || normalizedRole === 'TECNICO';
             
         default:
             return false;

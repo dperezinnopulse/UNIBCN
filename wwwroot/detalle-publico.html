@@ -156,6 +156,37 @@
                 </div>
             </div>
 
+            <!-- Información económica y financiera -->
+            <div class="card-section">
+                <h5 class="mb-3"><i class="fas fa-euro-sign text-primary me-2"></i>Información económica y financiera</h5>
+                <div class="row g-3">
+                    <div class="col-md-4" id="metaCosteEstimadoActividad"></div>
+                    <div class="col-md-4" id="metaTiposFinanciacionId"></div>
+                    <div class="col-md-4" id="metaPreinscripcion"></div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6" id="metaAnoInicialFinanciacion"></div>
+                    <div class="col-md-6" id="metaAnoFinalFinanciacion"></div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6" id="metaDenominacionDescuentoIds"></div>
+                    <div class="col-md-6" id="metaPlazasAfectadasDescuento"></div>
+                </div>
+            </div>
+
+            <!-- Información académica -->
+            <div class="card-section">
+                <h5 class="mb-3"><i class="fas fa-graduation-cap text-primary me-2"></i>Información académica</h5>
+                <div class="row g-3">
+                    <div class="col-md-4" id="metaEstadoActividad"></div>
+                    <div class="col-md-4" id="metaAsignaturaId"></div>
+                    <div class="col-md-4" id="metaGrupoAsignatura"></div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-12" id="metaDisciplinaRelacionadaId"></div>
+                </div>
+            </div>
+
             <!-- Fechas y temporalización -->
             <div class="card-section">
                 <h5 class="mb-3"><i class="fas fa-calendar-alt text-primary me-2"></i>Fechas y temporalización</h5>
@@ -196,6 +227,11 @@
                 <div class="row g-3 mt-2">
                     <div class="col-md-6" id="metaCreditosMinimosSAE"></div>
                     <div class="col-md-6" id="metaCreditosMaximosSAE"></div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4" id="metaCategoriaSAE"></div>
+                    <div class="col-md-4" id="metaTipusEstudiSAE"></div>
+                    <div class="col-md-4" id="metaCompetenciesSAE"></div>
                 </div>
             </div>
 
@@ -668,6 +704,48 @@
                 }
             };
             
+            // Función para mostrar campo de dominio con descripción
+            const mostrarCampoDominio = async (elementId, label, valor, icono = '', dominio = null) => {
+                const el = document.getElementById(elementId);
+                if(el) {
+                    if(valor !== null && valor !== undefined && valor !== '') {
+                        let textoMostrar = valor;
+                        
+                        // Si es un campo de dominio, intentar obtener la descripción
+                        if(dominio && typeof valor === 'number') {
+                            try {
+                                const descripcion = await obtenerDescripcionDominio(dominio, valor);
+                                if(descripcion) {
+                                    textoMostrar = `${descripcion} (${valor})`;
+                                }
+                            } catch(e) {
+                                console.log(`No se pudo obtener descripción para ${dominio}:${valor}`);
+                            }
+                        }
+                        
+                        el.innerHTML = `<strong>${icono}${label}:</strong><br>${textoMostrar}`;
+                        el.style.display = '';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                }
+            };
+            
+            // Función para obtener descripción de dominio
+            const obtenerDescripcionDominio = async (dominio, id) => {
+                try {
+                    const response = await fetch(`${getApiBaseUrl()}/api/dominios/${dominio}`);
+                    if(response.ok) {
+                        const dominios = await response.json();
+                        const item = dominios.find(d => d.id === id);
+                        return item ? item.descripcion || item.nombre : null;
+                    }
+                } catch(e) {
+                    console.log(`Error obteniendo dominio ${dominio}:`, e);
+                }
+                return null;
+            };
+            
             // ===== CABECERA PRINCIPAL =====
             document.getElementById('titulo').textContent = act.titulo || 'Sin título';
             document.getElementById('codigo').textContent = act.codigo ? `Código: ${act.codigo}` : 'Sin código';
@@ -722,11 +800,26 @@
             }
             
             // ===== INFORMACIÓN BÁSICA =====
-            mostrarCampo('metaTipoActividad', 'Tipo de actividad', act.tipoActividad, '<i class="fas fa-tag me-1"></i>');
-            mostrarCampo('metaModalidadGestion', 'Modalidad de gestión', act.modalidadGestion, '<i class="fas fa-cogs me-1"></i>');
+            await mostrarCampoDominio('metaTipoActividad', 'Tipo de actividad', act.tipoActividad, '<i class="fas fa-tag me-1"></i>', 'tipoActividad');
+            await mostrarCampoDominio('metaModalidadGestion', 'Modalidad de gestión', act.modalidadGestion, '<i class="fas fa-cogs me-1"></i>', 'modalidadGestion');
             mostrarCampo('metaCodigoRelacionado', 'Código relacionado', act.codigoRelacionado, '<i class="fas fa-link me-1"></i>');
             mostrarCampo('metaCondicionesEconomicas', 'Condiciones económicas', act.condicionesEconomicas, '<i class="fas fa-euro-sign me-1"></i>');
             mostrarCampo('metaMotivoCierre', 'Motivo de cierre', act.motivoCierre, '<i class="fas fa-times-circle me-1"></i>');
+            
+            // ===== INFORMACIÓN ECONÓMICA Y FINANCIERA =====
+            mostrarCampo('metaCosteEstimadoActividad', 'Coste estimado', act.costeEstimadoActividad ? `${act.costeEstimadoActividad}€` : null, '<i class="fas fa-euro-sign me-1"></i>');
+            mostrarCampo('metaTiposFinanciacionId', 'Tipo de financiación', act.tiposFinanciacionId, '<i class="fas fa-money-bill-wave me-1"></i>');
+            mostrarBoolean('metaPreinscripcion', 'Preinscripción', act.preinscripcion, '<i class="fas fa-clipboard-list me-1"></i>');
+            mostrarCampo('metaAnoInicialFinanciacion', 'Año inicial financiación', act.anoInicialFinanciacion, '<i class="fas fa-calendar-alt me-1"></i>');
+            mostrarCampo('metaAnoFinalFinanciacion', 'Año final financiación', act.anoFinalFinanciacion, '<i class="fas fa-calendar-alt me-1"></i>');
+            mostrarCampo('metaDenominacionDescuentoIds', 'Denominación descuentos', act.denominacionDescuentoIds, '<i class="fas fa-percentage me-1"></i>');
+            mostrarCampo('metaPlazasAfectadasDescuento', 'Plazas afectadas descuento', act.plazasAfectadasDescuento, '<i class="fas fa-users me-1"></i>');
+            
+            // ===== INFORMACIÓN ACADÉMICA =====
+            mostrarCampo('metaEstadoActividad', 'Estado de actividad', act.estadoActividad, '<i class="fas fa-info-circle me-1"></i>');
+            mostrarCampo('metaAsignaturaId', 'ID Asignatura', act.asignaturaId, '<i class="fas fa-book me-1"></i>');
+            mostrarCampo('metaGrupoAsignatura', 'Grupo asignatura', act.grupoAsignatura, '<i class="fas fa-layer-group me-1"></i>');
+            mostrarCampo('metaDisciplinaRelacionadaId', 'Disciplina relacionada', act.disciplinaRelacionadaId, '<i class="fas fa-graduation-cap me-1"></i>');
             
             // ===== FECHAS Y TEMPORALIZACIÓN =====
             mostrarCampo('metaFechaInicio', 'Fecha inicio', act.fechaInicio ? fmtDate(act.fechaInicio) : null, '<i class="fas fa-play me-1"></i>');
@@ -755,9 +848,14 @@
             mostrarCampo('metaCreditosMinimosSAE', 'Créditos mínimos SAE', act.creditosMinimosSAE, '<i class="fas fa-arrow-down me-1"></i>');
             mostrarCampo('metaCreditosMaximosSAE', 'Créditos máximos SAE', act.creditosMaximosSAE, '<i class="fas fa-arrow-up me-1"></i>');
             
+            // Campos específicos SAE con descripción de dominio
+            await mostrarCampoDominio('metaCategoriaSAE', 'Categoría SAE', act.categoriaSAE, '<i class="fas fa-tags me-1"></i>', 'categoriaSAE');
+            await mostrarCampoDominio('metaTipusEstudiSAE', 'Tipo de estudio SAE', act.tipusEstudiSAE, '<i class="fas fa-book-open me-1"></i>', 'tipusEstudiSAE');
+            await mostrarCampoDominio('metaCompetenciesSAE', 'Competencias SAE', act.competenciesSAE, '<i class="fas fa-trophy me-1"></i>', 'competenciesSAE');
+            
             // ===== LÍNEAS ESTRATÉGICAS =====
-            mostrarCampo('metaLineaEstrategica', 'Línea estratégica', act.lineaEstrategica, '<i class="fas fa-arrow-right me-1"></i>');
-            mostrarCampo('metaObjetivoEstrategico', 'Objetivo estratégico', act.objetivoEstrategico, '<i class="fas fa-target me-1"></i>');
+            await mostrarCampoDominio('metaLineaEstrategica', 'Línea estratégica', act.lineaEstrategica, '<i class="fas fa-arrow-right me-1"></i>', 'lineaEstrategica');
+            await mostrarCampoDominio('metaObjetivoEstrategico', 'Objetivo estratégico', act.objetivoEstrategico, '<i class="fas fa-target me-1"></i>', 'objetivoEstrategico');
             
             // ===== RESPONSABLES =====
             console.log('Debug responsables:');

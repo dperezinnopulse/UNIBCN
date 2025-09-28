@@ -60,7 +60,9 @@ BEGIN TRY
   -- Envío
   INSERT INTO TransicionesEstado (EstadoOrigenCodigo, EstadoDestinoCodigo, RolPermitido, Accion, Activo)
   VALUES (@BOR, @ENV, 'Docente', 'enviar', 1),
-         (@BOR, @ENV, 'TecnicoFormacion', 'enviar', 1);
+         (@BOR, @ENV, 'TecnicoFormacion', 'enviar', 1),
+         (@BOR, @ENV, 'CoordinadorFormacion', 'enviar', 1),
+         (@BOR, @VUN, 'TecnicoFormacion', 'enviar', 1);
 
   -- Revisión inicial
   INSERT INTO TransicionesEstado (EstadoOrigenCodigo, EstadoDestinoCodigo, RolPermitido, Accion, Activo)
@@ -69,12 +71,17 @@ BEGIN TRY
   -- Aprobación/devolución por Coordinador
   INSERT INTO TransicionesEstado (EstadoOrigenCodigo, EstadoDestinoCodigo, RolPermitido, Accion, Activo)
   VALUES (@ENR, @VUN, 'CoordinadorFormacion', 'aprobar', 1),
-         (@ENR, @BOR, 'CoordinadorFormacion', 'devolver', 1);
+         (@ENR, @BOR, 'CoordinadorFormacion', 'devolver', 1),
+         (@ENR, @REJ, 'CoordinadorFormacion', 'rechazar', 1),
+         (@ENR, @ENV, 'CoordinadorFormacion', 'devolver', 1),
+         (@ENR, @VUN, 'TecnicoFormacion', 'aprobar', 1),
+         (@ENR, @REJ, 'TecnicoFormacion', 'rechazar', 1);
 
   -- Validación de unidad
   INSERT INTO TransicionesEstado (EstadoOrigenCodigo, EstadoDestinoCodigo, RolPermitido, Accion, Activo)
   VALUES (@VUN, @DEF, 'ResponsableUnidad', 'aprobar', 1),
-         (@VUN, @ENR, 'ResponsableUnidad', 'devolver', 1);
+         (@VUN, @ENR, 'ResponsableUnidad', 'devolver', 1),
+         (@VUN, @REJ, 'ResponsableUnidad', 'rechazar', 1);
 
   -- Definición → Revisión adm.
   INSERT INTO TransicionesEstado (EstadoOrigenCodigo, EstadoDestinoCodigo, RolPermitido, Accion, Activo)
@@ -96,7 +103,9 @@ BEGIN TRY
   VALUES (@CAN, @BOR, 'Admin', 'reabrir', 1),
          (@REJ, @BOR, 'Admin', 'reabrir', 1),
          (@CAN, @BOR, 'Docente', 'reabrir', 1),
-         (@REJ, @BOR, 'Docente', 'reabrir', 1);
+         (@REJ, @BOR, 'Docente', 'reabrir', 1),
+         (@CAN, @BOR, 'TecnicoFormacion', 'reabrir', 1),
+         (@REJ, @BOR, 'TecnicoFormacion', 'reabrir', 1);
 
   -- Usuarios de prueba por UG (password plano '1234')
   DECLARE @UG_IDP INT = (SELECT TOP 1 Id FROM UnidadesGestion WHERE Codigo='IDP');
