@@ -524,7 +524,9 @@
 </div>
                             <div class="col-md-4">
                                 <label class="form-label">Competències</label>
-                                <input class="form-control" id="competenciesSAE" placeholder="Especifica competències"/>
+                                <select class="form-select" id="competenciesSAE">
+                                    <option value="">Selecciona competència...</option>
+                                </select>
 </div>
 </div>
 </div>
@@ -1021,6 +1023,7 @@
     <script src="header.js"></script>
     <script src="ug-specific-fields.js"></script>
     <script src="editar-actividad.js"></script>
+    <script src="scripts-clean.js?v=2.0"></script>
     <script src="adjuntos.js"></script>
     <script src="cambios-estado.js"></script>
     
@@ -1078,6 +1081,22 @@
             }
             document.addEventListener('DOMContentLoaded', attach);
         })();
+</script>
+<script>
+    // Cargar dominios cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Cargando dominios en editar actividad...');
+        
+        // Esperar un poco para asegurar que todos los scripts estén cargados
+        setTimeout(function() {
+            if (typeof cargarDominios === 'function') {
+                console.log('✅ Ejecutando cargarDominios...');
+                cargarDominios();
+            } else {
+                console.error('❌ Función cargarDominios no encontrada');
+            }
+        }, 1000);
+    });
 </script>
 </body>
 </html>

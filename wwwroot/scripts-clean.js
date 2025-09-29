@@ -31,6 +31,14 @@ class UBActividadAPI {
         console.log('🚀 DEBUG: makeRequest - Método:', options.method || 'GET');
         if (options.body) {
             console.log('🚀 DEBUG: makeRequest - Datos a enviar:', options.body);
+            
+            // Log especial para PUT requests (actualizaciones)
+            if (options.method === 'PUT') {
+                console.log('🔥 ===== JSON PARA ANALIZAR ERROR 500 =====');
+                console.log('📋 COPIA ESTE JSON COMPLETO:');
+                console.log(options.body);
+                console.log('🔥 ========================================');
+            }
         }
 
         try {
@@ -470,13 +478,14 @@ async function cargarDominios() {
             { elementId: 'objetivoEstrategico', dominio: 'OBJETIVOS_ESTRATEGICOS' },
             { elementId: 'actividadReservada', dominio: 'ACTIVIDADES_RESERVADAS' },
             { elementId: 'modalidadGestion', dominio: 'MODALIDADES_GESTION' },
-            { elementId: 'insc_modalidad', dominio: 'MODALIDAD_IMPARTICION' },
+            { elementId: 'inscripcionModalidad', dominio: 'MODALIDAD_IMPARTICION' },
             { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
             { elementId: 'imp_tipo', dominio: 'TIPOS_IMPUESTO' },
-            { elementId: 'actividadUnidadGestion', dominio: 'UNIDADES_GESTION' },
+            // { elementId: 'actividadUnidadGestion', dominio: 'UNIDADES_GESTION' }, // Cargado por función específica
             { elementId: 'centroTrabajoRequerido', dominio: 'OPCIONES_SI_NO' },
             { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
             { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
+            { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' },
             // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
             { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
             { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
@@ -573,6 +582,9 @@ async function cargarDominios() {
         if (elementosNoEncontrados.length > 0) {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
+        
+        // Cargar unidades de gestión directamente desde la tabla
+        await cargarUnidadesGestion();
         
         // Auto-seleccionar unidad gestora después de cargar todos los dominios
         await autoSeleccionarUnidadGestion();
@@ -754,76 +766,94 @@ async function guardarActividad() {
         const ugRaw = document.getElementById('actividadUnidadGestion')?.value || '';
         console.log('🔍 DEBUG: guardarActividad - ugRaw:', ugRaw);
         
-        // Mapear los IDs del dominio a los IDs reales de la tabla UnidadesGestion
+        // Para actividadUnidadGestion, usar directamente el valor ya que viene de la tabla UnidadesGestion (1, 2, 3)
         let unidadGestionId = null;
         if (ugRaw && !isNaN(parseInt(ugRaw))) {
-            // Mapear IDs del dominio (35, 36, 37) a IDs reales (1, 2, 3)
-            const dominioToRealMap = { '35': 1, '36': 2, '37': 3 };
-            unidadGestionId = dominioToRealMap[ugRaw] || null;
-            console.log('🔍 DEBUG: guardarActividad - Mapeo dominio a real:', ugRaw, '->', unidadGestionId);
-        } else {
-            // Mapear códigos de texto (compatibilidad con versión anterior)
-            const ugMap = { 'IDP': 1, 'CRAI': 2, 'SAE': 3 };
-            unidadGestionId = ugMap[ugRaw.toUpperCase()] || null;
-            console.log('🔍 DEBUG: guardarActividad - Mapeo de código:', ugRaw, '->', unidadGestionId);
+            unidadGestionId = parseInt(ugRaw);
+            console.log('🔍 DEBUG: guardarActividad - UnidadGestionId directo:', ugRaw, '->', unidadGestionId);
         }
+        
+        // Función auxiliar para limpiar valores vacíos
+        const limpiarValor = (valor) => {
+            if (valor === null || valor === undefined || valor === '') return undefined;
+            return valor;
+        };
+        
         const formData = {
-            // Básicos
-            Codigo: document.getElementById('actividadCodigo')?.value || '',
+            // Básicos - solo campos con valores
             Titulo: limpiarCaracteresEspeciales(document.getElementById('actividadTitulo')?.value) || '',
-            Descripcion: limpiarCaracteresEspeciales(document.getElementById('descripcion')?.value) || '',
-            AnioAcademico: document.getElementById('actividadAnioAcademico')?.value || '',
+            Descripcion: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('descripcion')?.value)),
+            Codigo: limpiarValor(document.getElementById('actividadCodigo')?.value),
+            AnioAcademico: limpiarValor(document.getElementById('actividadAnioAcademico')?.value),
             UnidadGestionId: unidadGestionId,
 
             // Información general
-            TipoActividad: limpiarCaracteresEspeciales(document.getElementById('tipoActividad')?.value) || '',
-            LineaEstrategica: document.getElementById('lineaEstrategica')?.value || '',
-            ObjetivoEstrategico: document.getElementById('objetivoEstrategico')?.value || '',
-            CodigoRelacionado: document.getElementById('codigoRelacionado')?.value || '',
+            TipoActividad: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('tipoActividad')?.value)),
+            LineaEstrategica: limpiarValor(document.getElementById('lineaEstrategica')?.value),
+            ObjetivoEstrategico: limpiarValor(document.getElementById('objetivoEstrategico')?.value),
+            CodigoRelacionado: limpiarValor(document.getElementById('codigoRelacionado')?.value),
             ActividadReservada: (() => {
                 const valor = document.getElementById('actividadReservada')?.value;
                 console.log('🔍 DEBUG: ActividadReservada - valor raw:', valor);
-                const resultado = valor ? parseInt(valor) : null;
+                const resultado = valor ? parseInt(valor) : undefined;
                 console.log('🔍 DEBUG: ActividadReservada - valor final:', resultado);
                 return resultado;
             })(),
-            ActividadPago: document.getElementById('actividadPago')?.checked ?? false,
-            FechaActividad: document.getElementById('fechaActividad')?.value ? new Date(document.getElementById('fechaActividad').value).toISOString() : null,
-            MotivoCierre: document.getElementById('motivoCierre')?.value || '',
-            PersonaSolicitante: document.getElementById('personaSolicitante')?.value || '',
-            Coordinador: document.getElementById('coordinador')?.value || '',
-            JefeUnidadGestora: document.getElementById('jefeUnidadGestora')?.value || '',
-            UnidadGestoraDetalle: document.getElementById('unidadGestoraDetalle')?.value || '',
-            GestorActividad: document.getElementById('gestorActividad')?.value || '',
-            FacultadDestinataria: document.getElementById('facultadDestinataria')?.value || '',
-            DepartamentoDestinatario: document.getElementById('departamentoDestinatario')?.value || '',
-            CentroUnidadUBDestinataria: document.getElementById('centroUnidadUBDestinataria')?.value || '',
-            OtrosCentrosInstituciones: document.getElementById('otrosCentrosInstituciones')?.value || '',
-            PlazasTotales: parseInt(document.getElementById('plazasTotales')?.value) || null,
-            HorasTotales: parseFloat(document.getElementById('horasTotales')?.value) || null,
-            CentroTrabajoRequerido: document.getElementById('centroTrabajoRequerido')?.value || '',
-            ModalidadGestion: document.getElementById('modalidadGestion')?.value || '',
-            FechaInicioImparticion: document.getElementById('fechaInicioImparticion')?.value ? new Date(document.getElementById('fechaInicioImparticion').value).toISOString() : null,
-            FechaFinImparticion: document.getElementById('fechaFinImparticion')?.value ? new Date(document.getElementById('fechaFinImparticion').value).toISOString() : null,
-            CondicionesEconomicas: document.getElementById('condicionesEconomicas')?.value || '',
+            ActividadPago: document.getElementById('actividadPago')?.checked ? "S" : "N",
+            FechaActividad: document.getElementById('fechaActividad')?.value ? new Date(document.getElementById('fechaActividad').value).toISOString() : undefined,
+            MotivoCierre: limpiarValor(document.getElementById('motivoCierre')?.value),
+            PersonaSolicitante: limpiarValor(document.getElementById('personaSolicitante')?.value),
+            Coordinador: limpiarValor(document.getElementById('coordinador')?.value),
+            JefeUnidadGestora: limpiarValor(document.getElementById('jefeUnidadGestora')?.value),
+            UnidadGestoraDetalle: limpiarValor(document.getElementById('unidadGestoraDetalle')?.value),
+            GestorActividad: limpiarValor(document.getElementById('gestorActividad')?.value),
+            FacultadDestinataria: limpiarValor(document.getElementById('facultadDestinataria')?.value),
+            DepartamentoDestinatario: limpiarValor(document.getElementById('departamentoDestinatario')?.value),
+            CentroUnidadUBDestinataria: limpiarValor(document.getElementById('centroUnidadUBDestinataria')?.value),
+            OtrosCentrosInstituciones: limpiarValor(document.getElementById('otrosCentrosInstituciones')?.value),
+            PlazasTotales: (() => {
+                const valor = document.getElementById('plazasTotales')?.value;
+                return valor ? parseInt(valor) : undefined;
+            })(),
+            HorasTotales: (() => {
+                const valor = document.getElementById('horasTotales')?.value;
+                return valor ? parseFloat(valor) : undefined;
+            })(),
+            CentroTrabajoRequerido: limpiarValor(document.getElementById('centroTrabajoRequerido')?.value),
+            ModalidadGestion: limpiarValor(document.getElementById('modalidadGestion')?.value),
+            FechaInicioImparticion: document.getElementById('fechaInicioImparticion')?.value ? new Date(document.getElementById('fechaInicioImparticion').value).toISOString() : undefined,
+            FechaFinImparticion: document.getElementById('fechaFinImparticion')?.value ? new Date(document.getElementById('fechaFinImparticion').value).toISOString() : undefined,
+            CondicionesEconomicas: limpiarValor(document.getElementById('condicionesEconomicas')?.value),
 
             // Campos UG específicos
-            CoordinadorCentreUnitat: limpiarCaracteresEspeciales(document.getElementById('coordinadorCentreUnitat')?.value) || '',
-            CentreTreballeAlumne: limpiarCaracteresEspeciales(document.getElementById('centreTreballeAlumne')?.value) || '',
-            CreditosTotalesCRAI: parseFloat(document.getElementById('creditosTotalesCRAI')?.value) || null,
-            CreditosTotalesSAE: parseFloat(document.getElementById('creditosTotalesSAE')?.value) || null,
-            CreditosMinimosSAE: parseFloat(document.getElementById('creditosMinimosSAE')?.value) || null,
-            CreditosMaximosSAE: parseFloat(document.getElementById('creditosMaximosSAE')?.value) || null,
-            TipusEstudiSAE: document.getElementById('tipusEstudiSAE')?.value || null,
-            CategoriaSAE: document.getElementById('categoriaSAE')?.value || null,
-            CompetenciesSAE: limpiarCaracteresEspeciales(document.getElementById('competenciesSAE')?.value) || '',
+            CoordinadorCentreUnitat: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('coordinadorCentreUnitat')?.value)),
+            CentreTreballeAlumne: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('centreTreballeAlumne')?.value)),
+            CreditosTotalesCRAI: (() => {
+                const valor = document.getElementById('creditosTotalesCRAI')?.value;
+                return valor ? parseFloat(valor) : undefined;
+            })(),
+            CreditosTotalesSAE: (() => {
+                const valor = document.getElementById('creditosTotalesSAE')?.value;
+                return valor ? parseFloat(valor) : undefined;
+            })(),
+            CreditosMinimosSAE: (() => {
+                const valor = document.getElementById('creditosMinimosSAE')?.value;
+                return valor ? parseFloat(valor) : undefined;
+            })(),
+            CreditosMaximosSAE: (() => {
+                const valor = document.getElementById('creditosMaximosSAE')?.value;
+                return valor ? parseFloat(valor) : undefined;
+            })(),
+            TipusEstudiSAE: limpiarValor(document.getElementById('tipusEstudiSAE')?.value),
+            CategoriaSAE: limpiarValor(document.getElementById('categoriaSAE')?.value),
+            CompetenciesSAE: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('competenciesSAE')?.value)),
 
             // Inscripción
             InscripcionInicio: document.getElementById('insc_inicio')?.value ? new Date(document.getElementById('insc_inicio').value).toISOString() : null,
             InscripcionFin: document.getElementById('insc_fin')?.value ? new Date(document.getElementById('insc_fin').value).toISOString() : null,
             InscripcionPlazas: parseInt(document.getElementById('insc_plazas')?.value) || null,
-            InscripcionListaEspera: document.getElementById('insc_lista_espera')?.checked || false,
-            InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('insc_modalidad')?.value) || '',
+            InscripcionListaEspera: document.getElementById('insc_lista_espera')?.checked ? "S" : "N",
+            InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('inscripcionModalidad')?.value) || '',
             InscripcionRequisitosES: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_es')?.value) || '',
             InscripcionRequisitosCA: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_ca')?.value) || '',
             InscripcionRequisitosEN: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_en')?.value) || '',
@@ -883,8 +913,34 @@ async function guardarActividad() {
 
         // Nota: Participantes y subactividades se manejarán en futuras versiones
 
+        // Limpiar valores vacíos del objeto antes de enviar
+        const limpiarObjeto = (obj) => {
+            const cleaned = {};
+            for (const [key, value] of Object.entries(obj)) {
+                if (value !== null && value !== undefined && value !== '') {
+                    if (Array.isArray(value)) {
+                        if (value.length > 0) {
+                            cleaned[key] = value;
+                        }
+                    } else {
+                        cleaned[key] = value;
+                    }
+                }
+            }
+            return cleaned;
+        };
+        
+        const formDataLimpio = limpiarObjeto(formData);
+        
         console.log('🚀 DEBUG: guardarActividad - Datos recopilados:', formData);
+        console.log('🧹 DEBUG: guardarActividad - Datos limpios:', formDataLimpio);
         console.log('🔍 DEBUG: guardarActividad - UnidadGestionId específico:', formData.UnidadGestionId);
+        
+        // ===== JSON PARA COPIAR Y ANALIZAR =====
+        console.log('📋 JSON ENVIADO A LA API (COPIA ESTO):');
+        console.log('=' * 60);
+        console.log(JSON.stringify(formDataLimpio, null, 2));
+        console.log('=' * 60);
 
         // Determinar si es crear o actualizar
         const actividadId = document.getElementById('actividadId')?.value;
@@ -892,11 +948,11 @@ async function guardarActividad() {
         let resultado;
         if (actividadId) {
             console.log('🚀 DEBUG: guardarActividad - Actualizando actividad con ID:', actividadId);
-            resultado = await api.updateActividad(actividadId, formData);
+            resultado = await api.updateActividad(actividadId, formDataLimpio);
             mostrarMensajeExito('¡Actividad actualizada correctamente!');
         } else {
             console.log('🚀 DEBUG: guardarActividad - Creando nueva actividad');
-            resultado = await api.createActividad(formData);
+            resultado = await api.createActividad(formDataLimpio);
             mostrarMensajeExito('¡Actividad creada correctamente!');
             
             // Encadenar guardado de colecciones relacionadas (si existen)
@@ -1806,6 +1862,67 @@ async function getValoresDominio(nombreDominio) {
     }
 }
 
+// Cargar unidades de gestión directamente desde la tabla UnidadesGestion
+async function cargarUnidadesGestion() {
+    try {
+        const element = document.getElementById('actividadUnidadGestion');
+        if (!element) {
+            console.log('⚠️ Elemento actividadUnidadGestion no encontrado');
+            return;
+        }
+        
+        console.log('🔍 DEBUG: cargarUnidadesGestion - Cargando unidades de gestión...');
+        
+        // Hacer petición directa a la API para obtener las unidades de gestión
+        const response = await fetch('/api/unidades-gestion', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('ub_token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const unidades = await response.json();
+        console.log('✅ DEBUG: cargarUnidadesGestion - Unidades obtenidas:', unidades);
+        
+        // Preservar la selección actual antes de limpiar
+        const valorSeleccionado = element.value;
+        console.log('🔍 DEBUG: cargarUnidadesGestion - Valor seleccionado antes de limpiar:', valorSeleccionado);
+        
+        // Limpiar select pero preservar la primera opción si existe
+        element.innerHTML = '';
+        
+        // Agregar opción por defecto
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccionar...';
+        element.appendChild(defaultOption);
+        
+        // Agregar opciones
+        unidades.forEach(unidad => {
+            const option = document.createElement('option');
+            option.value = unidad.id; // Usar el ID real de la tabla (1, 2, 3)
+            option.textContent = unidad.nombre;
+            element.appendChild(option);
+        });
+        
+        // Restaurar la selección si había una
+        if (valorSeleccionado && valorSeleccionado !== '') {
+            element.value = valorSeleccionado;
+            console.log('✅ DEBUG: cargarUnidadesGestion - Selección restaurada:', valorSeleccionado);
+        }
+        
+        console.log('✅ DEBUG: cargarUnidadesGestion - Select llenado con', unidades.length, 'opciones');
+        
+    } catch (error) {
+        console.error('❌ DEBUG: cargarUnidadesGestion - Error:', error);
+    }
+}
+
 // Cargar valores de dominio en un elemento select
 async function loadValoresDominio(elementId, nombreDominio) {
     try {
@@ -1995,11 +2112,18 @@ async function cargarActividadParaEdicionSinDominios(id) {
             { elementId: 'objetivoEstrategico', dominio: 'OBJETIVOS_ESTRATEGICOS' },
             { elementId: 'actividadReservada', dominio: 'ACTIVIDADES_RESERVADAS' },
             { elementId: 'modalidadGestion', dominio: 'MODALIDADES_GESTION' },
-            { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' }
+            { elementId: 'inscripcionModalidad', dominio: 'MODALIDAD_IMPARTICION' },
+            { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
+            { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
+            { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
+            { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' }
         ];
         
         // Cargar dominios de forma robusta
         await cargarDominiosRobust(dominiosACargar);
+        
+        // Cargar unidades de gestión directamente desde la tabla
+        await cargarUnidadesGestion();
         
         // SEGUNDO: Llenar el formulario con los datos
         llenarFormularioConActividad(actividad);
@@ -2206,9 +2330,9 @@ function llenarFormularioConActividad(actividad) {
         const inscListaEspera = actividad.inscripcionListaEspera || actividad.InscripcionListaEspera;
         document.getElementById('insc_lista_espera').checked = inscListaEspera || false;
     }
-    if (document.getElementById('insc_modalidad')) {
+    if (document.getElementById('inscripcionModalidad')) {
         const inscModalidad = actividad.inscripcionModalidad || actividad.InscripcionModalidad;
-        document.getElementById('insc_modalidad').value = inscModalidad || '';
+        document.getElementById('inscripcionModalidad').value = inscModalidad || '';
     }
     
     // Campos de requisitos multiidioma
@@ -2404,14 +2528,9 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.UnidadGestionId || actividad.unidadGestionId;
         console.log('🔧 DEBUG: establecerValoresDropdowns - actividadUnidadGestion, valor:', valor);
         
-        let codigo = '';
-        if (valor === 1 || valor === '1') codigo = 'IDP';
-        if (valor === 2 || valor === '2') codigo = 'CRAI';
-        if (valor === 3 || valor === '3') codigo = 'SAE';
-
-        const candidatos = [String(valor || ''), codigo].filter(Boolean);
+        // Para actividadUnidadGestion, usar directamente el valor (1, 2, 3) ya que viene de la tabla UnidadesGestion
         for (let option of select.options) {
-            if (candidatos.includes(option.value) || candidatos.includes(option.text)) {
+            if (option.value === String(valor)) {
                 option.selected = true;
                 console.log('✅ DEBUG: establecerValoresDropdowns - actividadUnidadGestion establecido:', option.text || option.value);
                 break;
@@ -2592,7 +2711,7 @@ function verificarCamposLlenados(actividad) {
         'modalidadGestion', 'fechaInicioImparticion', 'fechaFinImparticion', 'actividadPago',
         'coordinadorCentreUnitat', 'centreTreballeAlumne', 'creditosTotalesCRAI', 'creditosTotalesSAE',
         'creditosMinimosSAE', 'creditosMaximosSAE', 'insc_inicio', 'insc_fin', 'insc_plazas',
-        'insc_lista_espera', 'insc_modalidad', 'insc_requisitos_es', 'insc_requisitos_ca', 'insc_requisitos_en',
+        'insc_lista_espera', 'inscripcionModalidad', 'insc_requisitos_es', 'insc_requisitos_ca', 'insc_requisitos_en',
         'programa_descripcion_es', 'programa_descripcion_ca', 'programa_descripcion_en',
         'programa_contenidos_es', 'programa_contenidos_ca', 'programa_contenidos_en',
         'programa_objetivos_es', 'programa_objetivos_ca', 'programa_objetivos_en',
@@ -2671,7 +2790,7 @@ async function cargarDatosAdicionalesSinDominios(actividadId) {
         console.log('🚀 DEBUG: cargarDatosAdicionalesSinDominios - Iniciando carga de datos adicionales sin dominios...');
         
         // Cargar entidades organizadoras
-        const entidadesResponse = await fetch(`${API_BASE_URL}/api/actividades/${actividadId}/entidades-organizadoras`);
+        const entidadesResponse = await fetch(`${API_BASE_URL}/api/actividades/${actividadId}/colaboradoras`);
         if (entidadesResponse.ok) {
             const entidades = await entidadesResponse.json();
             console.log('✅ DEBUG: cargarDatosAdicionalesSinDominios - Entidades cargadas:', entidades);
@@ -2681,7 +2800,7 @@ async function cargarDatosAdicionalesSinDominios(actividadId) {
         }
         
         // Cargar importes y descuentos
-        const importesResponse = await fetch(`${API_BASE_URL}/api/actividades/${actividadId}/importes-descuentos`);
+        const importesResponse = await fetch(`${API_BASE_URL}/api/actividades/${actividadId}/importes`);
         if (importesResponse.ok) {
             const importes = await importesResponse.json();
             console.log('✅ DEBUG: cargarDatosAdicionalesSinDominios - Importes cargados:', importes);
