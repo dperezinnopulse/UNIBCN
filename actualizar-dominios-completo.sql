@@ -167,3 +167,4 @@ ALTER TABLE Actividades ADD UnidadGestoraDetalle NVARCHAR(50) NULL;
 CREATE INDEX IX_Actividades_UnidadGestoraDetalle ON Actividades(UnidadGestoraDetalle);
 
 PRINT 'Script ejecutado correctamente. Dominios actualizados y nuevos campos creados.';
+

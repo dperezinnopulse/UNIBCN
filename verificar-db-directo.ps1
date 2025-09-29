@@ -71,3 +71,4 @@ ORDER BY vd.Valor
 } catch {
     Write-Host "❌ Error consultando la base de datos: $($_.Exception.Message)" -ForegroundColor Red
 }
+

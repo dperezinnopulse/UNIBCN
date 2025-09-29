@@ -37,3 +37,4 @@ try {
     Write-Host "   - Backend: http://localhost:5001" -ForegroundColor Yellow
     Write-Host "   - Frontend: http://localhost:8080" -ForegroundColor Yellow
 }
+

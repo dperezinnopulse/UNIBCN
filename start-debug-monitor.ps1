@@ -107,3 +107,4 @@ try {
 } catch {
     Write-Host "Error monitoreando logs: $($_.Exception.Message)" -ForegroundColor Red
 }
+
