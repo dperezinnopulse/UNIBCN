@@ -30,6 +30,7 @@ namespace UB.Actividad1.API.DTOs
         public string? PersonaSolicitante { get; set; }
         public string? Coordinador { get; set; }
         public string? JefeUnidadGestora { get; set; }
+        public string? UnidadGestoraDetalle { get; set; }
         public string? GestorActividad { get; set; }
         public string? FacultadDestinataria { get; set; }
         public string? DepartamentoDestinatario { get; set; }

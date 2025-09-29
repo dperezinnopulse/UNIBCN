@@ -143,6 +143,7 @@ input.form-control, select.form-control, textarea.form-control {
 </div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option>Jornada</option></select></div>
 <div class="col-md-4"><label class="form-label" for="actividadUnidadGestion">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion"><option>IDP</option><option>CRAI</option><option>SAE</option></select></div>
+<div class="col-md-4"><label class="form-label">Unidad gestora detalle</label><select class="form-select" id="unidadGestoraDetalle"><option value="">Seleccionar...</option></select></div>
 <div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" id="descripcion" rows="3" placeholder="Descripción de la actividad"></textarea></div>
 <div class="col-md-4"><label class="form-label">Año académico</label><input class="form-control" id="actividadAnioAcademico" placeholder="2025-2026" type="text"/></div>
 <div class="col-md-4"><label class="form-label">Línea estratégica</label><select class="form-select" id="lineaEstrategica"><option>Línea 1</option></select></div>
@@ -335,9 +336,6 @@ input.form-control, select.form-control, textarea.form-control {
 <label class="form-label">Modalidad</label>
 <select class="form-select" data-save="1" id="insc_modalidad">
 <option value="">Selecciona</option>
-<option>Presencial</option>
-<option>Online</option>
-<option>Mixta</option>
 </select>
 </div>
 <div class="col-12 position-relative">
@@ -616,7 +614,7 @@ function toggleImporte() {
         </div>
         <div class="row g-3">
           <div class="col-md-4"><label class="form-label">Título</label><input class="form-control" id="${subactividadId}_titulo" /></div>
-          <div class="col-md-4"><label class="form-label">Modalidad</label><select class="form-select" id="${subactividadId}_modalidad"><option>Presencial</option><option>Online</option><option>Mixta</option></select></div>
+          <div class="col-md-4"><label class="form-label">Modalidad</label><select class="form-select" id="${subactividadId}_modalidad"><option value="">Seleccionar...</option></select></div>
           <div class="col-md-4"><label class="form-label">Docente/s</label><input class="form-control" id="${subactividadId}_docente" /></div>
           <div class="col-md-3"><label class="form-label">Fecha inicio</label><input type="date" class="form-control" id="${subactividadId}_fechaInicio" /></div>
           <div class="col-md-3"><label class="form-label">Fecha fin</label><input type="date" class="form-control" id="${subactividadId}_fechaFin" /></div>
@@ -649,7 +647,7 @@ function toggleImporte() {
     const participanteId = `participante_${++participanteCounter}`;
     wrap.innerHTML = `
       <div class="col-md-4"><label class="form-label">Nombre</label><input class="form-control" id="${participanteId}_nombre" /></div>
-      <div class="col-md-3"><label class="form-label">Rol</label><select class="form-select" id="${participanteId}_rol"><option>Ponente</option><option>Coordinación</option><option>Invitado</option></select></div>
+      <div class="col-md-3"><label class="form-label">Rol</label><select class="form-select" id="${participanteId}_rol"><option value="">Seleccionar...</option></select></div>
       <div class="col-md-3"><label class="form-label">Email</label><input type="email" class="form-control" id="${participanteId}_email" /></div>
       <div class="col-md-2 d-flex gap-2"><button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" data-dup>Duplicar</button><button type="button" class="btn btn-outline-danger btn-sm flex-grow-1" data-del>Eliminar</button></div>`;
     wrap.querySelector('[data-del]').addEventListener('click', ()=> wrap.remove());

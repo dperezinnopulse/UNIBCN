@@ -271,9 +271,6 @@ function addParticipante() {
                     <label class="form-label">Rol</label>
                     <select class="form-select" id="${participanteId}_rol">
                         <option value="">Seleccionar...</option>
-                        <option value="Ponente">Ponente</option>
-                        <option value="Coordinación">Coordinación</option>
-                        <option value="Invitado">Invitado</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -285,6 +282,9 @@ function addParticipante() {
     `;
     
     container.appendChild(participanteDiv);
+    
+    // Cargar roles de participantes en el nuevo elemento
+    cargarRolesParticipantes();
 }
 
 function addColaboradora() {
@@ -412,8 +412,10 @@ async function cargarDominios() {
             'centroTrabajoRequerido': 'OPCIONES_SI_NO',
             'tipoActividad': 'TIPOS_ACTIVIDAD',
             'modalidadGestion': 'MODALIDADES_GESTION',
+            'inscripcionModalidad': 'MODALIDAD_IMPARTICION',
             // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
             'jefeUnidadGestora': 'JEFES_UNIDAD_GESTORA',
+            'unidadGestoraDetalle': 'SUBUNIDAD_GESTORA',
             'gestorActividad': 'GESTORES_ACTIVIDAD',
             'facultadDestinataria': 'FACULTADES_DESTINATARIAS',
             'departamentoDestinatario': 'DEPARTAMENTOS_DESTINATARIOS',
@@ -463,8 +465,118 @@ async function cargarDominios() {
         // Cargar dominio de idiomas en las subactividades
         await cargarIdiomasSubactividades();
         
+        // Cargar roles de participantes
+        await cargarRolesParticipantes();
+        
+        // Cargar modalidades de subactividades
+        await cargarModalidadesSubactividades();
+        
     } catch (error) {
         Utils.error('Error cargando dominios:', error);
+    }
+}
+
+// Función para cargar roles de participantes desde el dominio TIPOS_PARTICIPANTE_ROL
+async function cargarRolesParticipantes() {
+    try {
+        Utils.log('Cargando roles de participantes...');
+        
+        // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
+        if (!response.ok) {
+            Utils.error(`Error obteniendo roles de participantes: ${response.status}`);
+            return;
+        }
+        
+        const roles = await response.json();
+        Utils.log('Roles obtenidos:', roles);
+        
+        // Función para poblar un select con roles
+        function poblarSelectRoles(selectElement) {
+            if (!selectElement) return;
+            
+            // Limpiar opciones existentes
+            selectElement.innerHTML = '';
+            
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Seleccionar...';
+            selectElement.appendChild(defaultOption);
+            
+            // Agregar roles del dominio
+            roles.forEach(rol => {
+                const option = document.createElement('option');
+                option.value = rol.id || rol.Id;
+                option.textContent = rol.descripcion || rol.Descripcion;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // Aplicar a todos los selects de rol de participantes existentes
+        const selectsRol = document.querySelectorAll('select[id*="_rol"]');
+        Utils.log(`Encontrados ${selectsRol.length} selects de rol`);
+        
+        selectsRol.forEach(select => {
+            poblarSelectRoles(select);
+        });
+        
+        Utils.log('Roles de participantes cargados correctamente');
+        
+    } catch (error) {
+        Utils.error('Error cargando roles de participantes:', error);
+    }
+}
+
+// Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
+async function cargarModalidadesSubactividades() {
+    try {
+        Utils.log('Cargando modalidades de subactividades...');
+        
+        // Obtener valores del dominio MODALIDAD_IMPARTICION
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/MODALIDAD_IMPARTICION/valores`);
+        if (!response.ok) {
+            Utils.error(`Error obteniendo modalidades de impartición: ${response.status}`);
+            return;
+        }
+        
+        const modalidades = await response.json();
+        Utils.log('Modalidades obtenidas:', modalidades);
+        
+        // Función para poblar un select con modalidades
+        function poblarSelectModalidades(selectElement) {
+            if (!selectElement) return;
+            
+            // Limpiar opciones existentes
+            selectElement.innerHTML = '';
+            
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Seleccionar...';
+            selectElement.appendChild(defaultOption);
+            
+            // Agregar modalidades del dominio
+            modalidades.forEach(modalidad => {
+                const option = document.createElement('option');
+                option.value = modalidad.id || modalidad.Id;
+                option.textContent = modalidad.descripcion || modalidad.Descripcion;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // Aplicar a todos los selects de modalidad de subactividades existentes
+        const selectsModalidad = document.querySelectorAll('select[id*="_modalidad"]');
+        Utils.log(`Encontrados ${selectsModalidad.length} selects de modalidad`);
+        
+        selectsModalidad.forEach(select => {
+            poblarSelectModalidades(select);
+        });
+        
+        Utils.log('Modalidades de subactividades cargadas correctamente');
+        
+    } catch (error) {
+        Utils.error('Error cargando modalidades de subactividades:', error);
     }
 }
 
@@ -981,6 +1093,7 @@ async function aplicarDatosReales(actividad) {
         'personaSolicitante': 'personaSolicitante',
         'coordinador': 'coordinador',
         'jefeUnidadGestora': 'jefeUnidadGestora',
+        'unidadGestoraDetalle': 'unidadGestoraDetalle',
         'gestorActividad': 'gestorActividad',
         'facultadDestinataria': 'facultadDestinataria',
         'departamentoDestinatario': 'departamentoDestinatario',
@@ -1639,9 +1752,6 @@ async function aplicarSubactividadesReales(subactividades) {
                         <label class="form-label">Modalidad</label>
                         <select class="form-select" id="${subactividadId}_modalidad">
                             <option value="">Seleccionar...</option>
-                            <option value="Presencial" ${subactividad.modalidad === 'Presencial' ? 'selected' : ''}>Presencial</option>
-                            <option value="Online" ${subactividad.modalidad === 'Online' ? 'selected' : ''}>Online</option>
-                            <option value="Mixta" ${subactividad.modalidad === 'Mixta' ? 'selected' : ''}>Mixta</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -1650,11 +1760,11 @@ async function aplicarSubactividadesReales(subactividades) {
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Fecha inicio</label>
-                        <input type="date" class="form-control" id="${subactividadId}_fechaInicio" value="${subactividad.fechaInicio || ''}"/>
+                        <input type="date" class="form-control" id="${subactividadId}_fechaInicio" value="${subactividad.fechaInicio ? subactividad.fechaInicio.split('T')[0] : ''}"/>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Fecha fin</label>
-                        <input type="date" class="form-control" id="${subactividadId}_fechaFin" value="${subactividad.fechaFin || ''}"/>
+                        <input type="date" class="form-control" id="${subactividadId}_fechaFin" value="${subactividad.fechaFin ? subactividad.fechaFin.split('T')[0] : ''}"/>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Hora inicio</label>
@@ -1693,6 +1803,23 @@ async function aplicarSubactividadesReales(subactividades) {
         container.appendChild(subactividadDiv);
         console.log(`✅ DEBUG: Subactividad ${index + 1} agregada al DOM`);
         
+        // Cargar modalidades de subactividades y establecer valor
+        cargarModalidadesSubactividades().then(() => {
+            if (subactividad.modalidad) {
+                const selectModalidad = document.getElementById(`${subactividadId}_modalidad`);
+                if (selectModalidad) {
+                    // Buscar la opción que coincida con el valor de modalidad
+                    const opciones = selectModalidad.querySelectorAll('option');
+                    for (let opcion of opciones) {
+                        if (opcion.value === subactividad.modalidad || opcion.textContent === subactividad.modalidad) {
+                            opcion.selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        
         // Cargar idiomas y seleccionar el valor correcto
         cargarIdiomasEnSelect(`${subactividadId}_idioma`).then(() => {
             if (subactividad.idioma) {
@@ -1709,6 +1836,25 @@ async function aplicarSubactividadesReales(subactividades) {
                 }
             }
         });
+    });
+    
+    // Cargar modalidades de subactividades después de crear todos los elementos
+    await cargarModalidadesSubactividades();
+    
+    // Establecer valores seleccionados después de cargar las opciones
+    subactividades.forEach((subactividad, index) => {
+        const subactividadId = `subactividad_${subactividad.id || Date.now()}`;
+        const modalidadSelect = document.getElementById(`${subactividadId}_modalidad`);
+        if (modalidadSelect && subactividad.modalidad) {
+            // Buscar la opción que coincida con el valor de modalidad
+            const opciones = modalidadSelect.querySelectorAll('option');
+            for (let opcion of opciones) {
+                if (opcion.value === subactividad.modalidad || opcion.textContent === subactividad.modalidad) {
+                    opcion.selected = true;
+                    break;
+                }
+            }
+        }
     });
     
     console.log(`🔍 DEBUG: Total subactividades aplicadas: ${subactividades.length}`);
@@ -1747,9 +1893,6 @@ async function aplicarParticipantesReales(participantes) {
                         <label class="form-label">Rol</label>
                         <select class="form-select" id="${participanteId}_rol">
                             <option value="">Seleccionar...</option>
-                            <option value="Ponente" ${participante.rol === 'Ponente' ? 'selected' : ''}>Ponente</option>
-                            <option value="Coordinación" ${participante.rol === 'Coordinación' ? 'selected' : ''}>Coordinación</option>
-                            <option value="Invitado" ${participante.rol === 'Invitado' ? 'selected' : ''}>Invitado</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -1761,6 +1904,18 @@ async function aplicarParticipantesReales(participantes) {
         `;
         
         container.appendChild(participanteDiv);
+    });
+    
+    // Cargar roles de participantes después de crear los elementos DOM
+    await cargarRolesParticipantes();
+    
+    // Establecer valores seleccionados después de cargar las opciones
+    participantes.forEach((participante, index) => {
+        const participanteId = `participante_${participante.id || Date.now()}`;
+        const rolSelect = document.getElementById(`${participanteId}_rol`);
+        if (rolSelect && participante.rol) {
+            rolSelect.value = participante.rol;
+        }
     });
     
     Utils.log(`Participantes cargados: ${participantes.length}`);
@@ -1878,6 +2033,7 @@ function recogerDatosFormulario() {
         'personaSolicitante': 'personaSolicitante',
         'coordinador': 'coordinador',
         'jefeUnidadGestora': 'jefeUnidadGestora',
+        'unidadGestoraDetalle': 'unidadGestoraDetalle',
         'gestorActividad': 'gestorActividad',
         'facultadDestinataria': 'facultadDestinataria',
         'departamentoDestinatario': 'departamentoDestinatario',
@@ -2157,24 +2313,30 @@ function recogerSubactividades() {
         cards.forEach((card, index) => {
             console.log(`🔍 DEBUG: Procesando card ${index + 1}:`, card);
             
+            // Obtener valores de los campos
+            const fechaInicioValue = card.querySelector('[id*="_fechaInicio"]')?.value;
+            const fechaFinValue = card.querySelector('[id*="_fechaFin"]')?.value;
+            
             const subactividad = {
-                titulo: card.querySelector('[id*="_titulo"]')?.value || '',
-                modalidad: card.querySelector('[id*="_modalidad"]')?.value || '',
-                docente: card.querySelector('[id*="_docente"]')?.value || '',
-                fechaInicio: card.querySelector('[id*="_fechaInicio"]')?.value || '',
-                fechaFin: card.querySelector('[id*="_fechaFin"]')?.value || '',
-                horaInicio: card.querySelector('[id*="_horaInicio"]')?.value || '',
-                horaFin: card.querySelector('[id*="_horaFin"]')?.value || '',
-                duracion: card.querySelector('[id*="_duracion"]')?.value || '',
-                ubicacion: card.querySelector('[id*="_ubicacion"]')?.value || '',
-                aforo: card.querySelector('[id*="_aforo"]')?.value || '',
-                idioma: card.querySelector('[id*="_idioma"]')?.selectedOptions[0]?.textContent || '',
-                descripcion: card.querySelector('[id*="_descripcion"]')?.value || ''
+                Titulo: card.querySelector('[id*="_titulo"]')?.value || '',
+                Modalidad: card.querySelector('[id*="_modalidad"]')?.value || '',
+                Docente: card.querySelector('[id*="_docente"]')?.value || '',
+                FechaInicio: fechaInicioValue && fechaInicioValue.trim() !== '' ? fechaInicioValue : null,
+                FechaFin: fechaFinValue && fechaFinValue.trim() !== '' ? fechaFinValue : null,
+                HoraInicio: card.querySelector('[id*="_horaInicio"]')?.value || '',
+                HoraFin: card.querySelector('[id*="_horaFin"]')?.value || '',
+                Duracion: card.querySelector('[id*="_duracion"]')?.value || '',
+                Ubicacion: card.querySelector('[id*="_ubicacion"]')?.value || '',
+                Aforo: card.querySelector('[id*="_aforo"]')?.value || '',
+                Idioma: card.querySelector('[id*="_idioma"]')?.selectedOptions[0]?.textContent || '',
+                Descripcion: card.querySelector('[id*="_descripcion"]')?.value || ''
             };
             
             console.log(`🔍 DEBUG: Subactividad ${index + 1} recogida:`, subactividad);
+            console.log(`🔍 DEBUG: FechaInicio tipo:`, typeof subactividad.FechaInicio, 'valor:', subactividad.FechaInicio);
+            console.log(`🔍 DEBUG: FechaFin tipo:`, typeof subactividad.FechaFin, 'valor:', subactividad.FechaFin);
             
-            if (subactividad.titulo.trim()) {
+            if (subactividad.Titulo.trim()) {
                 subactividades.push(subactividad);
                 console.log(`✅ DEBUG: Subactividad ${index + 1} agregada (tiene título)`);
             } else {

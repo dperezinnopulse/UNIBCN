@@ -1255,6 +1255,8 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
         // Agregar nuevas subactividades
         foreach (var subDto in dto.Subactividades)
         {
+            Console.WriteLine($"🔍 DEBUG: Procesando subactividad - Titulo: {subDto.Titulo}, FechaInicio: {subDto.FechaInicio}, FechaFin: {subDto.FechaFin}");
+            
             var subactividad = new Subactividad
             {
                 ActividadId = id,
@@ -1272,6 +1274,7 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
                 Idioma = subDto.Idioma
             };
             context.Subactividades.Add(subactividad);
+            Console.WriteLine($"✅ DEBUG: Subactividad agregada - FechaInicio: {subactividad.FechaInicio}, FechaFin: {subactividad.FechaFin}");
         }
     }
     

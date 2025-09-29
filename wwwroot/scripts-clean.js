@@ -280,7 +280,7 @@ async function loadValoresDominio(selectElement, nombreDominio) {
                     const option = document.createElement('option');
                     
                     // Usar siempre ID para todos los campos de dominio
-                    option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+                    option.value = valor.id || valor.Id;
                     option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
                     
                     selectElement.appendChild(option);
@@ -425,12 +425,8 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
             valores.forEach(valor => {
                 const option = document.createElement('option');
                 
-                // Usar valor.valor para campos SAE, ID para el resto
-                if (selectElement.id === 'tipusEstudiSAE' || selectElement.id === 'categoriaSAE') {
-                    option.value = valor.valor || valor.Valor || valor.value || valor.Value;
-                } else {
-                    option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
-                }
+                // Usar siempre ID para todos los campos de dominio
+                option.value = valor.id || valor.Id;
                 option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
                 
                 selectElement.appendChild(option);
@@ -474,6 +470,7 @@ async function cargarDominios() {
             { elementId: 'objetivoEstrategico', dominio: 'OBJETIVOS_ESTRATEGICOS' },
             { elementId: 'actividadReservada', dominio: 'ACTIVIDADES_RESERVADAS' },
             { elementId: 'modalidadGestion', dominio: 'MODALIDADES_GESTION' },
+            { elementId: 'insc_modalidad', dominio: 'MODALIDAD_IMPARTICION' },
             { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
             { elementId: 'imp_tipo', dominio: 'TIPOS_IMPUESTO' },
             { elementId: 'actividadUnidadGestion', dominio: 'UNIDADES_GESTION' },
@@ -482,6 +479,7 @@ async function cargarDominios() {
             { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
             // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
             { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
+            { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
             { elementId: 'gestorActividad', dominio: 'GESTORES_ACTIVIDAD' },
             { elementId: 'facultadDestinataria', dominio: 'FACULTADES_DESTINATARIAS' },
             { elementId: 'departamentoDestinatario', dominio: 'DEPARTAMENTOS_DESTINATARIOS' },
@@ -582,8 +580,118 @@ async function cargarDominios() {
         // Auto-rellenar persona solicitante con el nombre del usuario
         await autoRellenarPersonaSolicitante();
         
+        // Cargar roles de participantes
+        await cargarRolesParticipantes();
+        
+        // Cargar modalidades de subactividades
+        await cargarModalidadesSubactividades();
+        
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
+    }
+}
+
+// Función para cargar roles de participantes desde el dominio TIPOS_PARTICIPANTE_ROL
+async function cargarRolesParticipantes() {
+    try {
+        console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
+        
+        // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
+        if (!response.ok) {
+            console.error('❌ Error obteniendo roles de participantes:', response.status);
+            return;
+        }
+        
+        const roles = await response.json();
+        console.log('📊 DEBUG: cargarRolesParticipantes - Roles obtenidos:', roles);
+        
+        // Función para poblar un select con roles
+        function poblarSelectRoles(selectElement) {
+            if (!selectElement) return;
+            
+            // Limpiar opciones existentes
+            selectElement.innerHTML = '';
+            
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Seleccionar...';
+            selectElement.appendChild(defaultOption);
+            
+            // Agregar roles del dominio
+            roles.forEach(rol => {
+                const option = document.createElement('option');
+                option.value = rol.id || rol.Id;
+                option.textContent = rol.descripcion || rol.Descripcion;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // Aplicar a todos los selects de rol de participantes existentes
+        const selectsRol = document.querySelectorAll('select[id*="_rol"]');
+        console.log(`🔍 DEBUG: cargarRolesParticipantes - Encontrados ${selectsRol.length} selects de rol`);
+        
+        selectsRol.forEach(select => {
+            poblarSelectRoles(select);
+        });
+        
+        console.log('✅ DEBUG: cargarRolesParticipantes - Completado');
+        
+    } catch (error) {
+        console.error('❌ DEBUG: cargarRolesParticipantes - Error:', error);
+    }
+}
+
+// Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
+async function cargarModalidadesSubactividades() {
+    try {
+        console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
+        
+        // Obtener valores del dominio MODALIDAD_IMPARTICION
+        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/MODALIDAD_IMPARTICION/valores`);
+        if (!response.ok) {
+            console.error('❌ Error obteniendo modalidades de impartición:', response.status);
+            return;
+        }
+        
+        const modalidades = await response.json();
+        console.log('📊 DEBUG: cargarModalidadesSubactividades - Modalidades obtenidas:', modalidades);
+        
+        // Función para poblar un select con modalidades
+        function poblarSelectModalidades(selectElement) {
+            if (!selectElement) return;
+            
+            // Limpiar opciones existentes
+            selectElement.innerHTML = '';
+            
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Seleccionar...';
+            selectElement.appendChild(defaultOption);
+            
+            // Agregar modalidades del dominio
+            modalidades.forEach(modalidad => {
+                const option = document.createElement('option');
+                option.value = modalidad.id || modalidad.Id;
+                option.textContent = modalidad.descripcion || modalidad.Descripcion;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // Aplicar a todos los selects de modalidad de subactividades existentes
+        const selectsModalidad = document.querySelectorAll('select[id*="_modalidad"]');
+        console.log(`🔍 DEBUG: cargarModalidadesSubactividades - Encontrados ${selectsModalidad.length} selects de modalidad`);
+        
+        selectsModalidad.forEach(select => {
+            poblarSelectModalidades(select);
+        });
+        
+        console.log('✅ DEBUG: cargarModalidadesSubactividades - Completado');
+        
+    } catch (error) {
+        console.error('❌ DEBUG: cargarModalidadesSubactividades - Error:', error);
     }
 }
 
@@ -685,6 +793,7 @@ async function guardarActividad() {
             PersonaSolicitante: document.getElementById('personaSolicitante')?.value || '',
             Coordinador: document.getElementById('coordinador')?.value || '',
             JefeUnidadGestora: document.getElementById('jefeUnidadGestora')?.value || '',
+            UnidadGestoraDetalle: document.getElementById('unidadGestoraDetalle')?.value || '',
             GestorActividad: document.getElementById('gestorActividad')?.value || '',
             FacultadDestinataria: document.getElementById('facultadDestinataria')?.value || '',
             DepartamentoDestinatario: document.getElementById('departamentoDestinatario')?.value || '',

@@ -52,6 +52,9 @@ public class UpdateActividadDto
     public string? JefeUnidadGestora { get; set; }
     
     [MaxLength(200)]
+    public string? UnidadGestoraDetalle { get; set; }
+    
+    [MaxLength(200)]
     public string? GestorActividad { get; set; }
     
     [MaxLength(200)]
