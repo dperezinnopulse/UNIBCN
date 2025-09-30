@@ -168,3 +168,5 @@ CREATE INDEX IX_Actividades_UnidadGestoraDetalle ON Actividades(UnidadGestoraDet
 
 PRINT 'Script ejecutado correctamente. Dominios actualizados y nuevos campos creados.';
 
+
+

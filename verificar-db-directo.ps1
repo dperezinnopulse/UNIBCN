@@ -72,3 +72,5 @@ ORDER BY vd.Valor
     Write-Host "❌ Error consultando la base de datos: $($_.Exception.Message)" -ForegroundColor Red
 }
 
+
+

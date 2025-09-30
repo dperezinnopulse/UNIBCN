@@ -101,3 +101,5 @@ LEFT JOIN ValoresDominio vd ON d.Id = vd.DominioId
 WHERE d.Nombre IN ('MODALIDAD_IMPARTICION', 'TIPOS_PARTICIPANTE_ROL')
 GROUP BY d.Id, d.Nombre, d.Descripcion;
 
+
+

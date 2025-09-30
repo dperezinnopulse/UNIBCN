@@ -16,3 +16,5 @@ pip3 install pandas openpyxl
 
 echo "Dependencias instaladas correctamente"
 
+
+
