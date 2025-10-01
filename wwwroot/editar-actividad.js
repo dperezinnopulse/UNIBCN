@@ -737,6 +737,9 @@ async function poblarSelect(campoId, valores) {
         return;
     }
     
+    // Capturar valor previo y lockedValue antes de limpiar
+    const lockedValue = select.dataset ? select.dataset.lockedValue : undefined;
+    const valorPrevio = select.value || '';
     // Limpiar opciones existentes
     select.innerHTML = '';
     
@@ -761,6 +764,24 @@ async function poblarSelect(campoId, valores) {
     });
     
     Utils.log(`Select ${campoId} poblado con ${valores.length + 1} opciones (incluyendo "Seleccionar...")`);
+
+    // Restaurar selección previa (prioridad a lockedValue si existe)
+	const restore = (lockedValue && lockedValue !== '') ? String(lockedValue) : String(valorPrevio || '');
+	if (restore) {
+		let found = false;
+		for (let i = 0; i < select.options.length; i++) {
+			const opt = select.options[i];
+			if (opt.value === restore || opt.text === restore) {
+				select.value = opt.value;
+				if (lockedValue) { select.dataset.lockedValue = opt.value; }
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			// Si no existe en el dominio, mantener vacío y no duplicar opciones
+		}
+	}
 }
 
 async function cargarUnidadesGestion() {
@@ -1320,12 +1341,16 @@ async function aplicarDatosReales(actividad) {
                         
                         if (opcionEncontrada) {
                             elemento.value = opcionEncontrada.value;
+                            // Fijar selección para repoblados posteriores
+                            try { elemento.dataset.lockedValue = opcionEncontrada.value; } catch {}
                             Utils.log(`Select ${campoFormulario} configurado con valor: ${valor} -> ${opcionEncontrada.value} ("${opcionEncontrada.textContent}")`);
+                            // No duplicar opción, solo fijar lockedValue
                         } else {
                             // Si no se encuentra, dejar en "Seleccionar..." y loggear
-                            elemento.value = '';
-                            Utils.log(`Valor no encontrado en select ${campoFormulario}: ${valor} (tipo: ${typeof valor})`);
-                            Utils.log(`Opciones disponibles:`, opciones.map(op => ({ value: op.value, text: op.textContent })));
+							elemento.value = '';
+							Utils.log(`Valor no encontrado en select ${campoFormulario}: ${valor} (tipo: ${typeof valor})`);
+							Utils.log(`Opciones disponibles:`, opciones.map(op => ({ value: op.value, text: op.textContent })));
+							// No duplicar opción
                         }
                     }
                 } else if (elemento.type === 'date' && valor) {
@@ -1727,7 +1752,8 @@ async function aplicarSubactividadesReales(subactividades) {
     
     subactividades.forEach((subactividad, index) => {
         console.log(`🔍 DEBUG: Aplicando subactividad ${index + 1}:`, subactividad);
-        const subactividadId = `subactividad_${subactividad.id || Date.now()}`;
+        const subKey = (subactividad.id !== undefined && subactividad.id !== null && subactividad.id !== '') ? subactividad.id : `i${index}`;
+        const subactividadId = `subactividad_${subKey}`;
         const subactividadDiv = document.createElement('div');
         subactividadDiv.className = 'card-dynamic mb-3';
         subactividadDiv.innerHTML = `
@@ -1843,17 +1869,17 @@ async function aplicarSubactividadesReales(subactividades) {
     
     // Establecer valores seleccionados después de cargar las opciones
     subactividades.forEach((subactividad, index) => {
-        const subactividadId = `subactividad_${subactividad.id || Date.now()}`;
+        const subKey = (subactividad.id !== undefined && subactividad.id !== null && subactividad.id !== '') ? subactividad.id : `i${index}`;
+        const subactividadId = `subactividad_${subKey}`;
         const modalidadSelect = document.getElementById(`${subactividadId}_modalidad`);
         if (modalidadSelect && subactividad.modalidad) {
-            // Buscar la opción que coincida con el valor de modalidad
+            // Seleccionar si existe
+            const valor = String(subactividad.modalidad);
             const opciones = modalidadSelect.querySelectorAll('option');
             for (let opcion of opciones) {
-                if (opcion.value === subactividad.modalidad || opcion.textContent === subactividad.modalidad) {
-                    opcion.selected = true;
-                    break;
-                }
+                if (opcion.value === valor || opcion.textContent === valor) { opcion.selected = true; break; }
             }
+            // No duplicar opción, solo fijar lockedValue
         }
     });
     
@@ -1867,8 +1893,9 @@ async function aplicarParticipantesReales(participantes) {
     
     container.innerHTML = '';
     
-    participantes.forEach(participante => {
-        const participanteId = `participante_${participante.id || Date.now()}`;
+    participantes.forEach((participante, index) => {
+        const partKey = (participante.id !== undefined && participante.id !== null && participante.id !== '') ? participante.id : `i${index}`;
+        const participanteId = `participante_${partKey}`;
         const participanteDiv = document.createElement('div');
         participanteDiv.className = 'card-dynamic mb-3';
         participanteDiv.innerHTML = `
@@ -1914,7 +1941,14 @@ async function aplicarParticipantesReales(participantes) {
         const participanteId = `participante_${participante.id || Date.now()}`;
         const rolSelect = document.getElementById(`${participanteId}_rol`);
         if (rolSelect && participante.rol) {
-            rolSelect.value = participante.rol;
+            const valor = String(participante.rol);
+            // Seleccionar si existe por value o texto
+            for (let i = 0; i < rolSelect.options.length; i++) {
+                const opt = rolSelect.options[i];
+                if (opt.value === valor || opt.text === valor) { rolSelect.value = opt.value; break; }
+            }
+            // No duplicar opción, solo fijar lockedValue
+            rolSelect.dataset.lockedValue = rolSelect.value || valor;
         }
     });
     
@@ -2007,6 +2041,38 @@ async function aplicarImportesReales(importes) {
     });
     
     Utils.log(`Importes aplicados correctamente`);
+
+    // Seleccionar Tipos de financiación si existe
+    try {
+        const tiposFinanciacionSelect = document.getElementById('tiposFinanciacionId');
+        const valorFin = (typeof actividad !== 'undefined' && actividad) ? (actividad.tiposFinanciacionId ?? actividad.TiposFinanciacionId) : null;
+        if (tiposFinanciacionSelect && valorFin != null && valorFin !== '') {
+            const valStr = String(valorFin);
+            for (let i = 0; i < tiposFinanciacionSelect.options.length; i++) {
+                const opt = tiposFinanciacionSelect.options[i];
+                if (opt.value === valStr || opt.text === valStr) { tiposFinanciacionSelect.value = opt.value; break; }
+            }
+            // No duplicar; basta con marcar selected sobre las existentes
+            tiposFinanciacionSelect.dataset.lockedValue = tiposFinanciacionSelect.value || valStr;
+        }
+    } catch {}
+
+    // Seleccionar Denominación del Descuento (multi-select) si existen ids
+    try {
+        const multi = document.getElementById('denominacionDescuentoIds');
+        let ids = [];
+        if (typeof actividad !== 'undefined' && actividad) {
+            ids = actividad.denominacionDescuentoIds || actividad.DenominacionDescuentoIds || [];
+        }
+        if (multi && Array.isArray(ids) && ids.length > 0) {
+            const idStrings = ids.map(x => String(x));
+            // Seleccionar las existentes
+            Array.from(multi.options).forEach(opt => {
+                if (idStrings.includes(opt.value)) { opt.selected = true; }
+            });
+            // No duplicar; basta con marcar selected sobre las existentes
+        }
+    } catch {}
 }
 
 // NUEVA FUNCIÓN: Recoger todos los datos del formulario

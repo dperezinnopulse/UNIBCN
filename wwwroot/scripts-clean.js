@@ -244,6 +244,13 @@ async function loadValoresDominio(selectElement, nombreDominio) {
             value: o.value,
             text: o.textContent
         }));
+        // Si el select ya tiene un valor bloqueado y opciones cargadas, no repoblar
+        if (selectElement?.dataset?.lockedValue && selectElement.options.length > 1) {
+            console.log(`⏭️ DEBUG: loadValoresDominio - Omitido ${nombreDominio} por lockedValue en #${selectElement.id}`);
+            return;
+        }
+        // Preservar selección actual
+        const valorSeleccionadoPrevio = selectElement.value;
         
         const valores = await api.getValoresDominio(nombreDominio);
         console.log(`📊 DEBUG: loadValoresDominio - Valores obtenidos para ${nombreDominio}:`, valores);
@@ -294,6 +301,14 @@ async function loadValoresDominio(selectElement, nombreDominio) {
                     selectElement.appendChild(option);
                     opcionesAgregadas++;
                 });
+        // Restaurar selección previa si existe entre las nuevas opciones
+        if (valorSeleccionadoPrevio && valorSeleccionadoPrevio !== '') {
+            const exists = Array.from(selectElement.options).some(o => o.value == valorSeleccionadoPrevio);
+            if (exists) {
+                selectElement.value = valorSeleccionadoPrevio;
+                console.log(`🔁 DEBUG: loadValoresDominio - Selección preservada para ${nombreDominio}:`, valorSeleccionadoPrevio);
+            }
+        }
         console.log(`✅ DEBUG: loadValoresDominio - ${opcionesAgregadas} opciones agregadas para ${nombreDominio}`);
     } catch (error) {
         console.error(`❌ DEBUG: loadValoresDominio - Error cargando dominio ${nombreDominio}:`, error);
@@ -410,6 +425,16 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
                 throw new Error(`Elemento ${selectElement?.id || 'unknown'} ya no existe en DOM`);
             }
             
+            // Preservar selección previa y lock
+            const lockedValue = selectElement.dataset.lockedValue;
+            const valorSeleccionadoPrevio = selectElement.value;
+
+            // Si ya está bloqueado y tiene opciones, no repoblar
+            if (lockedValue && selectElement.options.length > 1) {
+                console.log(`⏭️ DEBUG: loadValoresDominioRobust - Omitido ${nombreDominio} por lockedValue en #${selectElement.id}`);
+                return true;
+            }
+
             // Intentar cargar valores
             const valores = await api.getValoresDominio(nombreDominio);
             console.log(`📊 DEBUG: loadValoresDominioRobust - Obtenidos ${valores.length} valores para ${nombreDominio}`);
@@ -440,7 +465,16 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
                 selectElement.appendChild(option);
                 opcionesAgregadas++;
             });
-            
+            // Restaurar selección previa (prioridad a lockedValue)
+            const restoreValue = lockedValue || valorSeleccionadoPrevio;
+            if (restoreValue && restoreValue !== '') {
+                const exists = Array.from(selectElement.options).some(o => o.value == restoreValue);
+                if (exists) {
+                    selectElement.value = restoreValue;
+                    console.log(`🔁 DEBUG: loadValoresDominioRobust - Selección preservada para ${nombreDominio}:`, restoreValue);
+                }
+            }
+
             console.log(`✅ DEBUG: loadValoresDominioRobust - ${opcionesAgregadas} opciones agregadas para ${nombreDominio}`);
             
             // Verificar que las opciones se agregaron correctamente
@@ -799,7 +833,10 @@ async function guardarActividad() {
                 console.log('🔍 DEBUG: ActividadReservada - valor final:', resultado);
                 return resultado;
             })(),
-            ActividadPago: document.getElementById('actividadPago')?.checked ? "S" : "N",
+            ActividadPago: (function(){
+                const checked = document.getElementById('actividadPago')?.checked || false;
+                return isUpdate ? (checked ? "S" : "N") : checked;
+            })(),
             FechaActividad: document.getElementById('fechaActividad')?.value ? new Date(document.getElementById('fechaActividad').value).toISOString() : undefined,
             MotivoCierre: limpiarValor(document.getElementById('motivoCierre')?.value),
             PersonaSolicitante: limpiarValor(document.getElementById('personaSolicitante')?.value),
@@ -852,7 +889,10 @@ async function guardarActividad() {
             InscripcionInicio: document.getElementById('insc_inicio')?.value ? new Date(document.getElementById('insc_inicio').value).toISOString() : null,
             InscripcionFin: document.getElementById('insc_fin')?.value ? new Date(document.getElementById('insc_fin').value).toISOString() : null,
             InscripcionPlazas: parseInt(document.getElementById('insc_plazas')?.value) || null,
-            InscripcionListaEspera: document.getElementById('insc_lista_espera')?.checked ? "S" : "N",
+            InscripcionListaEspera: (function(){
+                const checked = document.getElementById('insc_lista_espera')?.checked || false;
+                return isUpdate ? (checked ? "S" : "N") : checked;
+            })(),
             InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('inscripcionModalidad')?.value) || '',
             InscripcionRequisitosES: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_es')?.value) || '',
             InscripcionRequisitosCA: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_ca')?.value) || '',
@@ -1933,7 +1973,9 @@ async function loadValoresDominio(elementId, nombreDominio) {
         }
         
         console.log('🔍 DEBUG: loadValoresDominio - Cargando', nombreDominio, 'en elemento:', element);
-        
+        // Si el select tiene un valor bloqueado (de edición), preservarlo siempre
+        const lockedValue = element.dataset.lockedValue;
+
         const response = await getValoresDominio(nombreDominio);
         console.log('📊 DEBUG: loadValoresDominio - Respuesta obtenida para', nombreDominio + ':', response);
         
@@ -1946,8 +1988,7 @@ async function loadValoresDominio(elementId, nombreDominio) {
             return;
         }
         
-        // Limpiar select pero preservar la primera opción si existe
-        const firstOption = element.querySelector('option');
+        // Limpiar select
         element.innerHTML = '';
         
         // Agregar opción por defecto
@@ -1967,6 +2008,15 @@ async function loadValoresDominio(elementId, nombreDominio) {
             element.appendChild(option);
         });
         
+        // Restaurar lockedValue o valor anterior si existe en las nuevas opciones
+        const valorPrevio = lockedValue || element.value;
+        if (valorPrevio && valorPrevio !== '') {
+            const exists = Array.from(element.options).some(o => o.value == valorPrevio);
+            if (exists) {
+                element.value = valorPrevio;
+                console.log(`🔁 DEBUG: loadValoresDominio - Selección preservada (${nombreDominio}):`, valorPrevio);
+            }
+        }
         console.log('✅ DEBUG: loadValoresDominio - Select', elementId, 'llenado con', valores.length, 'opciones');
         
     } catch (error) {
@@ -2105,7 +2155,7 @@ async function cargarActividadParaEdicionSinDominios(id) {
         // Esperar hasta que todos los elementos DOM estén disponibles
         await ensureElementsReady();
         
-        // Lista de dominios a cargar con sus elementos
+        // Lista de dominios a cargar con sus elementos (modo edición)
         const dominiosACargar = [
             { elementId: 'tipoActividad', dominio: 'TIPOS_ACTIVIDAD' },
             { elementId: 'lineaEstrategica', dominio: 'LINEAS_ESTRATEGICAS' },
@@ -2116,7 +2166,14 @@ async function cargarActividadParaEdicionSinDominios(id) {
             { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
             { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
             { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
-            { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' }
+            { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' },
+            // Dominios adicionales necesarios en edición
+            { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
+            { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
+            { elementId: 'gestorActividad', dominio: 'GESTORES_ACTIVIDAD' },
+            { elementId: 'facultadDestinataria', dominio: 'FACULTADES_DESTINATARIAS' },
+            { elementId: 'departamentoDestinatario', dominio: 'DEPARTAMENTOS_DESTINATARIOS' },
+            { elementId: 'coordinadorCentreUnitat', dominio: 'COORDINADORES_CENTRE_UNITAT_IDP' }
         ];
         
         // Cargar dominios de forma robusta
@@ -2153,6 +2210,13 @@ async function cargarActividadParaEdicionSinDominios(id) {
 // Función para llenar el formulario con los datos de la actividad
 function llenarFormularioConActividad(actividad) {
     console.log('🚀 DEBUG: llenarFormularioConActividad - Llenando formulario...');
+    // Guardar para depuración y mostrar esperado por secciones
+    try {
+        window.__actividadDebugActual = actividad;
+        if (typeof imprimirValoresEsperadosPorSeccion === 'function') {
+            imprimirValoresEsperadosPorSeccion(actividad, true);
+        }
+    } catch (e) { /* noop */ }
     
     // Campos básicos - Usar propiedades con ambos casos (mayúsculas y minúsculas)
     const titulo = actividad.Titulo || actividad.titulo;
@@ -2313,97 +2377,95 @@ function llenarFormularioConActividad(actividad) {
         document.getElementById('creditosMaximosSAE').value = creditosMax || '';
     }
     
-    // Campos de inscripción
-    if (document.getElementById('insc_inicio')) {
-        const inscInicio = actividad.inscripcionInicio || actividad.InscripcionInicio;
-        document.getElementById('insc_inicio').value = inscInicio ? inscInicio.split('T')[0] : '';
-    }
-    if (document.getElementById('insc_fin')) {
-        const inscFin = actividad.inscripcionFin || actividad.InscripcionFin;
-        document.getElementById('insc_fin').value = inscFin ? inscFin.split('T')[0] : '';
-    }
-    if (document.getElementById('insc_plazas')) {
-        const inscPlazas = actividad.inscripcionPlazas || actividad.InscripcionPlazas;
-        document.getElementById('insc_plazas').value = inscPlazas || '';
-    }
-    if (document.getElementById('insc_lista_espera')) {
-        const inscListaEspera = actividad.inscripcionListaEspera || actividad.InscripcionListaEspera;
-        document.getElementById('insc_lista_espera').checked = inscListaEspera || false;
-    }
-    if (document.getElementById('inscripcionModalidad')) {
-        const inscModalidad = actividad.inscripcionModalidad || actividad.InscripcionModalidad;
-        document.getElementById('inscripcionModalidad').value = inscModalidad || '';
-    }
-    
-    // Campos de requisitos multiidioma
-    if (document.getElementById('insc_requisitos_es')) {
-        const reqES = actividad.inscripcionRequisitosES || actividad.InscripcionRequisitosES;
-        document.getElementById('insc_requisitos_es').value = reqES || '';
-    }
-    if (document.getElementById('insc_requisitos_ca')) {
-        const reqCA = actividad.inscripcionRequisitosCA || actividad.InscripcionRequisitosCA;
-        document.getElementById('insc_requisitos_ca').value = reqCA || '';
-    }
-    if (document.getElementById('insc_requisitos_en')) {
-        const reqEN = actividad.inscripcionRequisitosEN || actividad.InscripcionRequisitosEN;
-        document.getElementById('insc_requisitos_en').value = reqEN || '';
-    }
-    
-    // Campos de programa multiidioma
-    if (document.getElementById('programa_descripcion_es')) {
-        const progDescES = actividad.programaDescripcionES || actividad.ProgramaDescripcionES;
-        document.getElementById('programa_descripcion_es').value = progDescES || '';
-    }
-    if (document.getElementById('programa_descripcion_ca')) {
-        const progDescCA = actividad.programaDescripcionCA || actividad.ProgramaDescripcionCA;
-        document.getElementById('programa_descripcion_ca').value = progDescCA || '';
-    }
-    if (document.getElementById('programa_descripcion_en')) {
-        const progDescEN = actividad.programaDescripcionEN || actividad.ProgramaDescripcionEN;
-        document.getElementById('programa_descripcion_en').value = progDescEN || '';
-    }
-    
-    // Campos de contenidos multiidioma
-    if (document.getElementById('programa_contenidos_es')) {
-        const progContES = actividad.programaContenidosES || actividad.ProgramaContenidosES;
-        document.getElementById('programa_contenidos_es').value = progContES || '';
-    }
-    if (document.getElementById('programa_contenidos_ca')) {
-        const progContCA = actividad.programaContenidosCA || actividad.ProgramaContenidosCA;
-        document.getElementById('programa_contenidos_ca').value = progContCA || '';
-    }
-    if (document.getElementById('programa_contenidos_en')) {
-        const progContEN = actividad.programaContenidosEN || actividad.ProgramaContenidosEN;
-        document.getElementById('programa_contenidos_en').value = progContEN || '';
-    }
-    
-    // Campos de objetivos multiidioma
-    if (document.getElementById('programa_objetivos_es')) {
-        const progObjES = actividad.programaObjetivosES || actividad.ProgramaObjetivosES;
-        document.getElementById('programa_objetivos_es').value = progObjES || '';
-    }
-    if (document.getElementById('programa_objetivos_ca')) {
-        const progObjCA = actividad.programaObjetivosCA || actividad.ProgramaObjetivosCA;
-        document.getElementById('programa_objetivos_ca').value = progObjCA || '';
-    }
-    if (document.getElementById('programa_objetivos_en')) {
-        const progObjEN = actividad.programaObjetivosEN || actividad.ProgramaObjetivosEN;
-        document.getElementById('programa_objetivos_en').value = progObjEN || '';
-    }
-    
-    // Campos de duración y fechas del programa
-    if (document.getElementById('programa_duracion')) {
-        const progDuracion = actividad.programaDuracion || actividad.ProgramaDuracion;
-        document.getElementById('programa_duracion').value = progDuracion || '';
-    }
-    if (document.getElementById('programa_inicio')) {
-        const progInicio = actividad.programaInicio || actividad.ProgramaInicio;
-        document.getElementById('programa_inicio').value = progInicio ? progInicio.split('T')[0] : '';
-    }
-    if (document.getElementById('programa_fin')) {
-        const progFin = actividad.programaFin || actividad.ProgramaFin;
-        document.getElementById('programa_fin').value = progFin ? progFin.split('T')[0] : '';
-    }
+    // Helper genérico para asignar valor al primer id existente
+    const setValueByIds = (ids, value, opts = {}) => {
+        for (const id of ids) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            if (opts.type === 'checkbox') {
+                el.checked = !!value;
+                return el;
+            }
+            if (value == null) {
+                el.value = '';
+            } else if (opts.date === true && typeof value === 'string') {
+                el.value = value.includes('T') ? value.split('T')[0] : value;
+            } else {
+                el.value = value;
+            }
+            if (opts.lock === true && value != null && el.tagName === 'SELECT') {
+                el.dataset.lockedValue = String(value);
+            }
+            return el;
+        }
+        return null;
+    };
+
+    // Campos de inscripción (admite ambas convenciones de IDs)
+    setValueByIds(['insc_inicio','inscripcionInicio'], actividad.inscripcionInicio || actividad.InscripcionInicio, { date: true });
+    setValueByIds(['insc_fin','inscripcionFin'], actividad.inscripcionFin || actividad.InscripcionFin, { date: true });
+    setValueByIds(['insc_plazas','inscripcionPlazas'], actividad.inscripcionPlazas || actividad.InscripcionPlazas);
+    setValueByIds(['insc_lista_espera','inscripcionListaEspera'], actividad.inscripcionListaEspera || actividad.InscripcionListaEspera, { type: 'checkbox' });
+    setValueByIds(['inscripcionModalidad'], actividad.inscripcionModalidad || actividad.InscripcionModalidad, { lock: true });
+    // Nuevos: Remesa y Tipos de Inscripción
+    setValueByIds(['remesa'], actividad.remesa || actividad.Remesa, { lock: true });
+    setValueByIds(['tiposInscripcionId'], (actividad.tiposInscripcionId ?? actividad.TiposInscripcionId), { lock: true });
+
+    // Estado de actividad: intentar por id o por texto
+    (function(){
+        var select = document.getElementById('estadoActividad');
+        if (!select) return;
+        var raw = actividad.estadoActividad != null ? actividad.estadoActividad : actividad.EstadoActividad;
+        if (raw == null || raw === '') return;
+        var target = String(raw).trim();
+        var matched = false;
+        for (var i = 0; i < select.options.length; i++) {
+            var opt = select.options[i];
+            if (opt.value === target || opt.text === target) {
+                select.value = opt.value;
+                select.dataset.lockedValue = opt.value;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            var map = { 'Abierta':'63', 'Cerrada':'64', 'Actividad abierta':'63', 'Actividad cerrada':'64' };
+            var mapped = map[target] || map[target.toLowerCase?.()] || null;
+            if (!mapped) {
+                // Intento case-insensitive por texto
+                for (var j = 0; j < select.options.length; j++) {
+                    var o = select.options[j];
+                    if ((o.text || '').toLowerCase() === target.toLowerCase()) { mapped = o.value; break; }
+                }
+            }
+            if (mapped) {
+                select.value = String(mapped);
+                select.dataset.lockedValue = String(mapped);
+            }
+        }
+    })();
+
+    // Requisitos multiidioma
+    setValueByIds(['insc_requisitos_es','inscripcionRequisitosES'], actividad.inscripcionRequisitosES || actividad.InscripcionRequisitosES);
+    setValueByIds(['insc_requisitos_ca','inscripcionRequisitosCA'], actividad.inscripcionRequisitosCA || actividad.InscripcionRequisitosCA);
+    setValueByIds(['insc_requisitos_en','inscripcionRequisitosEN'], actividad.inscripcionRequisitosEN || actividad.InscripcionRequisitosEN);
+
+    // Programa: descripciones
+    setValueByIds(['programa_descripcion_es','programaDescripcionES'], actividad.programaDescripcionES || actividad.ProgramaDescripcionES);
+    setValueByIds(['programa_descripcion_ca','programaDescripcionCA'], actividad.programaDescripcionCA || actividad.ProgramaDescripcionCA);
+    setValueByIds(['programa_descripcion_en','programaDescripcionEN'], actividad.programaDescripcionEN || actividad.ProgramaDescripcionEN);
+    // Programa: contenidos
+    setValueByIds(['programa_contenidos_es','programaContenidosES'], actividad.programaContenidosES || actividad.ProgramaContenidosES);
+    setValueByIds(['programa_contenidos_ca','programaContenidosCA'], actividad.programaContenidosCA || actividad.ProgramaContenidosCA);
+    setValueByIds(['programa_contenidos_en','programaContenidosEN'], actividad.programaContenidosEN || actividad.ProgramaContenidosEN);
+    // Programa: objetivos
+    setValueByIds(['programa_objetivos_es','programaObjetivosES'], actividad.programaObjetivosES || actividad.ProgramaObjetivosES);
+    setValueByIds(['programa_objetivos_ca','programaObjetivosCA'], actividad.programaObjetivosCA || actividad.ProgramaObjetivosCA);
+    setValueByIds(['programa_objetivos_en','programaObjetivosEN'], actividad.programaObjetivosEN || actividad.ProgramaObjetivosEN);
+    // Programa: duración y fechas
+    setValueByIds(['programa_duracion','programaDuracion'], actividad.programaDuracion || actividad.ProgramaDuracion);
+    setValueByIds(['programa_inicio','programaInicio'], actividad.programaInicio || actividad.ProgramaInicio, { date: true });
+    setValueByIds(['programa_fin','programaFin'], actividad.programaFin || actividad.ProgramaFin, { date: true });
     
     // Campos SAE
     if (document.getElementById('tipusEstudiSAE')) {
@@ -2440,6 +2502,32 @@ function llenarFormularioConActividad(actividad) {
         document.getElementById('lugar').value = lugar || '';
     }
     
+	// Campos simples adicionales (texto/textarea)
+	if (document.getElementById('espacioImparticion')) {
+		document.getElementById('espacioImparticion').value = actividad.espacioImparticion || actividad.EspacioImparticion || '';
+	}
+	if (document.getElementById('lugarImparticion')) {
+		document.getElementById('lugarImparticion').value = actividad.lugarImparticion || actividad.LugarImparticion || '';
+	}
+	if (document.getElementById('otrasUbicaciones')) {
+		document.getElementById('otrasUbicaciones').value = actividad.otrasUbicaciones || actividad.OtrasUbicaciones || '';
+	}
+	if (document.getElementById('sistemaEvaluacion')) {
+		document.getElementById('sistemaEvaluacion').value = actividad.sistemaEvaluacion || actividad.SistemaEvaluacion || '';
+	}
+	if (document.getElementById('horarioYCalendario')) {
+		document.getElementById('horarioYCalendario').value = actividad.horarioYCalendario || actividad.HorarioYCalendario || '';
+	}
+	if (document.getElementById('observaciones')) {
+		document.getElementById('observaciones').value = actividad.observaciones || actividad.Observaciones || '';
+	}
+	if (document.getElementById('urlPlataformaVirtual')) {
+		document.getElementById('urlPlataformaVirtual').value = actividad.urlPlataformaVirtual || actividad.UrlPlataformaVirtual || '';
+	}
+	if (document.getElementById('urlCuestionarioSatisfaccion')) {
+		document.getElementById('urlCuestionarioSatisfaccion').value = actividad.urlCuestionarioSatisfaccion || actividad.UrlCuestionarioSatisfaccion || '';
+	}
+
     // Campos adicionales que faltan
     if (document.getElementById('descripcion')) {
         document.getElementById('descripcion').value = descripcion || '';
@@ -2452,6 +2540,18 @@ function llenarFormularioConActividad(actividad) {
     if (document.getElementById('tipoActividad')) {
         const tipoAct = actividad.tipoActividad || actividad.TipoActividad;
         document.getElementById('tipoActividad').value = tipoAct || '';
+    }
+    // Idioma de impartición (select)
+    if (document.getElementById('idiomaImparticionId')) {
+        const idiomaVal = actividad.idiomaImparticionId || actividad.IdiomaImparticionId;
+        const sel = document.getElementById('idiomaImparticionId');
+        if (idiomaVal != null && sel) {
+            sel.dataset.lockedValue = String(idiomaVal);
+            // si ya están las opciones, intenta seleccionar
+            for (let opt of sel.options) {
+                if (opt.value === String(idiomaVal)) { opt.selected = true; break; }
+            }
+        }
     }
     if (document.getElementById('actividadReservada')) {
         const actividadReserv = actividad.actividadReservada || actividad.ActividadReservada;
@@ -2521,6 +2621,21 @@ function llenarFormularioConActividad(actividad) {
 // Función para establecer valores en dropdowns después de que se carguen los dominios
 function establecerValoresDropdowns(actividad) {
     console.log('🔧 DEBUG: establecerValoresDropdowns - Estableciendo valores en dropdowns...');
+    // Helper para observar y preservar valores bloqueados
+    const attachLockedObserver = (select) => {
+        if (!select || select.__lockedObserverAttached) return;
+        const observer = new MutationObserver(() => {
+            const locked = select.dataset?.lockedValue;
+            if (locked && Array.from(select.options).some(o => o.value == locked)) {
+                if (select.value != locked) {
+                    select.value = locked;
+                    console.log(`🔁 DEBUG: Observer reaplicó lockedValue en #${select.id}:`, locked);
+                }
+            }
+        });
+        observer.observe(select, { childList: true });
+        select.__lockedObserverAttached = true;
+    };
     
     // Establecer valores en dropdowns
     if (document.getElementById('actividadUnidadGestion')) {
@@ -2533,18 +2648,113 @@ function establecerValoresDropdowns(actividad) {
             if (option.value === String(valor)) {
                 option.selected = true;
                 console.log('✅ DEBUG: establecerValoresDropdowns - actividadUnidadGestion establecido:', option.text || option.value);
+                select.dataset.lockedValue = option.value;
+                attachLockedObserver(select);
                 break;
             }
         }
     }
     
+    // Jefe/a unidad gestora
+    if (document.getElementById('jefeUnidadGestora')) {
+        const select = document.getElementById('jefeUnidadGestora');
+        const valor = actividad.JefeUnidadGestora || actividad.jefeUnidadGestora;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - jefeUnidadGestora, valor:', valor);
+        if (valor != null) {
+            // Fijar lock por adelantado para que se aplique cuando lleguen las opciones
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - jefeUnidadGestora establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Gestor/a de la actividad
+    if (document.getElementById('gestorActividad')) {
+        const select = document.getElementById('gestorActividad');
+        const valor = actividad.GestorActividad || actividad.gestorActividad;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - gestorActividad, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - gestorActividad establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Facultad destinataria
+    if (document.getElementById('facultadDestinataria')) {
+        const select = document.getElementById('facultadDestinataria');
+        const valor = actividad.FacultadDestinataria || actividad.facultadDestinataria;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - facultadDestinataria, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - facultadDestinataria establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Departamento destinatario
+    if (document.getElementById('departamentoDestinatario')) {
+        const select = document.getElementById('departamentoDestinatario');
+        const valor = actividad.DepartamentoDestinatario || actividad.departamentoDestinatario;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - departamentoDestinatario, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - departamentoDestinatario establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Coordinador/a Centre Unitat (IDP)
+    if (document.getElementById('coordinadorCentreUnitat')) {
+        const select = document.getElementById('coordinadorCentreUnitat');
+        const valor = actividad.CoordinadorCentreUnitat || actividad.coordinadorCentreUnitat;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - coordinadorCentreUnitat, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - coordinadorCentreUnitat establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+
     if (document.getElementById('lineaEstrategica')) {
         const select = document.getElementById('lineaEstrategica');
         const valor = actividad.LineaEstrategica || actividad.lineaEstrategica;
         console.log('🔧 DEBUG: establecerValoresDropdowns - lineaEstrategica, valor:', valor);
-        if (valor) {
+        if (valor != null && valor !== '') {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
             for (let option of select.options) {
-                if (option.value === valor || option.text === valor) {
+                if (option.value === String(valor) || option.text === String(valor)) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - lineaEstrategica establecido:', option.text);
                     break;
@@ -2557,9 +2767,11 @@ function establecerValoresDropdowns(actividad) {
         const select = document.getElementById('objetivoEstrategico');
         const valor = actividad.ObjetivoEstrategico || actividad.objetivoEstrategico;
         console.log('🔧 DEBUG: establecerValoresDropdowns - objetivoEstrategico, valor:', valor);
-        if (valor) {
+        if (valor != null && valor !== '') {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
             for (let option of select.options) {
-                if (option.value === valor || option.text === valor) {
+                if (option.value === String(valor) || option.text === String(valor)) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - objetivoEstrategico establecido:', option.text);
                     break;
@@ -2577,6 +2789,26 @@ function establecerValoresDropdowns(actividad) {
                 if (option.value === valor || option.text === valor) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - centroUnidadUBDestinataria establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Idioma de impartición
+    if (document.getElementById('idiomaImparticionId')) {
+        const select = document.getElementById('idiomaImparticionId');
+        const valor = actividad.IdiomaImparticionId || actividad.idiomaImparticionId;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - idiomaImparticionId, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - idiomaImparticionId establecido:', option.text || option.value);
                     break;
                 }
             }
@@ -2603,6 +2835,8 @@ function establecerValoresDropdowns(actividad) {
                     option.text.toLowerCase() === valorMapeado.toLowerCase()) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - centroTrabajoRequerido establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
                     break;
                 }
             }
@@ -2618,6 +2852,8 @@ function establecerValoresDropdowns(actividad) {
                 if (option.value === valor || option.text === valor) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - tipoActividad establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
                     break;
                 }
             }
@@ -2633,6 +2869,8 @@ function establecerValoresDropdowns(actividad) {
                 if (option.value === valor || option.text === valor) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - modalidadGestion establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
                     break;
                 }
             }
@@ -2661,6 +2899,8 @@ function establecerValoresDropdowns(actividad) {
                     option.text.toLowerCase() === valorMapeado.toLowerCase()) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - tipusEstudiSAE establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
                     break;
                 }
             }
@@ -2689,6 +2929,8 @@ function establecerValoresDropdowns(actividad) {
                     option.text.toLowerCase() === valorMapeado.toLowerCase()) {
                     option.selected = true;
                     console.log('✅ DEBUG: establecerValoresDropdowns - categoriaSAE establecido:', option.text);
+                    select.dataset.lockedValue = option.value;
+                    attachLockedObserver(select);
                     break;
                 }
             }
@@ -2696,7 +2938,29 @@ function establecerValoresDropdowns(actividad) {
     }
     
     console.log('✅ DEBUG: establecerValoresDropdowns - Valores de dropdowns establecidos');
+    // Tras aplicar selecciones, imprimir el estado seteado por secciones
+    try {
+        if (typeof imprimirValoresSeteadosPorSeccion === 'function') {
+            imprimirValoresSeteadosPorSeccion(true);
+        }
+    } catch (e) { /* noop */ }
 }
+
+// Exponer helper global para otros módulos (editar-actividad.js)
+window.attachLockedObserver = window.attachLockedObserver || function(select) {
+    if (!select || select.__lockedObserverAttached) return;
+    const observer = new MutationObserver(() => {
+        const locked = select.dataset?.lockedValue;
+        if (locked && Array.from(select.options).some(o => o.value == locked)) {
+            if (select.value != locked) {
+                select.value = locked;
+                console.log(`🔁 DEBUG: (global) Observer reaplicó lockedValue en #${select.id}:`, locked);
+            }
+        }
+    });
+    observer.observe(select, { childList: true });
+    select.__lockedObserverAttached = true;
+};
 
 // Función para verificar qué campos se llenaron correctamente
 function verificarCamposLlenados(actividad) {
@@ -2710,28 +2974,48 @@ function verificarCamposLlenados(actividad) {
         'otrosCentrosInstituciones', 'plazasTotales', 'horasTotales', 'centroTrabajoRequerido',
         'modalidadGestion', 'fechaInicioImparticion', 'fechaFinImparticion', 'actividadPago',
         'coordinadorCentreUnitat', 'centreTreballeAlumne', 'creditosTotalesCRAI', 'creditosTotalesSAE',
-        'creditosMinimosSAE', 'creditosMaximosSAE', 'insc_inicio', 'insc_fin', 'insc_plazas',
-        'insc_lista_espera', 'inscripcionModalidad', 'insc_requisitos_es', 'insc_requisitos_ca', 'insc_requisitos_en',
+        'creditosMinimosSAE', 'creditosMaximosSAE',
+        // Inscripción (ambos conjuntos de ids)
+        'insc_inicio', 'insc_fin', 'insc_plazas', 'insc_lista_espera', 'inscripcionModalidad',
+        'insc_requisitos_es', 'insc_requisitos_ca', 'insc_requisitos_en',
+        'inscripcionInicio', 'inscripcionFin', 'inscripcionPlazas', 'inscripcionListaEspera',
+        'inscripcionRequisitosES', 'inscripcionRequisitosCA', 'inscripcionRequisitosEN',
+        // Programa (ambos conjuntos de ids)
         'programa_descripcion_es', 'programa_descripcion_ca', 'programa_descripcion_en',
         'programa_contenidos_es', 'programa_contenidos_ca', 'programa_contenidos_en',
         'programa_objetivos_es', 'programa_objetivos_ca', 'programa_objetivos_en',
-        'programa_duracion', 'programa_inicio', 'programa_fin', 'tipusEstudiSAE', 'categoriaSAE', 'competenciesSAE'
+        'programa_duracion', 'programa_inicio', 'programa_fin',
+        'programaDescripcionES', 'programaDescripcionCA', 'programaDescripcionEN',
+        'programaContenidosES', 'programaContenidosCA', 'programaContenidosEN',
+        'programaObjetivosES', 'programaObjetivosCA', 'programaObjetivosEN',
+        'programaInicio', 'programaFin',
+        // SAE
+        'tipusEstudiSAE', 'categoriaSAE', 'competenciesSAE'
     ];
     
+    // Detectar UG para marcar campos NO_APLICA (p.e. SAE cuando UG=IDP)
+    const ugId = actividad.UnidadGestionId || actividad.unidadGestionId;
+    const isIDP = String(ugId) === '1';
+
     camposEsperados.forEach(campo => {
-        const elemento = document.getElementById(campo);
+        const resolvedId = resolveExistingId(campo) || campo;
+        const elemento = document.getElementById(resolvedId);
         if (elemento) {
             let valor = elemento.value;
             
             // Para actividadUnidadGestion, verificar también el texto seleccionado
-            if (campo === 'actividadUnidadGestion' && elemento.tagName === 'SELECT') {
+            if (resolvedId === 'actividadUnidadGestion' && elemento.tagName === 'SELECT') {
                 const selectedOption = elemento.options[elemento.selectedIndex];
                 if (selectedOption && selectedOption.text && selectedOption.text !== 'Seleccionar...' && selectedOption.text !== 'Seleccionar unidad...') {
                     valor = selectedOption.text;
                 }
             }
             
-            if (valor && valor !== '') {
+            // Campos NO_APLICA por UG (SAE no aplica a IDP)
+            const isCampoSAE = ['tipusEstudiSAE','categoriaSAE','competenciesSAE'].includes(campo);
+            if (isIDP && isCampoSAE) {
+                console.log(`ℹ️ Campo ${campo}: NO_APLICA (UG=IDP)`);
+            } else if (valor && valor !== '') {
                 console.log(`✅ Campo ${campo}: "${valor}"`);
             } else {
                 console.log(`❌ Campo ${campo}: VACÍO`);
@@ -2741,6 +3025,200 @@ function verificarCamposLlenados(actividad) {
         }
     });
 }
+
+// ====== UTILIDADES DE DEBUG POR SECCIONES ======
+const DOM_TO_ACT_KEYS = {
+    'actividadTitulo': ['Titulo','titulo'],
+    'actividadCodigo': ['Codigo','codigo'],
+    'actividadAnioAcademico': ['AnioAcademico','anioAcademico'],
+    'actividadUnidadGestion': ['UnidadGestionId','unidadGestionId'],
+    'condicionesEconomicas': ['CondicionesEconomicas','condicionesEconomicas'],
+    'lineaEstrategica': ['LineaEstrategica','lineaEstrategica'],
+    'objetivoEstrategico': ['ObjetivoEstrategico','objetivoEstrategico'],
+    'codigoRelacionado': ['CodigoRelacionado','codigoRelacionado'],
+    'fechaActividad': ['FechaActividad','fechaActividad'],
+    'motivoCierre': ['MotivoCierre','motivoCierre'],
+    'personaSolicitante': ['PersonaSolicitante','personaSolicitante'],
+    'coordinador': ['Coordinador','coordinador'],
+    'jefeUnidadGestora': ['JefeUnidadGestora','jefeUnidadGestora'],
+    'gestorActividad': ['GestorActividad','gestorActividad'],
+    'facultadDestinataria': ['FacultadDestinataria','facultadDestinataria'],
+    'departamentoDestinatario': ['DepartamentoDestinatario','departamentoDestinatario'],
+    'centroUnidadUBDestinataria': ['CentroUnidadUBDestinataria','centroUnidadUBDestinataria'],
+    'otrosCentrosInstituciones': ['OtrosCentrosInstituciones','otrosCentrosInstituciones'],
+    'plazasTotales': ['PlazasTotales','plazasTotales'],
+    'horasTotales': ['HorasTotales','horasTotales'],
+    'centroTrabajoRequerido': ['CentroTrabajoRequerido','centroTrabajoRequerido'],
+    'modalidadGestion': ['ModalidadGestion','modalidadGestion'],
+    'fechaInicioImparticion': ['FechaInicioImparticion','fechaInicioImparticion'],
+    'fechaFinImparticion': ['FechaFinImparticion','fechaFinImparticion'],
+    'actividadPago': ['ActividadPago','actividadPago'],
+    'coordinadorCentreUnitat': ['CoordinadorCentreUnitat','coordinadorCentreUnitat'],
+    'centreTreballeAlumne': ['CentreTreballeAlumne','centreTreballeAlumne'],
+    'creditosTotalesCRAI': ['CreditosTotalesCRAI','creditosTotalesCRAI'],
+    'creditosTotalesSAE': ['CreditosTotalesSAE','creditosTotalesSAE'],
+    'creditosMinimosSAE': ['CreditosMinimosSAE','creditosMinimosSAE'],
+    'creditosMaximosSAE': ['CreditosMaximosSAE','creditosMaximosSAE'],
+    'insc_inicio': ['InscInicio','insc_inicio'],
+    'insc_fin': ['InscFin','insc_fin'],
+    'insc_plazas': ['InscPlazas','insc_plazas'],
+    'insc_lista_espera': ['InscListaEspera','insc_lista_espera'],
+    'inscripcionModalidad': ['InscripcionModalidad','inscripcionModalidad'],
+    'insc_requisitos_es': ['InscRequisitosES','insc_requisitos_es'],
+    'insc_requisitos_ca': ['InscRequisitosCA','insc_requisitos_ca'],
+    'insc_requisitos_en': ['InscRequisitosEN','insc_requisitos_en'],
+    'programa_descripcion_es': ['ProgramaDescripcionES','programa_descripcion_es'],
+    'programa_descripcion_ca': ['ProgramaDescripcionCA','programa_descripcion_ca'],
+    'programa_descripcion_en': ['ProgramaDescripcionEN','programa_descripcion_en'],
+    'programa_contenidos_es': ['ProgramaContenidosES','programa_contenidos_es'],
+    'programa_contenidos_ca': ['ProgramaContenidosCA','programa_contenidos_ca'],
+    'programa_contenidos_en': ['ProgramaContenidosEN','programa_contenidos_en'],
+    'programa_objetivos_es': ['ProgramaObjetivosES','programa_objetivos_es'],
+    'programa_objetivos_ca': ['ProgramaObjetivosCA','programa_objetivos_ca'],
+    'programa_objetivos_en': ['ProgramaObjetivosEN','programa_objetivos_en'],
+    'programa_duracion': ['ProgramaDuracion','programa_duracion'],
+    'programa_inicio': ['ProgramaInicio','programa_inicio'],
+    'programa_fin': ['ProgramaFin','programa_fin'],
+    'tipusEstudiSAE': ['TipusEstudiSAE','tipusEstudiSAE'],
+    'categoriaSAE': ['CategoriaSAE','categoriaSAE'],
+    'competenciesSAE': ['CompetenciesSAE','competenciesSAE'],
+    'tipoActividad': ['TipoActividad','tipoActividad']
+};
+
+const SECCIONES_DEBUG = {
+    'Básicos': ['actividadTitulo','actividadCodigo','actividadAnioAcademico','codigoRelacionado','motivoCierre','personaSolicitante'],
+    'UG y responsables': ['actividadUnidadGestion','jefeUnidadGestora','gestorActividad','coordinador','coordinadorCentreUnitat'],
+    'Estrategia': ['lineaEstrategica','objetivoEstrategico'],
+    'Centros': ['centroUnidadUBDestinataria','otrosCentrosInstituciones','centroTrabajoRequerido','facultadDestinataria','departamentoDestinatario'],
+    'Impartición': ['fechaActividad','fechaInicioImparticion','fechaFinImparticion','horasTotales','plazasTotales','tipoActividad','modalidadGestion','actividadPago'],
+    'Inscripción': ['insc_inicio','insc_fin','insc_plazas','insc_lista_espera','inscripcionModalidad','insc_requisitos_es','insc_requisitos_ca','insc_requisitos_en'],
+    'Programa': ['programa_descripcion_es','programa_descripcion_ca','programa_descripcion_en','programa_contenidos_es','programa_contenidos_ca','programa_contenidos_en','programa_objetivos_es','programa_objetivos_ca','programa_objetivos_en','programa_duracion','programa_inicio','programa_fin'],
+    'Créditos': ['creditosTotalesCRAI','creditosTotalesSAE','creditosMinimosSAE','creditosMaximosSAE'],
+    'SAE': ['tipusEstudiSAE','categoriaSAE','competenciesSAE']
+};
+
+// Alias de IDs en DOM (snake_case -> camelCase u otras variantes)
+const DOM_ALIASES = {
+    // Inscripción
+    'insc_inicio': ['inscripcionInicio'],
+    'insc_fin': ['inscripcionFin'],
+    'insc_plazas': ['inscripcionPlazas'],
+    'insc_lista_espera': ['inscripcionListaEspera'],
+    'insc_requisitos_es': ['inscripcionRequisitosES'],
+    'insc_requisitos_ca': ['inscripcionRequisitosCA'],
+    'insc_requisitos_en': ['inscripcionRequisitosEN'],
+    // Programa
+    'programa_descripcion_es': ['programaDescripcionES'],
+    'programa_descripcion_ca': ['programaDescripcionCA'],
+    'programa_descripcion_en': ['programaDescripcionEN'],
+    'programa_contenidos_es': ['programaContenidosES'],
+    'programa_contenidos_ca': ['programaContenidosCA'],
+    'programa_contenidos_en': ['programaContenidosEN'],
+    'programa_objetivos_es': ['programaObjetivosES'],
+    'programa_objetivos_ca': ['programaObjetivosCA'],
+    'programa_objetivos_en': ['programaObjetivosEN'],
+    'programa_duracion': ['programaDuracion'],
+    'programa_inicio': ['programaInicio'],
+    'programa_fin': ['programaFin']
+};
+
+function resolveExistingId(primaryId) {
+    const aliases = DOM_ALIASES[primaryId] || [];
+    const candidates = [primaryId, ...aliases];
+    for (const id of candidates) {
+        const el = document.getElementById(id);
+        if (el) return id;
+    }
+    return null;
+}
+
+function getValorActividad(actividad, claves) {
+    if (!actividad || !claves) return undefined;
+    for (const k of claves) {
+        if (actividad[k] !== undefined && actividad[k] !== null) return actividad[k];
+    }
+    return undefined;
+}
+
+function imprimirValoresEsperadosPorSeccion(actividad, plano = false) {
+    try {
+        if (plano) {
+            console.log('🧭 Esperados por sección (plano)');
+            Object.keys(SECCIONES_DEBUG).forEach(seccion => {
+                SECCIONES_DEBUG[seccion].forEach(id => {
+                    const esperado = getValorActividad(actividad, DOM_TO_ACT_KEYS[id]);
+                    console.log(`[Esperado] ${seccion} > ${id}:`, esperado);
+                });
+            });
+        } else {
+            console.groupCollapsed('🧭 Esperados por sección');
+            Object.keys(SECCIONES_DEBUG).forEach(seccion => {
+                const filas = SECCIONES_DEBUG[seccion].map(id => {
+                    const esperado = getValorActividad(actividad, DOM_TO_ACT_KEYS[id]);
+                    return { campo: id, esperado: esperado };
+                });
+                console.groupCollapsed(`Sección: ${seccion}`);
+                console.table(filas);
+                console.groupEnd();
+            });
+            console.groupEnd();
+        }
+    } catch (e) {
+        console.warn('⚠️ imprimirValoresEsperadosPorSeccion error:', e);
+    }
+}
+
+function leerValorDesdeDom(id) {
+    let domId = resolveExistingId(id) || id;
+    const el = document.getElementById(domId);
+    if (!el) return { estado: 'NO_ENCONTRADO', valor: null, texto: null };
+    if (el.tagName === 'SELECT') {
+        const opt = el.options[el.selectedIndex];
+        const valor = el.value || '';
+        const texto = opt ? opt.text : '';
+        return { estado: valor ? 'SETEADO' : 'VACÍO', valor, texto };
+    }
+    if (el.type === 'checkbox') {
+        return { estado: el.checked ? 'SETEADO' : 'VACÍO', valor: el.checked };
+    }
+    return { estado: el.value ? 'SETEADO' : 'VACÍO', valor: el.value };
+}
+
+function imprimirValoresSeteadosPorSeccion(plano = false) {
+    try {
+        if (plano) {
+            console.log('📌 Seteados en DOM por sección (plano)');
+            Object.keys(SECCIONES_DEBUG).forEach(seccion => {
+                SECCIONES_DEBUG[seccion].forEach(id => {
+                    const lectura = leerValorDesdeDom(id);
+                    console.log(`[Seteado] ${seccion} > ${id}:`, lectura);
+                });
+            });
+        } else {
+            console.groupCollapsed('📌 Seteados en DOM por sección');
+            Object.keys(SECCIONES_DEBUG).forEach(seccion => {
+                const filas = SECCIONES_DEBUG[seccion].map(id => {
+                    const lectura = leerValorDesdeDom(id);
+                    return { campo: id, estado: lectura.estado, valor: lectura.valor, texto: lectura.texto };
+                });
+                console.groupCollapsed(`Sección: ${seccion}`);
+                console.table(filas);
+                console.groupEnd();
+            });
+            console.groupEnd();
+        }
+    } catch (e) {
+        console.warn('⚠️ imprimirValoresSeteadosPorSeccion error:', e);
+    }
+}
+
+// Helpers globales para volcado plano sin expansión
+window.dumpEsperadosPlano = function() {
+    try { imprimirValoresEsperadosPorSeccion(window.__actividadDebugActual, true); } catch (e) {}
+};
+window.dumpSeteadosPlano = function() {
+    try { imprimirValoresSeteadosPorSeccion(true); } catch (e) {}
+};
 
 // Función para cargar datos adicionales de la actividad
 async function cargarDatosAdicionales(actividadId) {
