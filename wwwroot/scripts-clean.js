@@ -4209,22 +4209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 DEBUG: DOMContentLoaded - Llamando a cargarActividadParaEdicion...');
         cargarActividadParaEdicionSinDominios(actividadId);
     } else {
-        console.log('🚀 DEBUG: DOMContentLoaded - No es modo edición o no hay ID');
-        // Solo cargar dominios si NO estamos en modo edición
-        setTimeout(() => {
-            if (typeof cargarDominios === 'function') {
-                cargarDominios();
-            } else {
-                console.log('⚠️ Función cargarDominios no disponible, esperando...');
-                setTimeout(() => {
-                    if (typeof cargarDominios === 'function') {
-                        cargarDominios();
-                    } else {
-                        console.error('❌ Función cargarDominios no encontrada');
-                    }
-                }, 2000);
-            }
-        }, 1500);
+        console.log('🚀 DEBUG: DOMContentLoaded - No es modo edición o no hay ID (initializePage gestionará la carga)');
     }
 });
 
