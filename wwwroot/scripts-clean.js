@@ -4418,7 +4418,7 @@ async function cargarIdiomasEnSelectCrear(selectId) {
 // Debug logging switch
 (function(){
     const STORAGE_KEY = 'ub_debug_logging_enabled';
-    let enabled = true;
+    let enabled = false;
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) enabled = saved === 'true';
@@ -4436,8 +4436,7 @@ async function cargarIdiomasEnSelectCrear(selectId) {
         console.log = (...args) => { if (enabled) original.log(...args); };
         console.info = (...args) => { if (enabled) original.info(...args); };
         console.debug = (...args) => { if (enabled) original.debug(...args); };
-        // Mantener warnings y errores siempre visibles
-        console.warn = original.warn;
+        console.warn = (...args) => { if (enabled) original.warn(...args); };
         console.error = original.error;
     }
 
