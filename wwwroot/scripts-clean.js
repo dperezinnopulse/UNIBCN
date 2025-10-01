@@ -11,7 +11,18 @@ const API_BASE_URL = '';
     }
     window.perfStart = function(name){ try { window.__perf.marks[name] = performance.now(); } catch {} };
     window.perfEnd = function(name){ try { const t0 = window.__perf.marks[name]; if (t0!=null){ const dt = performance.now()-t0; window.__perf.measures.push({ name, ms: Math.round(dt) }); delete window.__perf.marks[name]; } } catch {} };
-    window.dumpPerf = function(){ try { const list = (window.__perf.measures||[]).slice().sort((a,b)=>b.ms-a.ms); console.error('⏱️ PERF (ms):', list); return list; } catch { return []; } };
+    window.dumpPerf = function(){
+        try {
+            const list = (window.__perf.measures||[]).slice().sort((a,b)=>b.ms-a.ms);
+            let total = 0; list.forEach(m=> total+=m.ms);
+            console.error(`⏱️ PERF total: ${total} ms, items: ${list.length}`);
+            list.forEach(m => {
+                const tag = m.ms >= 200 ? 'SLOW' : 'OK';
+                console.error(` - [${tag}] ${m.name}: ${m.ms} ms`);
+            });
+            return list;
+        } catch { return []; }
+    };
 })();
 
 // Clase principal para manejar las operaciones de la API
