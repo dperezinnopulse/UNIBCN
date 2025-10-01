@@ -4414,3 +4414,44 @@ async function cargarIdiomasEnSelectCrear(selectId) {
         console.error('Error cargando idiomas en select:', error);
     }
 }
+
+// Debug logging switch
+(function(){
+    const STORAGE_KEY = 'ub_debug_logging_enabled';
+    let enabled = true;
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved !== null) enabled = saved === 'true';
+    } catch {}
+
+    const original = {
+        log: console.log.bind(console),
+        info: console.info.bind(console),
+        debug: console.debug ? console.debug.bind(console) : console.log.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console)
+    };
+
+    function patchConsole() {
+        console.log = (...args) => { if (enabled) original.log(...args); };
+        console.info = (...args) => { if (enabled) original.info(...args); };
+        console.debug = (...args) => { if (enabled) original.debug(...args); };
+        // Mantener warnings y errores siempre visibles
+        console.warn = original.warn;
+        console.error = original.error;
+    }
+
+    window.setDebugLogging = function(flag) {
+        enabled = !!flag;
+        try { localStorage.setItem(STORAGE_KEY, String(enabled)); } catch {}
+        patchConsole();
+        original.log(`🔁 Debug logging ${enabled ? 'activado' : 'desactivado'}`);
+    };
+
+    window.toggleDebugLogging = function() {
+        window.setDebugLogging(!enabled);
+    };
+
+    // Aplicar al cargar
+    patchConsole();
+})();
