@@ -1919,19 +1919,15 @@ async function rellenarConDatosPrueba() {
 
 // ===== DOMINIOS =====
 
-// Obtener valores de un dominio específico
+// Obtener valores de un dominio específico (DELEGADO a API con caché)
 async function getValoresDominio(nombreDominio) {
-    console.log('🚀 DEBUG: getValoresDominio - Dominio:', nombreDominio);
+    console.log('🚀 DEBUG: getValoresDominio (global) - Dominio:', nombreDominio);
     try {
-        const response = await fetch(`${API_BASE_URL}/api/dominios/${nombreDominio}/valores`);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        console.log('✅ DEBUG: getValoresDominio - Respuesta para', nombreDominio + ':', data);
-        return data;
+        const valores = await api.getValoresDominio(nombreDominio);
+        console.log('✅ DEBUG: getValoresDominio (global) - Devolviendo array con', Array.isArray(valores) ? valores.length : 0, 'valores');
+        return valores; // Puede ser consumido como array o response.valores||response
     } catch (error) {
-        console.error('❌ DEBUG: getValoresDominio - Error:', error);
+        console.error('❌ DEBUG: getValoresDominio (global) - Error:', error);
         throw error;
     }
 }
