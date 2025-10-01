@@ -122,25 +122,59 @@ class UBActividadAPI {
     // Obtener valores de un dominio específico
     async getValoresDominio(nombreDominio) {
         console.log(`🚀 DEBUG: getValoresDominio - Dominio: ${nombreDominio}`);
+        const CACHE_KEY = `dominio_cache_${nombreDominio}`;
+        const CACHE_TS_KEY = `dominio_cache_${nombreDominio}_ts`;
+        const TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
         try {
+            // 1) Intentar leer de caché válida
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                const ts = parseInt(localStorage.getItem(CACHE_TS_KEY) || '0', 10);
+                if (raw && ts && (Date.now() - ts) < TTL_MS) {
+                    const cached = JSON.parse(raw);
+                    if (Array.isArray(cached)) {
+                        console.log(`💾 DEBUG: getValoresDominio - Usando caché para ${nombreDominio} con ${cached.length} valores (edad ${(Date.now()-ts)/1000}s)`);
+                        return cached;
+                    }
+                }
+            } catch (e) {
+                console.warn(`⚠️ DEBUG: getValoresDominio - Error leyendo caché de ${nombreDominio}:`, e);
+            }
+
+            // 2) Fallback a petición de red
             const response = await this.makeRequest(`/api/dominios/${nombreDominio}/valores`);
             console.log(`✅ DEBUG: getValoresDominio - Respuesta para ${nombreDominio}:`, response);
-            
-            // La respuesta tiene la estructura { dominio: {...}, valores: [...] }
-            // Devolver solo el array de valores
+            let valores = [];
             if (response && response.valores) {
-                console.log(`📊 DEBUG: getValoresDominio - Devolviendo ${response.valores.length} valores`);
-                return response.valores;
+                valores = response.valores;
             } else if (Array.isArray(response)) {
-                // En caso de que sea directamente un array
-                console.log(`📊 DEBUG: getValoresDominio - Respuesta es array directo con ${response.length} valores`);
-                return response;
+                valores = response;
             } else {
-                console.warn(`⚠️ DEBUG: getValoresDominio - Estructura de respuesta inesperada:`, response);
-                return [];
+                console.warn(`⚠️ DEBUG: getValoresDominio - Estructura inesperada`, response);
             }
+
+            // 3) Guardar en caché si hay datos
+            try {
+                if (Array.isArray(valores) && valores.length >= 0) {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(valores));
+                    localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+                    console.log(`💾 DEBUG: getValoresDominio - Caché actualizada para ${nombreDominio} (${valores.length} valores)`);
+                }
+            } catch (e) {
+                console.warn(`⚠️ DEBUG: getValoresDominio - No se pudo escribir caché para ${nombreDominio}:`, e);
+            }
+
+            return valores;
         } catch (error) {
             console.error(`❌ DEBUG: getValoresDominio - Error para ${nombreDominio}:`, error);
+            // Si hay error de red, intentar devolver caché aunque esté expirada
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (raw) {
+                    console.log(`💾 DEBUG: getValoresDominio - Devolviendo caché (expirada) para ${nombreDominio}`);
+                    return JSON.parse(raw);
+                }
+            } catch {}
             throw error;
         }
     }
