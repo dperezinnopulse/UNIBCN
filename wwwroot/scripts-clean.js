@@ -539,7 +539,16 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
 async function cargarDominios() {
     try {
         console.log('🚀 DEBUG: cargarDominios - Iniciando carga de dominios...');
-        
+        if (window.__cargarDominiosInFlight) {
+            console.log('⏭️ DEBUG: cargarDominios - Llamada ignorada (ya en curso)');
+            return;
+        }
+        if (window.__dominiosCargados) {
+            console.log('⏭️ DEBUG: cargarDominios - Llamada ignorada (ya cargados)');
+            return;
+        }
+        window.__cargarDominiosInFlight = true;
+
         const dominiosACargar = [
             { elementId: 'tipoActividad', dominio: 'TIPOS_ACTIVIDAD' },
             { elementId: 'lineaEstrategica', dominio: 'LINEAS_ESTRATEGICAS' },
@@ -549,19 +558,16 @@ async function cargarDominios() {
             { elementId: 'inscripcionModalidad', dominio: 'MODALIDAD_IMPARTICION' },
             { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
             { elementId: 'imp_tipo', dominio: 'TIPOS_IMPUESTO' },
-            // { elementId: 'actividadUnidadGestion', dominio: 'UNIDADES_GESTION' }, // Cargado por función específica
             { elementId: 'centroTrabajoRequerido', dominio: 'OPCIONES_SI_NO' },
             { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
             { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
             { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' },
-            // NUEVOS DOMINIOS - CAMPOS CONVERTIDOS A SELECT
             { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
             { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
             { elementId: 'gestorActividad', dominio: 'GESTORES_ACTIVIDAD' },
             { elementId: 'facultadDestinataria', dominio: 'FACULTADES_DESTINATARIAS' },
             { elementId: 'departamentoDestinatario', dominio: 'DEPARTAMENTOS_DESTINATARIOS' },
             { elementId: 'coordinadorCentreUnitat', dominio: 'COORDINADORES_CENTRE_UNITAT_IDP' },
-            // NUEVOS DOMINIOS
             { elementId: 'asignaturaId', dominio: 'Asignatura' },
             { elementId: 'disciplinaRelacionadaId', dominio: 'DisciplinaRelacionada' },
             { elementId: 'idiomaImparticionId', dominio: 'IdiomaImparticion' },
@@ -579,95 +585,34 @@ async function cargarDominios() {
         let dominiosCargados = 0;
         let elementosNoEncontrados = [];
 
-        for (const item of dominiosACargar) {
-            console.log(`🔍 DEBUG: cargarDominios - Procesando dominio: ${item.dominio} para elemento: ${item.elementId}`);
-            
-            // Intentar encontrar el elemento con múltiples intentos
-            let select = null;
-            let attempts = 0;
-            const maxAttempts = 3;
-            
-            while (!select && attempts < maxAttempts) {
-                attempts++;
-                select = document.getElementById(item.elementId);
-                if (!select) {
-                    console.log(`⏳ DEBUG: cargarDominios - Elemento ${item.elementId} no encontrado en intento ${attempts}, esperando...`);
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } else {
-                    console.log(`✅ DEBUG: cargarDominios - Elemento encontrado en intento ${attempts}: ${item.elementId}`);
-                }
-            }
-            
-            if (!select) {
-                console.warn(`⚠️ DEBUG: cargarDominios - Elemento no encontrado después de ${maxAttempts} intentos: ${item.elementId}`);
-                elementosNoEncontrados.push(item.elementId);
-                continue;
-            }
-            
-            elementosEncontrados++;
-            console.log(`✅ DEBUG: cargarDominios - Elemento encontrado: ${item.elementId}`, select);
-            console.log(`🔍 DEBUG: cargarDominios - Cargando ${item.dominio} en ${item.elementId}`);
-            
-            // Verificar estado del select antes de cargar
-            console.log(`📊 DEBUG: cargarDominios - Estado del select antes de cargar:`, {
-                id: select.id,
-                options: select.options.length,
-                innerHTML: select.innerHTML.substring(0, 100) + '...'
-            });
-            
-            // ESPECÍFICO para actividadUnidadGestion
-            if (item.elementId === 'actividadUnidadGestion') {
-                console.log(`🎯 DEBUG: cargarDominios - PROCESANDO actividadUnidadGestion específicamente`);
-                console.log(`🎯 DEBUG: cargarDominios - Elemento DOM:`, select);
-                console.log(`🎯 DEBUG: cargarDominios - ID del elemento:`, select.id);
-                console.log(`🎯 DEBUG: cargarDominios - Clases del elemento:`, select.className);
-            }
-            
-            try {
-                await loadValoresDominio(item.elementId, item.dominio);
-                dominiosCargados++;
-                
-                // Verificar estado del select después de cargar
-                console.log(`📊 DEBUG: cargarDominios - Estado del select después de cargar:`, {
-                    id: select.id,
-                    options: select.options.length,
-                    innerHTML: select.innerHTML.substring(0, 100) + '...'
-                });
-                
-                // ESPECÍFICO para actividadUnidadGestion
-                if (item.elementId === 'actividadUnidadGestion') {
-                    console.log(`🎯 DEBUG: cargarDominios - DESPUÉS de cargar actividadUnidadGestion`);
-                    console.log(`🎯 DEBUG: cargarDominios - Opciones después de cargar:`, select.options.length);
-                    console.log(`🎯 DEBUG: cargarDominios - HTML después de cargar:`, select.innerHTML);
-                }
-                
-            } catch (error) {
-                console.error(`❌ DEBUG: cargarDominios - Error cargando ${item.dominio}:`, error);
-            }
-        }
-        
+        // Filtrar solo los selects presentes para evitar esperas con retries
+        const itemsPresentes = dominiosACargar.filter(item => {
+            const el = document.getElementById(item.elementId);
+            if (!el) { elementosNoEncontrados.push(item.elementId); return false; }
+            elementosEncontrados++; return true;
+        });
+
+        // Cargar todos los dominios presentes en paralelo
+        await Promise.allSettled(itemsPresentes.map(item =>
+            loadValoresDominio(item.elementId, item.dominio).then(() => { dominiosCargados++; })
+        ));
+
         console.log(`✅ DEBUG: cargarDominios - Completado. ${dominiosCargados} dominios cargados, ${elementosNoEncontrados.length} elementos no encontrados`);
         if (elementosNoEncontrados.length > 0) {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
-        
-        // Cargar unidades de gestión directamente desde la tabla
+
         await cargarUnidadesGestion();
-        
-        // Auto-seleccionar unidad gestora después de cargar todos los dominios
         await autoSeleccionarUnidadGestion();
-        
-        // Auto-rellenar persona solicitante con el nombre del usuario
         await autoRellenarPersonaSolicitante();
-        
-        // Cargar roles de participantes
         await cargarRolesParticipantes();
-        
-        // Cargar modalidades de subactividades
         await cargarModalidadesSubactividades();
-        
+
+        window.__dominiosCargados = true;
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
+    } finally {
+        window.__cargarDominiosInFlight = false;
     }
 }
 
