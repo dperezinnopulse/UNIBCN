@@ -4,6 +4,16 @@
 // Usar same-origin para app integrada (y compatible con proxy del WebServer)
 const API_BASE_URL = '';
 
+// Utilidades de rendimiento (medición sencilla)
+(function(){
+    if (!window.__perf) {
+        window.__perf = { marks: {}, measures: [] };
+    }
+    window.perfStart = function(name){ try { window.__perf.marks[name] = performance.now(); } catch {} };
+    window.perfEnd = function(name){ try { const t0 = window.__perf.marks[name]; if (t0!=null){ const dt = performance.now()-t0; window.__perf.measures.push({ name, ms: Math.round(dt) }); delete window.__perf.marks[name]; } } catch {} };
+    window.dumpPerf = function(){ try { const list = (window.__perf.measures||[]).slice().sort((a,b)=>b.ms-a.ms); console.error('⏱️ PERF (ms):', list); return list; } catch { return []; } };
+})();
+
 // Clase principal para manejar las operaciones de la API
 class UBActividadAPI {
     constructor() {
@@ -126,6 +136,7 @@ class UBActividadAPI {
         const CACHE_TS_KEY = `dominio_cache_${nombreDominio}_ts`;
         const TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
         try {
+            perfStart(`dominio:${nombreDominio}`);
             // 1) Intentar leer de caché válida
             try {
                 const raw = localStorage.getItem(CACHE_KEY);
@@ -133,6 +144,7 @@ class UBActividadAPI {
                 if (raw && ts && (Date.now() - ts) < TTL_MS) {
                     const cached = JSON.parse(raw);
                     if (Array.isArray(cached)) {
+                        perfEnd(`dominio:${nombreDominio}`);
                         console.log(`💾 DEBUG: getValoresDominio - Usando caché para ${nombreDominio} con ${cached.length} valores (edad ${(Date.now()-ts)/1000}s)`);
                         return cached;
                     }
@@ -163,7 +175,7 @@ class UBActividadAPI {
             } catch (e) {
                 console.warn(`⚠️ DEBUG: getValoresDominio - No se pudo escribir caché para ${nombreDominio}:`, e);
             }
-
+            perfEnd(`dominio:${nombreDominio}`);
             return valores;
         } catch (error) {
             console.error(`❌ DEBUG: getValoresDominio - Error para ${nombreDominio}:`, error);
@@ -592,12 +604,16 @@ async function cargarDominios() {
             elementosEncontrados++; return true;
         });
 
+        perfStart('dominios:paralelo');
+
         // Cargar todos los dominios presentes en paralelo
         await Promise.allSettled(itemsPresentes.map(item =>
             loadValoresDominio(item.elementId, item.dominio).then(() => { dominiosCargados++; })
         ));
 
+        perfEnd('dominios:paralelo');
         console.log(`✅ DEBUG: cargarDominios - Completado. ${dominiosCargados} dominios cargados, ${elementosNoEncontrados.length} elementos no encontrados`);
+        dumpPerf();
         if (elementosNoEncontrados.length > 0) {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
