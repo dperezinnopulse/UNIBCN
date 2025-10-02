@@ -635,9 +635,11 @@ function toggleImporte() {
     // Cargar idiomas en el select de idioma (esperar a que función esté definida)
     (function waitIdiomas(){
       if (typeof cargarIdiomasEnSelectCrear === 'function') {
-        cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`);
+        try { cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`); } catch {}
       } else {
-        setTimeout(waitIdiomas, 50);
+        // Evitar bucle infinito; dejar idioma por defecto si no está lista en 1s
+        if (!window.__idiomasWaitStart) window.__idiomasWaitStart = Date.now();
+        if (Date.now() - window.__idiomasWaitStart < 1000) setTimeout(waitIdiomas, 50);
       }
     })();
     

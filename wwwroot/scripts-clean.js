@@ -2051,6 +2051,7 @@ async function cargarUnidadesGestion() {
     try {
         if (window.__unidadesGestionLoaded) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya cargado (skip)'); return; }
         if (window.__unidadesGestionStarted) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya iniciado (skip)'); return; }
+        try { if (window.__dominiosDoneTs && (performance.now() - window.__dominiosDoneTs) > 1000) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ventana tardía, skip'); return; } } catch {}
         window.__unidadesGestionStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarUnidadesGestion tardío'); console.trace(); } } catch {}
         const element = document.getElementById('actividadUnidadGestion');
