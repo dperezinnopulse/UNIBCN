@@ -148,7 +148,27 @@
 <div class="col-md-3"><label class="form-label">Nº de plazas</label><input class="form-control" id="insc_plazas" min="0" step="1" type="number" inputmode="numeric"/></div>
 <div class="col-md-3"><label class="form-label d-block">Lista de espera</label><div class="form-check form-switch"><input class="form-check-input" id="insc_lista_espera" type="checkbox"/><label class="form-check-label" for="insc_lista_espera">Activar</label></div></div>
 <div class="col-md-4"><label class="form-label">Modalidad</label><select class="form-select" id="insc_modalidad"><option value="">Selecciona</option></select></div>
-<div class="col-12"><label class="form-label">Requisitos</label><textarea class="form-control" id="insc_requisitos_es" rows="2"></textarea></div>
+<div class="col-12 position-relative">
+<label class="form-label">Requisitos</label>
+<div class="input-group">
+<textarea class="form-control" id="insc_requisitos_es" placeholder="Requisitos (ES)" rows="2"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+  <div class="i18n-row mb-2" data-lang="ca">
+    <small class="text-muted">Català</small>
+    <textarea class="form-control" id="insc_requisitos_ca" placeholder="Requisits (CA)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row mb-2" data-lang="es">
+    <small class="text-muted">Castellano</small>
+    <textarea class="form-control" id="insc_requisitos_es_dup" placeholder="Requisitos (ES)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row" data-lang="en">
+    <small class="text-muted">English</small>
+    <textarea class="form-control" id="insc_requisitos_en" placeholder="Requirements (EN)" rows="2"></textarea>
+  </div>
+</div>
+</div>
 <div class="col-md-3"><label class="form-label">Fecha Límite de Pago</label><input class="form-control" id="fechaLimitePago" type="date"/></div>
 <div class="col-md-3"><label class="form-label d-block">TPV</label><div class="form-check form-switch"><input class="form-check-input" id="tpv" type="checkbox"/><label class="form-check-label" for="tpv">Activar</label></div></div>
 <div class="col-md-3"><label class="form-label">Remesa</label><select class="form-select" id="remesa"><option value="">Selecciona</option></select></div>
