@@ -769,11 +769,12 @@ async function cargarDominios() {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
 
-        await cargarUnidadesGestion();
-        await autoSeleccionarUnidadGestion();
-        await autoRellenarPersonaSolicitante();
-        await cargarRolesParticipantes();
-        await cargarModalidadesSubactividades();
+        // Desacoplar cargas auxiliares: lanzar en paralelo y no bloquear cargarDominios
+        try { setTimeout(() => { cargarUnidadesGestion(); }, 0); } catch {}
+        try { setTimeout(() => { autoSeleccionarUnidadGestion(); }, 0); } catch {}
+        try { setTimeout(() => { autoRellenarPersonaSolicitante(); }, 0); } catch {}
+        try { setTimeout(() => { cargarRolesParticipantes(); }, 0); } catch {}
+        try { setTimeout(() => { cargarModalidadesSubactividades(); }, 0); } catch {}
 
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
