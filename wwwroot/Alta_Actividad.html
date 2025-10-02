@@ -556,9 +556,17 @@ function mostrarTraduccion(elemento) {
         try { showPageError(`Error guardando (HTTP ${res.status} ${res.statusText})`, bodyJson? JSON.stringify(bodyJson, null, 2) : (bodyText||'(sin cuerpo)')); } catch {}
         throw new Error(`HTTP ${res.status} ${res.statusText}`);
       }
-      const data = await res.json();
+      let data = null; let txt = '';
+      try {
+        const ct = (res.headers.get('content-type')||'').toLowerCase();
+        if (ct.includes('application/json')) { data = await res.json(); }
+        else { txt = await res.text().catch(()=> ''); }
+      } catch { try { txt = await res.text().catch(()=> ''); } catch {} }
       alert('Actividad creada correctamente');
-      try { window.location.href = `editar-actividad.html?id=${data.id||data.Id}`; } catch {}
+      const newId = data?.id || data?.Id;
+      if (newId) {
+        try { window.location.href = `editar-actividad.html?id=${newId}`; } catch {}
+      }
     } catch(err){ console.error(err); alert('Error guardando actividad: '+err.message); }
   }
   document.addEventListener('DOMContentLoaded', function(){
