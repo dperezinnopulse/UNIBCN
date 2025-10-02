@@ -60,7 +60,18 @@
 <h2 class="h5 mb-4 text-primary">Información general</h2>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" id="actividadCodigo" type="text"/></div>
-<div class="col-md-4"><label class="form-label">Título de la actividad</label><input class="form-control" id="actividadTitulo" type="text" required/></div>
+<div class="col-md-4 position-relative">
+<label class="form-label">Título de la actividad</label>
+<div class="input-group">
+<input class="form-control" id="actividadTitulo" type="text" required/>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion bg-light p-3 rounded border mt-2 d-none">
+<label class="form-label mt-1">Catalán</label><input class="form-control mb-1" id="actividadTituloCA" type="text"/>
+<label class="form-label">Castellano</label><input class="form-control mb-1" id="actividadTituloES" type="text"/>
+<label class="form-label">Inglés</label><input class="form-control" id="actividadTituloEN" type="text"/>
+</div>
+</div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label" for="actividadUnidadGestion">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion" required><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Unidad gestora detalle</label><select class="form-select" id="unidadGestoraDetalle"><option value="">Selecciona</option></select></div>
@@ -321,6 +332,15 @@
       try { cargarDominiosAlta(); } catch(e) { console.error(e); }
     });
   })();
+</script>
+
+<script>
+function mostrarTraduccion(elemento) {
+  const root = elemento.closest('.position-relative');
+  if (!root) return;
+  const panel = root.querySelector('.traduccion');
+  if (panel) panel.classList.toggle('d-none');
+}
 </script>
 
 <!-- Helper de traducción eliminado (volveremos a añadirlo campo a campo cuando lo indiques) -->
