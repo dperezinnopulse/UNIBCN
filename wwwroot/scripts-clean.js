@@ -789,14 +789,9 @@ async function cargarRolesParticipantes() {
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarRolesParticipantes tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
         
-        // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
-        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
-        if (!response.ok) {
-            console.error('❌ Error obteniendo roles de participantes:', response.status);
-            return;
-        }
-        
-        const roles = await response.json();
+        // Obtener valores cacheados del dominio TIPOS_PARTICIPANTE_ROL
+        const resp = await getValoresDominio('TIPOS_PARTICIPANTE_ROL');
+        const roles = resp?.valores || resp || [];
         console.log('📊 DEBUG: cargarRolesParticipantes - Roles obtenidos:', roles);
         
         // Función para poblar un select con roles
@@ -825,9 +820,7 @@ async function cargarRolesParticipantes() {
         const selectsRol = document.querySelectorAll('select[id*="_rol"]');
         console.log(`🔍 DEBUG: cargarRolesParticipantes - Encontrados ${selectsRol.length} selects de rol`);
         
-        selectsRol.forEach(select => {
-            poblarSelectRoles(select);
-        });
+        selectsRol.forEach(select => { poblarSelectRoles(select); });
         
         console.log('✅ DEBUG: cargarRolesParticipantes - Completado');
         window.__rolesLoaded = true;
@@ -844,14 +837,9 @@ async function cargarModalidadesSubactividades() {
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarModalidadesSubactividades tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
         
-        // Obtener valores del dominio MODALIDAD_IMPARTICION
-        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/MODALIDAD_IMPARTICION/valores`);
-        if (!response.ok) {
-            console.error('❌ Error obteniendo modalidades de impartición:', response.status);
-            return;
-        }
-        
-        const modalidades = await response.json();
+        // Obtener valores cacheados del dominio MODALIDAD_IMPARTICION
+        const resp = await getValoresDominio('MODALIDAD_IMPARTICION');
+        const modalidades = resp?.valores || resp || [];
         console.log('📊 DEBUG: cargarModalidadesSubactividades - Modalidades obtenidas:', modalidades);
         
         // Función para poblar un select con modalidades
