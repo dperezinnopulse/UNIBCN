@@ -785,6 +785,7 @@ async function cargarDominios() {
 async function cargarRolesParticipantes() {
     try {
         if (window.__rolesLoaded) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya cargado (skip)'); return; }
+        try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarRolesParticipantes tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
         
         // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
@@ -839,6 +840,7 @@ async function cargarRolesParticipantes() {
 async function cargarModalidadesSubactividades() {
     try {
         if (window.__modalidadesLoaded) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya cargado (skip)'); return; }
+        try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarModalidadesSubactividades tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
         
         // Obtener valores del dominio MODALIDAD_IMPARTICION
@@ -1336,6 +1338,8 @@ async function cambiarEstado(actividadId, nuevoEstadoId) {
 
 // Función para inicializar la página
 async function initializePage() {
+    if (window.__initializePageRan) { console.log('⏭️ DEBUG: initializePage - ya ejecutado (skip)'); return; }
+    window.__initializePageRan = true;
     console.log('🚀 DEBUG: initializePage - Versión del script: scripts.js?v=1.0.6');
     console.log('🚀 DEBUG: initializePage - Iniciando inicialización de la página...');
     
@@ -2050,6 +2054,7 @@ async function getValoresDominio(nombreDominio) {
 async function cargarUnidadesGestion() {
     try {
         if (window.__unidadesGestionLoaded) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya cargado (skip)'); return; }
+        try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarUnidadesGestion tardío'); console.trace(); } } catch {}
         const element = document.getElementById('actividadUnidadGestion');
         if (!element) {
             console.log('⚠️ Elemento actividadUnidadGestion no encontrado');
@@ -4563,6 +4568,7 @@ async function cargarIdiomasEnSelectCrear(selectId) {
     try {
         const select = document.getElementById(selectId);
         if (!select) return;
+        try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarIdiomasEnSelectCrear tardío'); console.trace(); } } catch {}
         if (window.__idiomasCache) {
             while (select.children.length > 1) { select.removeChild(select.lastChild); }
             window.__idiomasCache.forEach(idioma => {

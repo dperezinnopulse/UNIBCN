@@ -632,10 +632,8 @@ function toggleImporte() {
     div.querySelector('[data-del]').addEventListener('click', ()=> div.remove());
     div.querySelector('[data-dup]').addEventListener('click', ()=> subCont && subCont.appendChild(subCard()));
     
-    // Cargar idiomas en el select de idioma
-    setTimeout(() => {
-        cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`);
-    }, 100);
+    // Cargar idiomas en el select de idioma (sin delay, con cache interna)
+    cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`);
     
     return div;
   }
