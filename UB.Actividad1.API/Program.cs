@@ -100,6 +100,10 @@ app.UseCors("AllowAll");
 // Middleware para logging detallado de requests (solo en desarrollo)
 if (app.Environment.IsDevelopment())
 {
+    // Asegurar carpeta de logs local
+    string devLogsDir = Path.Combine(app.Environment.ContentRootPath, "logs");
+    try { if (!Directory.Exists(devLogsDir)) Directory.CreateDirectory(devLogsDir); } catch {}
+
     app.Use(async (context, next) =>
     {
         Console.WriteLine($"🔍 REQUEST: {context.Request.Method} {context.Request.Path}");
@@ -111,9 +115,22 @@ if (app.Environment.IsDevelopment())
             var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
             context.Request.Body.Position = 0;
             Console.WriteLine($"🔍 Body: {body}");
+            try
+            {
+                var reqLog = $"{DateTime.UtcNow:o} REQUEST {context.Request.Method} {context.Request.Path}\nHeaders: {string.Join(", ", context.Request.Headers.Select(h => $"{h.Key}: {h.Value}"))}\nBody: {body}\n";
+                await File.AppendAllTextAsync(Path.Combine(devLogsDir, "dev-requests.log"), reqLog + "----\n");
+            }
+            catch {}
         }
         
         await next();
+
+        try
+        {
+            var respLog = $"{DateTime.UtcNow:o} RESPONSE {context.Request.Method} {context.Request.Path} -> {context.Response.StatusCode}\n";
+            await File.AppendAllTextAsync(Path.Combine(devLogsDir, "dev-requests.log"), respLog + "----\n");
+        }
+        catch {}
     });
 }
 
@@ -130,6 +147,13 @@ app.Use(async (context, next) =>
         Console.WriteLine($"   Mensaje: {ex.Message}");
         Console.WriteLine($"   Stack Trace: {ex.StackTrace}");
         Console.WriteLine($"   Inner Exception: {ex.InnerException?.Message}");
+        try
+        {
+            string devLogsDir = Path.Combine(app.Environment.ContentRootPath, "logs");
+            var errText = $"{DateTime.UtcNow:o} EXCEPTION {context.Request.Method} {context.Request.Path}\nMensaje: {ex.Message}\nStack: {ex.StackTrace}\nInner: {ex.InnerException?.Message}\n----\n";
+            await File.AppendAllTextAsync(Path.Combine(devLogsDir, "dev-errors.log"), errText);
+        }
+        catch {}
         
         context.Response.StatusCode = 500;
         await context.Response.WriteAsync($"Error interno del servidor: {ex.Message}");
