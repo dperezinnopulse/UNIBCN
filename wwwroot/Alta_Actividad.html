@@ -42,6 +42,7 @@
 <div id="headerContainer"></div>
 
 <main class="p-4">
+<div id="alertContainer" class="mb-3"></div>
 <div class="bg-white rounded shadow p-3 mb-3" id="cabeceraPropuesta">
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
 <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -467,6 +468,17 @@ function mostrarTraduccion(elemento) {
 <script>
 // Guardado básico (solo sección Información general)
 (function(){
+  function escapeHtml(str){
+    try { return String(str).replace(/[&<>"]g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); } catch { return String(str); }
+  }
+  function showPageError(title, details){
+    try {
+      const cont = document.getElementById('alertContainer');
+      if (!cont) return;
+      const pre = details ? `<pre class="mt-2 mb-0 small">${escapeHtml(details)}</pre>` : '';
+      cont.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>${escapeHtml(title)}</strong>${pre}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+    } catch {}
+  }
   function toIso(value){ return value ? new Date(value).toISOString() : null; }
   function getVal(id){ const el=document.getElementById(id); return el? el.value?.trim():''; }
   function getInt(id){ const v=getVal(id); const n=parseInt(v,10); return isNaN(n)? null : n; }
@@ -540,6 +552,7 @@ function mostrarTraduccion(elemento) {
           if (bodyJson) { console.log('Response JSON:', bodyJson); } else { console.log('Response body:', bodyText); }
           console.groupEnd();
         } catch {}
+        try { showPageError(`Error guardando (HTTP ${res.status} ${res.statusText})`, bodyJson? JSON.stringify(bodyJson, null, 2) : (bodyText||'(sin cuerpo)')); } catch {}
         throw new Error(`HTTP ${res.status} ${res.statusText}`);
       }
       const data = await res.json();
