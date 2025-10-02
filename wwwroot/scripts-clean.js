@@ -769,12 +769,12 @@ async function cargarDominios() {
             console.warn(`⚠️ DEBUG: cargarDominios - Elementos no encontrados:`, elementosNoEncontrados);
         }
 
-        // Desacoplar cargas auxiliares: lanzar en paralelo y no bloquear cargarDominios
-        try { setTimeout(() => { cargarUnidadesGestion(); }, 0); } catch {}
-        try { setTimeout(() => { autoSeleccionarUnidadGestion(); }, 0); } catch {}
-        try { setTimeout(() => { autoRellenarPersonaSolicitante(); }, 0); } catch {}
-        try { setTimeout(() => { cargarRolesParticipantes(); }, 0); } catch {}
-        try { setTimeout(() => { cargarModalidadesSubactividades(); }, 0); } catch {}
+        // Ejecutar cargas auxiliares inmediatamente (con guardas internas de "once")
+        try { cargarUnidadesGestion(); } catch {}
+        try { autoSeleccionarUnidadGestion(); } catch {}
+        try { autoRellenarPersonaSolicitante(); } catch {}
+        try { cargarRolesParticipantes(); } catch {}
+        try { cargarModalidadesSubactividades(); } catch {}
 
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
@@ -787,6 +787,8 @@ async function cargarDominios() {
 async function cargarRolesParticipantes() {
     try {
         if (window.__rolesLoaded) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya cargado (skip)'); return; }
+        if (window.__rolesStarted) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya iniciado (skip)'); return; }
+        window.__rolesStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarRolesParticipantes tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
         
@@ -825,6 +827,7 @@ async function cargarRolesParticipantes() {
         
         console.log('✅ DEBUG: cargarRolesParticipantes - Completado');
         window.__rolesLoaded = true;
+        window.__rolesStarted = false;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarRolesParticipantes - Error:', error);
@@ -835,6 +838,8 @@ async function cargarRolesParticipantes() {
 async function cargarModalidadesSubactividades() {
     try {
         if (window.__modalidadesLoaded) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya cargado (skip)'); return; }
+        if (window.__modalidadesStarted) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya iniciado (skip)'); return; }
+        window.__modalidadesStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarModalidadesSubactividades tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
         
@@ -875,6 +880,7 @@ async function cargarModalidadesSubactividades() {
         
         console.log('✅ DEBUG: cargarModalidadesSubactividades - Completado');
         window.__modalidadesLoaded = true;
+        window.__modalidadesStarted = false;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarModalidadesSubactividades - Error:', error);
@@ -2044,6 +2050,8 @@ async function getValoresDominio(nombreDominio) {
 async function cargarUnidadesGestion() {
     try {
         if (window.__unidadesGestionLoaded) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya cargado (skip)'); return; }
+        if (window.__unidadesGestionStarted) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya iniciado (skip)'); return; }
+        window.__unidadesGestionStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarUnidadesGestion tardío'); console.trace(); } } catch {}
         const element = document.getElementById('actividadUnidadGestion');
         if (!element) {
@@ -2098,6 +2106,7 @@ async function cargarUnidadesGestion() {
         
         console.log('✅ DEBUG: cargarUnidadesGestion - Select llenado con', unidades.length, 'opciones');
         window.__unidadesGestionLoaded = true;
+        window.__unidadesGestionStarted = false;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarUnidadesGestion - Error:', error);
