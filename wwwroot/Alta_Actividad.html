@@ -562,10 +562,16 @@ function mostrarTraduccion(elemento) {
         if (ct.includes('application/json')) { data = await res.json(); }
         else { txt = await res.text().catch(()=> ''); }
       } catch { try { txt = await res.text().catch(()=> ''); } catch {} }
-      alert('Actividad creada correctamente');
-      const newId = data?.id || data?.Id;
-      if (newId) {
+      const loc = res.headers.get('location') || '';
+      const m = loc.match(/\/api\/actividades\/(\d+)/);
+      const newId = data?.id || data?.Id || (m ? m[1] : null);
+      if (res.status === 201 && newId) {
+        alert('Actividad creada correctamente');
         try { window.location.href = `editar-actividad.html?id=${newId}`; } catch {}
+      } else {
+        console.warn('⚠️ Guardado sin confirmación de ID', { status: res.status, headers: Object.fromEntries(res.headers.entries()), body: data||txt });
+        showPageError(`Guardado no confirmado (HTTP ${res.status})`, data? JSON.stringify(data,null,2) : (txt||'(respuesta vacía)'));
+        return;
       }
     } catch(err){ console.error(err); alert('Error guardando actividad: '+err.message); }
   }
