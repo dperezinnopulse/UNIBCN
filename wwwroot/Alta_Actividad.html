@@ -524,7 +524,24 @@ function mostrarTraduccion(elemento) {
         headers: { 'Content-Type':'application/json', 'Authorization': token? `Bearer ${token}`: undefined },
         body: JSON.stringify(cleaned)
       });
-      if (!res.ok){ const txt=await res.text(); throw new Error(`HTTP ${res.status}: ${txt}`); }
+      if (!res.ok){
+        let bodyText = '';
+        let bodyJson = null;
+        try { bodyText = await res.text(); } catch {}
+        try {
+          if (bodyText && (bodyText.trim().startsWith('{') || (res.headers.get('content-type')||'').includes('application/json'))){
+            bodyJson = JSON.parse(bodyText);
+          }
+        } catch {}
+        try {
+          console.groupCollapsed(`❌ Guardado fallido /api/actividades → HTTP ${res.status} ${res.statusText}`);
+          console.log('Payload enviado:', cleaned);
+          console.log('Response headers:', Object.fromEntries(res.headers.entries()));
+          if (bodyJson) { console.log('Response JSON:', bodyJson); } else { console.log('Response body:', bodyText); }
+          console.groupEnd();
+        } catch {}
+        throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      }
       const data = await res.json();
       alert('Actividad creada correctamente');
       try { window.location.href = `editar-actividad.html?id=${data.id||data.Id}`; } catch {}
