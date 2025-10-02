@@ -209,7 +209,7 @@
   });
 </script>
 
-<script src="scripts-clean.js?v=2.0"></script>
+<!-- Nota: No se incluye scripts-clean.js para evitar cualquier llamada al backend en esta página -->
 
 <!-- Estructuras para posterior rellenado y carga básica de dominios -->
 <script>
@@ -276,23 +276,29 @@
       });
     }
 
-    async function getDominio(nombre){
+    function getDominioDesdeCache(nombre){
       try {
-        if (typeof getValoresDominio === 'function') return await getValoresDominio(nombre);
-      } catch(e) { console.warn('getValoresDominio error', e); }
-      try {
-        const res = await fetch(`/api/dominios/${encodeURIComponent(nombre)}/valores`);
-        if (res.ok) return await res.json();
-      } catch(e) { console.warn('fetch dominio error', nombre, e); }
-      return [];
+        const raw = localStorage.getItem(`dominio_cache_${nombre}`);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
     }
 
     async function cargarDominiosAlta(){
+      // UG principal: estático para evitar backend
+      try {
+        const ug = document.getElementById('actividadUnidadGestion');
+        if (ug && ug.options.length <= 1) {
+          ['IDP','CRAI','SAE'].forEach(v => { const o=document.createElement('option'); o.value=v; o.textContent=v; ug.appendChild(o); });
+        }
+      } catch {}
+
       const presentes = map.filter(m => document.getElementById(m.elementId));
-      await Promise.allSettled(presentes.map(async m => {
-        const valores = await getDominio(m.dominio);
+      presentes.forEach(m => {
+        const valores = getDominioDesdeCache(m.dominio);
         setOptions(document.getElementById(m.elementId), valores);
-      }));
+      });
     }
 
     document.addEventListener('DOMContentLoaded', function(){
