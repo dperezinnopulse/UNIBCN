@@ -185,6 +185,7 @@
      * Inicializa la funcionalidad de campos específicos por UG
      */
     function initializeUGSpecificFields() {
+        try { perfStart('ug:init'); } catch {}
         console.log('🚀 Inicializando campos específicos por unidad gestora...');
 
         // Obtener la unidad gestora del usuario
@@ -228,11 +229,14 @@
             showUGSpecificFields(currentUserUG);
             applyUGStyles(currentUserUG);
             console.log(`🔒 Usuario no-Admin: bloqueando unidad gestora a ${currentUserUG}`);
+            try { perfStart('ug:preselect'); } catch {}
             preselectUserUG(currentUserUG);
+            try { perfEnd('ug:preselect'); } catch {}
             // Enlazar cambios por si varía (ej. cambio de sesión)
             bindUGSelect();
         }
         console.log('✅ Campos específicos por unidad gestora inicializados');
+        try { perfEnd('ug:init'); } catch {}
     }
 
     /**

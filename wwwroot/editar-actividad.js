@@ -955,6 +955,7 @@ function rellenarConDatosPrueba() {
 
 // ===== INICIALIZACIÓN =====
 async function initEditarActividad() {
+    try { perfStart('editar:init'); } catch {}
     try {
         Utils.log('Inicializando página de edición de actividad');
         
@@ -994,6 +995,7 @@ async function initEditarActividad() {
         // Marcar como inicializado
         globalState.initialized = true;
         Utils.log('Página de edición inicializada correctamente');
+        try { perfEnd('editar:init'); } catch {}
         
         // Cargar resumen de mensajes después de la inicialización
         setTimeout(() => {
@@ -1003,6 +1005,7 @@ async function initEditarActividad() {
     } catch (error) {
         Utils.error('Error inicializando página de edición', error);
         Utils.showAlert('error', 'Error inicializando la página: ' + error.message);
+        try { perfEnd('editar:init'); } catch {}
     }
 }
 

@@ -58,12 +58,87 @@ const API_BASE_URL = '';
                 } catch {}
             }
         }, true);
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const t = performance.now();
+                console.error(`⏱️ page:dom-ready @ ${Math.round(t)}ms`);
+            } catch {}
+        });
         window.addEventListener('load', () => {
             try {
                 const t = performance.now();
                 console.error(`⏱️ page:load @ ${Math.round(t)}ms (desde scriptStart ${Math.round(t-(window.__perf.scriptStart||0))}ms)`);
             } catch {}
         });
+    } catch {}
+})();
+
+// Wrappers de inicialización para medir tiempos de funciones globales
+(function(){
+    const tryWrap = (name) => {
+        try {
+            const g = window;
+            const orig = g[name];
+            if (typeof orig === 'function' && !orig.__wrapped) {
+                g[name] = async function wrappedInit(){
+                    const k = `init:${name}`;
+                    perfStart(k);
+                    const t0 = performance.now();
+                    try { return await orig.apply(this, arguments); }
+                    finally {
+                        perfEnd(k);
+                        const t1 = performance.now();
+                        console.error(`⏱️ ${name}:done @ ${Math.round(t1)}ms (dur=${Math.round(t1-t0)}ms, since dominios=${Math.round(t1-(window.__dominiosDoneTs||t0))}ms)`);
+                    }
+                };
+                g[name].__wrapped = true;
+            }
+        } catch {}
+    };
+    const poll = () => {
+        tryWrap('initEditarActividad');
+        tryWrap('initializeUGSpecificFields');
+        tryWrap('preselectUserUG');
+    };
+    try {
+        poll();
+        const id = setInterval(() => {
+            poll();
+            if (window.initEditarActividad && window.initializeUGSpecificFields) {
+                clearInterval(id);
+            }
+        }, 200);
+    } catch {}
+})();
+
+// Observador ligero de cambios en opciones de selects (para detectar cuándo quedan listos)
+(function(){
+    try {
+        const lastLens = new Map();
+        const logChange = (sel) => {
+            const len = sel.options ? sel.options.length : 0;
+            const prev = lastLens.get(sel) || -1;
+            if (len !== prev) {
+                lastLens.set(sel, len);
+                const t = performance.now();
+                const done = window.__dominiosDoneTs||t;
+                console.error(`⏱️ select:options '${sel.id||'(sin-id)'}' = ${len} @ ${Math.round(t)}ms (since dominios ${Math.round(t-done)}ms)`);
+            }
+        };
+        const observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.target && m.target.tagName === 'SELECT' && (m.addedNodes.length>0 || m.removedNodes.length>0)) {
+                    logChange(m.target);
+                }
+                // Cambios dentro del select (options añadidas)
+                if (m.type === 'childList' && m.target && m.target.tagName === 'SELECT') {
+                    logChange(m.target);
+                }
+            }
+        });
+        observer.observe(document.documentElement, { subtree: true, childList: true });
+        // Primer muestreo de selects existentes
+        Array.from(document.getElementsByTagName('select')).forEach(logChange);
     } catch {}
 })();
 
