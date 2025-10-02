@@ -209,7 +209,9 @@
   });
 </script>
 
-<!-- Estructuras para posterior rellenado (sin lógica de carga) -->
+<script src="scripts-clean.js?v=2.0"></script>
+
+<!-- Estructuras para posterior rellenado y carga básica de dominios -->
 <script>
   window.SelectIds = {
     static: [
@@ -228,6 +230,75 @@
     CRAI: ['asignaturaId','grupoAsignatura','disciplinaRelacionadaId','creditosTotalesCRAI'],
     SAE: ['creditosTotalesSAE','creditosMinimosSAE','creditosMaximosSAE','tipusEstudiSAE','categoriaSAE','competenciesSAE']
   };
+
+  (function(){
+    const map = [
+      { elementId: 'tipoActividad', dominio: 'TIPOS_ACTIVIDAD' },
+      { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
+      { elementId: 'lineaEstrategica', dominio: 'LINEAS_ESTRATEGICAS' },
+      { elementId: 'objetivoEstrategico', dominio: 'OBJETIVOS_ESTRATEGICOS' },
+      { elementId: 'actividadReservada', dominio: 'ACTIVIDADES_RESERVADAS' },
+      { elementId: 'jefeUnidadGestora', dominio: 'JEFES_UNIDAD_GESTORA' },
+      { elementId: 'gestorActividad', dominio: 'GESTORES_ACTIVIDAD' },
+      { elementId: 'facultadDestinataria', dominio: 'FACULTADES_DESTINATARIAS' },
+      { elementId: 'departamentoDestinatario', dominio: 'DEPARTAMENTOS_DESTINATARIOS' },
+      { elementId: 'centroUnidadUBDestinataria', dominio: 'CENTROS_UB' },
+      { elementId: 'modalidadGestion', dominio: 'MODALIDADES_GESTION' },
+      { elementId: 'estadoActividad', dominio: 'EstadoActividad' },
+      { elementId: 'asignaturaId', dominio: 'Asignatura' },
+      { elementId: 'disciplinaRelacionadaId', dominio: 'DisciplinaRelacionada' },
+      { elementId: 'idiomaImparticionId', dominio: 'IdiomaImparticion' },
+      { elementId: 'tiposCertificacionId', dominio: 'TiposCertificacion' },
+      { elementId: 'materiaDisciplinaId', dominio: 'MateriaDisciplina' },
+      { elementId: 'ambitoFormacionId', dominio: 'AmbitoFormacion' },
+      { elementId: 'tiposFinanciacionId', dominio: 'TiposFinanciacion' },
+      { elementId: 'denominacionDescuentoIds', dominio: 'DenominacionDescuento' },
+      { elementId: 'insc_modalidad', dominio: 'MODALIDADES_SUBACTIVIDAD' },
+      { elementId: 'remesa', dominio: 'Remesa' },
+      { elementId: 'tiposInscripcionId', dominio: 'TiposInscripcion' },
+      { elementId: 'tipusEstudiSAE', dominio: 'TIPUS_ESTUDI_SAE' },
+      { elementId: 'categoriaSAE', dominio: 'CATEGORIAS_SAE' },
+      { elementId: 'competenciesSAE', dominio: 'COMPETENCIAS_SAE' },
+      { elementId: 'subactividad_1_modalidad', dominio: 'MODALIDADES_SUBACTIVIDAD' },
+      { elementId: 'subactividad_1_idioma', dominio: 'IdiomaImparticion' },
+      { elementId: 'participante_1_rol', dominio: 'TIPOS_PARTICIPANTE_ROL' },
+    ];
+
+    function setOptions(select, valores){
+      if (!select) return;
+      const keepFirst = select.firstElementChild && select.firstElementChild.value === '';
+      while (select.options.length > (keepFirst?1:0)) select.remove(keepFirst?1:0);
+      (valores||[]).forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = (v.id ?? v.Id ?? '').toString();
+        opt.textContent = v.descripcion ?? v.Descripcion ?? v.nombre ?? v.Nombre ?? String(v.id ?? v.Id ?? '');
+        select.appendChild(opt);
+      });
+    }
+
+    async function getDominio(nombre){
+      try {
+        if (typeof getValoresDominio === 'function') return await getValoresDominio(nombre);
+      } catch(e) { console.warn('getValoresDominio error', e); }
+      try {
+        const res = await fetch(`/api/dominios/${encodeURIComponent(nombre)}/valores`);
+        if (res.ok) return await res.json();
+      } catch(e) { console.warn('fetch dominio error', nombre, e); }
+      return [];
+    }
+
+    async function cargarDominiosAlta(){
+      const presentes = map.filter(m => document.getElementById(m.elementId));
+      await Promise.allSettled(presentes.map(async m => {
+        const valores = await getDominio(m.dominio);
+        setOptions(document.getElementById(m.elementId), valores);
+      }));
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      try { cargarDominiosAlta(); } catch(e) { console.error(e); }
+    });
+  })();
 </script>
 
 <!-- Autenticación mínima (para cabecera) -->
