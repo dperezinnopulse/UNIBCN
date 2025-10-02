@@ -46,13 +46,12 @@
   <button class="ugOption" data-admin="roles"><span class="chip"></span>Roles</button>
 </div>`;
 
-  /**
-   * Inserta la cabecera en el elemento de destino y configura los menús.
-   * @param {string} containerId ID del contenedor donde se insertará la cabecera.
-   */
+  // Bandera para habilitar/deshabilitar Weglot (desactivado para mejorar rendimiento)
+  const ENABLE_WEGLOT = false;
+
   // Función para inicializar Weglot
   function initializeWeglot() {
-    // Cargar script de Weglot si no está cargado
+    if (!ENABLE_WEGLOT) return; // Desactivado por rendimiento
     if (!window.Weglot && !document.querySelector('script[src*="weglot.min.js"]')) {
       const script = document.createElement('script');
       script.type = 'text/javascript';
@@ -64,7 +63,6 @@
       };
       document.head.appendChild(script);
     } else if (window.Weglot) {
-      // Si ya está cargado, reinicializar
       Weglot.initialize({
         api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
       });
@@ -75,8 +73,7 @@
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = headerHTML;
-    
-    // Inicializar Weglot después de cargar el header
+    // Inicializar Weglot (opcional)
     setTimeout(initializeWeglot, 100);
     // Lógica de menús y selector de UG
     (function(){
