@@ -485,10 +485,10 @@ function mostrarTraduccion(elemento) {
   function toIso(value){ return value ? new Date(value).toISOString() : null; }
   function getVal(id){ const el=document.getElementById(id); return el? el.value?.trim():''; }
   function getInt(id){ const v=getVal(id); const n=parseInt(v,10); return isNaN(n)? null : n; }
-  function getBoolFromSelect(id){
-    const v=getVal(id).toLowerCase();
+  function getReservadaInt(id){
+    const v=(getVal(id)||'').toLowerCase();
     if (!v) return null;
-    return v==='1'||v==='true'||v==='s'||v==='si'||v==='sí';
+    return (v==='1'||v==='true'||v==='s'||v==='si'||v==='sí') ? 1 : 0;
   }
   async function guardarActividadAlta(){
     try {
@@ -509,7 +509,7 @@ function mostrarTraduccion(elemento) {
         LineaEstrategica: getVal('lineaEstrategica')||null,
         ObjetivoEstrategico: getVal('objetivoEstrategico')||null,
         CodigoRelacionado: getVal('codigoRelacionado')||null,
-        ActividadReservada: getBoolFromSelect('actividadReservada'),
+        ActividadReservada: getReservadaInt('actividadReservada'),
         FechaActividad: toIso(getVal('fechaActividad')),
         MotivoCierre: getVal('motivoCierre')||null,
         PersonaSolicitante: getVal('personaSolicitante')||null,
@@ -534,11 +534,9 @@ function mostrarTraduccion(elemento) {
       const cleaned={}; Object.entries(payload).forEach(([k,v])=>{ if(v!==null && v!==undefined && v!==''){ cleaned[k]=v; } });
 
       const token = sessionStorage.getItem('ub_token') || localStorage.getItem('ub_token') || '';
-      const res = await fetch('/api/actividades', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization': token? `Bearer ${token}`: undefined },
-        body: JSON.stringify(cleaned)
-      });
+      const headers = new Headers({ 'Content-Type':'application/json' });
+      if (token) headers.set('Authorization', `Bearer ${token}`);
+      const res = await fetch('/api/actividades', { method: 'POST', headers, body: JSON.stringify(cleaned) });
       if (!res.ok){
         let bodyText = '';
         let bodyJson = null;
