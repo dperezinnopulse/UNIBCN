@@ -23,6 +23,35 @@ const API_BASE_URL = '';
             return list;
         } catch { return []; }
     };
+
+    // Long Task observer (para detectar bloqueos del hilo >50ms)
+    try {
+        if ('PerformanceObserver' in window) {
+            const po = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    const ms = Math.round(entry.duration);
+                    // Registrar solo bloqueos relevantes
+                    if (ms >= 100) {
+                        console.error(`⛔ LONGTASK ${ms} ms @ ${Math.round(entry.startTime)}ms`);
+                    }
+                }
+            });
+            // Tipo de entrada 'longtask' (Chrome/Edge)
+            try { po.observe({ type: 'longtask', buffered: true }); } catch {}
+        }
+    } catch {}
+
+    // Medición al abrir selects (click/focus inicial)
+    try {
+        document.addEventListener('mousedown', (e) => {
+            const el = e.target;
+            if (el && el.tagName === 'SELECT') {
+                const key = `ui:select-open:${el.id||'(sin-id)'}`;
+                perfStart(key);
+                setTimeout(() => perfEnd(key), 0);
+            }
+        }, true);
+    } catch {}
 })();
 
 // Clase principal para manejar las operaciones de la API
