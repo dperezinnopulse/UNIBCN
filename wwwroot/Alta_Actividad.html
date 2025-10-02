@@ -402,11 +402,17 @@
     }
 
     async function cargarDominiosAlta(){
-      // UG principal: estático para evitar backend
+      // UG principal: estático para evitar backend (usar IDs 1/2/3)
       try {
         const ug = document.getElementById('actividadUnidadGestion');
         if (ug && ug.options.length <= 1) {
-          ['IDP','CRAI','SAE'].forEach(v => { const o=document.createElement('option'); o.value=v; o.textContent=v; ug.appendChild(o); });
+          const ugMap = { IDP: 1, CRAI: 2, SAE: 3 };
+          Object.entries(ugMap).forEach(([label, id]) => {
+            const o = document.createElement('option');
+            o.value = String(id);
+            o.textContent = label;
+            ug.appendChild(o);
+          });
         }
       } catch {}
 
