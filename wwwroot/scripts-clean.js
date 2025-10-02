@@ -134,6 +134,10 @@ const API_BASE_URL = '';
                 if (m.type === 'childList' && m.target && m.target.tagName === 'SELECT') {
                     logChange(m.target);
                 }
+                // También detectar cambios en children de un select si target es OPTION
+                if (m.type === 'childList' && m.target && m.target.parentElement && m.target.parentElement.tagName === 'SELECT') {
+                    logChange(m.target.parentElement);
+                }
             }
         });
         observer.observe(document.documentElement, { subtree: true, childList: true });

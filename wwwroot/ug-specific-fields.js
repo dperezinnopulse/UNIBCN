@@ -236,6 +236,7 @@
             bindUGSelect();
         }
         console.log('✅ Campos específicos por unidad gestora inicializados');
+        try { window.__ugInitialized = true; } catch {}
         try { perfEnd('ug:init'); } catch {}
     }
 

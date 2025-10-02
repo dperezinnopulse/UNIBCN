@@ -731,30 +731,23 @@ function toggleImporte() {
             setTimeout(updateResponsablePropuesta, 1500);
         });
 
-        // Script para cargar dominios después de que todo esté listo
+        // Script para cargar dominios y UG sin delays extra y evitando dobles
         window.addEventListener('load', function() {
-            console.log('🚀 Window load - Iniciando carga de dominios...');
-            
-            // Esperar un poco más para asegurar que todos los scripts estén cargados
-            setTimeout(function() {
+            console.log('🚀 Window load - Iniciando carga de dominios/UG (sin delays)...');
+            try {
                 if (typeof cargarDominios === 'function') {
-                    console.log('✅ Función cargarDominios encontrada, ejecutando...');
+                    console.log('✅ Ejecutando cargarDominios...');
                     cargarDominios();
                 } else {
                     console.error('❌ Función cargarDominios no encontrada');
                 }
-                
-                // Inicializar campos específicos por unidad gestora
-                setTimeout(function() {
-                    if (typeof window.initializeUGSpecificFields === 'function') {
-                        console.log('✅ Inicializando campos específicos por UG...');
-                        window.initializeUGSpecificFields();
-                    } else {
-                        console.warn('⚠️ Función initializeUGSpecificFields no encontrada');
-                    }
-                }, 1000);
-                
-            }, 2000);
+            } catch(e) { console.error(e); }
+            try {
+                if (!window.__ugInitialized && typeof window.initializeUGSpecificFields === 'function') {
+                    console.log('✅ Inicializando UG (una sola vez)...');
+                    window.initializeUGSpecificFields();
+                }
+            } catch(e) { console.warn(e); }
         });
     </script>
 </body>
