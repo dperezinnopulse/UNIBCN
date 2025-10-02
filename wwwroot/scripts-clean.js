@@ -9,6 +9,7 @@ const API_BASE_URL = '';
     if (!window.__perf) {
         window.__perf = { marks: {}, measures: [] };
     }
+    try { window.__perf.scriptStart = performance.now(); } catch {}
     window.perfStart = function(name){ try { window.__perf.marks[name] = performance.now(); } catch {} };
     window.perfEnd = function(name){ try { const t0 = window.__perf.marks[name]; if (t0!=null){ const dt = performance.now()-t0; window.__perf.measures.push({ name, ms: Math.round(dt) }); delete window.__perf.marks[name]; } } catch {} };
     window.dumpPerf = function(){
@@ -49,8 +50,20 @@ const API_BASE_URL = '';
                 const key = `ui:select-open:${el.id||'(sin-id)'}`;
                 perfStart(key);
                 setTimeout(() => perfEnd(key), 0);
+                // Tiempos relativos
+                try {
+                    const t = performance.now();
+                    const done = window.__dominiosDoneTs||t;
+                    console.error(`⏱️ UI select '${el.id}': t=${Math.round(t)}ms, since dominios=${Math.round(t-done)}ms`);
+                } catch {}
             }
         }, true);
+        window.addEventListener('load', () => {
+            try {
+                const t = performance.now();
+                console.error(`⏱️ page:load @ ${Math.round(t)}ms (desde scriptStart ${Math.round(t-(window.__perf.scriptStart||0))}ms)`);
+            } catch {}
+        });
     } catch {}
 })();
 
@@ -647,9 +660,18 @@ async function cargarDominios() {
         perfStart('dominios:paralelo');
 
         // Cargar todos los dominios presentes en paralelo
+        const t0 = performance.now();
         await Promise.allSettled(itemsPresentes.map(item =>
-            loadValoresDominio(item.elementId, item.dominio).then(() => { dominiosCargados++; })
+            (async () => {
+                const k = `dom:fill:${item.elementId}`;
+                perfStart(k);
+                await loadValoresDominio(item.elementId, item.dominio);
+                perfEnd(k);
+                dominiosCargados++;
+            })()
         ));
+        window.__dominiosDoneTs = performance.now();
+        console.error(`⏱️ dominios:done @ ${Math.round(window.__dominiosDoneTs)}ms (dur=${Math.round(window.__dominiosDoneTs-t0)}ms)`);
 
         perfEnd('dominios:paralelo');
         console.log(`✅ DEBUG: cargarDominios - Completado. ${dominiosCargados} dominios cargados, ${elementosNoEncontrados.length} elementos no encontrados`);
