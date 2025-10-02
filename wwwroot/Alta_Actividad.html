@@ -14,6 +14,12 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
 
 <link href="css/styles.css" rel="stylesheet"/>
+<style>
+/* Colores para campos específicos por UG */
+[data-ug="IDP"]{ border:1px solid #000000 !important; border-left:6px solid #0f172a; border-radius:10px; padding:12px; background:#f8fafc; }
+[data-ug="CRAI"]{ border:1px solid #93c5fd; border-left:6px solid #3b82f6; border-radius:10px; padding:12px; background:#eff6ff; }
+[data-ug="SAE"]{ border:1px solid #86efac; border-left:6px solid #10b981; border-radius:10px; padding:12px; background:#ecfdf5; }
+</style>
 </head>
 <body>
 <script>
@@ -54,9 +60,9 @@
 <h2 class="h5 mb-4 text-primary">Información general</h2>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" id="actividadCodigo" type="text"/></div>
-<div class="col-md-4"><label class="form-label">Título de la actividad</label><input class="form-control" id="actividadTitulo" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Título de la actividad</label><input class="form-control" id="actividadTitulo" type="text" required/></div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option value="">Selecciona</option></select></div>
-<div class="col-md-4"><label class="form-label" for="actividadUnidadGestion">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion"><option value="">Selecciona</option></select></div>
+<div class="col-md-4"><label class="form-label" for="actividadUnidadGestion">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion" required><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Unidad gestora detalle</label><select class="form-select" id="unidadGestoraDetalle"><option value="">Selecciona</option></select></div>
 <div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" id="descripcion" rows="3"></textarea></div>
 <div class="col-md-4"><label class="form-label">Año académico</label><input class="form-control" id="actividadAnioAcademico" placeholder="2025-2026" type="text"/></div>
@@ -66,7 +72,7 @@
 <div class="col-md-4"><label class="form-label">Actividad reservada</label><select class="form-select" id="actividadReservada"><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Fecha Cierre de actividad</label><input class="form-control" id="fechaActividad" type="date"/></div>
 <div class="col-md-4"><label class="form-label">Motivo de cierre</label><input class="form-control" id="motivoCierre" type="text"/></div>
-<div class="col-md-4"><label class="form-label">Persona solicitante</label><input class="form-control" id="personaSolicitante" type="text"/></div>
+<div class="col-md-4"><label class="form-label">Persona solicitante</label><input class="form-control" id="personaSolicitante" type="text" disabled/></div>
 <div class="col-md-4"><label class="form-label">Jefe/a unidad gestora</label><select class="form-select" id="jefeUnidadGestora"><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Gestor/a de la actividad</label><select class="form-select" id="gestorActividad"><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Facultad destinataria</label><select class="form-select" id="facultadDestinataria"><option value="">Selecciona</option></select></div>
@@ -232,6 +238,14 @@
   };
 
   (function(){
+    // Rellenar personaSolicitante con el usuario de sesión
+    try {
+      const userRaw = sessionStorage.getItem('ub_user');
+      if (userRaw) {
+        try { const user = JSON.parse(userRaw); const el = document.getElementById('personaSolicitante'); if (el) el.value = (user?.username || user?.name || ''); } catch {}
+      }
+    } catch {}
+
     const map = [
       { elementId: 'tipoActividad', dominio: 'TIPOS_ACTIVIDAD' },
       { elementId: 'unidadGestoraDetalle', dominio: 'SUBUNIDAD_GESTORA' },
