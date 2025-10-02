@@ -469,7 +469,10 @@ function mostrarTraduccion(elemento) {
 // Guardado básico (solo sección Información general)
 (function(){
   function escapeHtml(str){
-    try { return String(str).replace(/[&<>"]g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); } catch { return String(str); }
+    try {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String(str).replace(/[&<>"']/g, ch => map[ch]);
+    } catch { return String(str); }
   }
   function showPageError(title, details){
     try {
