@@ -10,10 +10,12 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar logging detallado para desarrollo
+// Configurar logging (con niveles por configuración y proveedores comunes)
 builder.Logging.ClearProviders();
+try { builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging")); } catch {}
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+try { builder.Logging.AddEventLog(); } catch {}
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 // Agregar servicios al contenedor
