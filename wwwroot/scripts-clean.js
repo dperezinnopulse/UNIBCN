@@ -683,6 +683,13 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
 async function cargarDominios() {
     try {
         console.log('🚀 DEBUG: cargarDominios - Iniciando carga de dominios...');
+        try {
+            const now = performance.now();
+            if (window.__dominiosStartTs && (now - window.__dominiosStartTs) > 1000) {
+                console.warn(`⏭️ DEBUG: cargarDominios - Reentrada tardía ignorada (since first ${Math.round(now - window.__dominiosStartTs)}ms)`);
+                return;
+            }
+        } catch {}
         if (window.__cargarDominiosInFlight) {
             console.log('⏭️ DEBUG: cargarDominios - Llamada ignorada (ya en curso)');
             return;
@@ -692,6 +699,7 @@ async function cargarDominios() {
             return;
         }
         window.__cargarDominiosInFlight = true;
+        try { window.__dominiosStartTs = performance.now(); } catch {}
 
         const dominiosACargar = [
             { elementId: 'tipoActividad', dominio: 'TIPOS_ACTIVIDAD' },
@@ -776,6 +784,7 @@ async function cargarDominios() {
 // Función para cargar roles de participantes desde el dominio TIPOS_PARTICIPANTE_ROL
 async function cargarRolesParticipantes() {
     try {
+        if (window.__rolesLoaded) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya cargado (skip)'); return; }
         console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
         
         // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
@@ -819,6 +828,7 @@ async function cargarRolesParticipantes() {
         });
         
         console.log('✅ DEBUG: cargarRolesParticipantes - Completado');
+        window.__rolesLoaded = true;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarRolesParticipantes - Error:', error);
@@ -828,6 +838,7 @@ async function cargarRolesParticipantes() {
 // Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
 async function cargarModalidadesSubactividades() {
     try {
+        if (window.__modalidadesLoaded) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya cargado (skip)'); return; }
         console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
         
         // Obtener valores del dominio MODALIDAD_IMPARTICION
@@ -871,6 +882,7 @@ async function cargarModalidadesSubactividades() {
         });
         
         console.log('✅ DEBUG: cargarModalidadesSubactividades - Completado');
+        window.__modalidadesLoaded = true;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarModalidadesSubactividades - Error:', error);
@@ -2037,6 +2049,7 @@ async function getValoresDominio(nombreDominio) {
 // Cargar unidades de gestión directamente desde la tabla UnidadesGestion
 async function cargarUnidadesGestion() {
     try {
+        if (window.__unidadesGestionLoaded) { console.log('⏭️ DEBUG: cargarUnidadesGestion - ya cargado (skip)'); return; }
         const element = document.getElementById('actividadUnidadGestion');
         if (!element) {
             console.log('⚠️ Elemento actividadUnidadGestion no encontrado');
@@ -2089,6 +2102,7 @@ async function cargarUnidadesGestion() {
         }
         
         console.log('✅ DEBUG: cargarUnidadesGestion - Select llenado con', unidades.length, 'opciones');
+        window.__unidadesGestionLoaded = true;
         
     } catch (error) {
         console.error('❌ DEBUG: cargarUnidadesGestion - Error:', error);
@@ -4549,10 +4563,22 @@ async function cargarIdiomasEnSelectCrear(selectId) {
     try {
         const select = document.getElementById(selectId);
         if (!select) return;
+        if (window.__idiomasCache) {
+            while (select.children.length > 1) { select.removeChild(select.lastChild); }
+            window.__idiomasCache.forEach(idioma => {
+                const option = document.createElement('option');
+                option.value = idioma.id || idioma.Id;
+                option.textContent = idioma.descripcion || idioma.Descripcion;
+                select.appendChild(option);
+            });
+            console.log('✅ DEBUG: cargarIdiomasEnSelectCrear - poblado desde cache');
+            return;
+        }
         
         const response = await fetch(`${API_BASE_URL}/api/dominios/IdiomaImparticion/valores`);
         if (response.ok) {
             const idiomas = await response.json();
+            window.__idiomasCache = idiomas;
             
             // Limpiar opciones existentes (excepto "Seleccionar...")
             while (select.children.length > 1) {
