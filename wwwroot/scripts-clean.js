@@ -758,6 +758,8 @@ async function cargarDominios() {
             })()
         ));
         window.__dominiosDoneTs = performance.now();
+        // Marcar dominios como cargados ANTES de cargas auxiliares para evitar reentradas
+        window.__dominiosCargados = true;
         console.error(`⏱️ dominios:done @ ${Math.round(window.__dominiosDoneTs)}ms (dur=${Math.round(window.__dominiosDoneTs-t0)}ms)`);
 
         perfEnd('dominios:paralelo');
@@ -773,7 +775,6 @@ async function cargarDominios() {
         await cargarRolesParticipantes();
         await cargarModalidadesSubactividades();
 
-        window.__dominiosCargados = true;
     } catch (error) {
         console.error('❌ DEBUG: cargarDominios - Error:', error);
     } finally {

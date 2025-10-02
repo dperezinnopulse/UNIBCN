@@ -632,8 +632,14 @@ function toggleImporte() {
     div.querySelector('[data-del]').addEventListener('click', ()=> div.remove());
     div.querySelector('[data-dup]').addEventListener('click', ()=> subCont && subCont.appendChild(subCard()));
     
-    // Cargar idiomas en el select de idioma (sin delay, con cache interna)
-    cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`);
+    // Cargar idiomas en el select de idioma (esperar a que función esté definida)
+    (function waitIdiomas(){
+      if (typeof cargarIdiomasEnSelectCrear === 'function') {
+        cargarIdiomasEnSelectCrear(`${subactividadId}_idioma`);
+      } else {
+        setTimeout(waitIdiomas, 50);
+      }
+    })();
     
     return div;
   }
