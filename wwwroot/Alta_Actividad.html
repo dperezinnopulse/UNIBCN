@@ -60,18 +60,7 @@
 <h2 class="h5 mb-4 text-primary">Información general</h2>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Código de la actividad</label><input class="form-control" id="actividadCodigo" type="text"/></div>
-<div class="col-md-4 position-relative">
-<label class="form-label">Título de la actividad</label>
-<div class="input-group">
-<input class="form-control" id="actividadTitulo" type="text" required/>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion bg-light p-3 rounded border mt-2 d-none">
-<label class="form-label mt-1">Catalán</label><input class="form-control mb-1" id="actividadTituloCA" type="text"/>
-<label class="form-label">Castellano</label><input class="form-control mb-1" id="actividadTituloES" type="text"/>
-<label class="form-label">Inglés</label><input class="form-control" id="actividadTituloEN" type="text"/>
-<\/div>
-<\/div>
+<div class="col-md-4"><label class="form-label">Título de la actividad</label><input class="form-control" id="actividadTitulo" type="text" required/></div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label" for="actividadUnidadGestion">Unidad gestora</label><select class="form-select" id="actividadUnidadGestion" required><option value="">Selecciona</option></select></div>
 <div class="col-md-4"><label class="form-label">Unidad gestora detalle</label><select class="form-select" id="unidadGestoraDetalle"><option value="">Selecciona</option></select></div>
@@ -119,17 +108,7 @@
 <div class="row g-3">
 <div class="col-md-3"><label class="form-label">Importe base (€)</label><input class="form-control" id="imp_base" min="0" step="0.01" type="number" inputmode="decimal"/></div>
 <div class="col-md-3"><label class="form-label">Descuento (%)</label><input class="form-control" id="imp_descuento_pct" max="100" min="0" step="1" type="number" inputmode="numeric"/></div>
-<div class="col-12 position-relative">
-<label class="form-label">Condiciones</label>
-<div class="input-group">
-<textarea class="form-control" id="imp_condiciones_es" rows="2"></textarea>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
-<div class="mb-2"><small class="text-muted">Català<\/small><textarea class="form-control" id="imp_condiciones_ca" placeholder="Condicions (CA)" rows="2"></textarea><\/div>
-<div><small class="text-muted">English<\/small><textarea class="form-control" id="imp_condiciones_en" placeholder="Terms (EN)" rows="2"></textarea><\/div>
-<\/div>
-<\/div>
+<div class="col-12"><label class="form-label">Condiciones</label><textarea class="form-control" id="imp_condiciones_es" rows="2"></textarea></div>
 </div>
 <div class="row g-3 mt-1">
 <div class="col-md-3"><label class="form-label">Coste estimado de la actividad (€)</label><input class="form-control" id="costeEstimadoActividad" min="0" step="0.01" type="number" inputmode="decimal"/></div>
@@ -149,17 +128,7 @@
 <div class="col-md-3"><label class="form-label">Nº de plazas</label><input class="form-control" id="insc_plazas" min="0" step="1" type="number" inputmode="numeric"/></div>
 <div class="col-md-3"><label class="form-label d-block">Lista de espera</label><div class="form-check form-switch"><input class="form-check-input" id="insc_lista_espera" type="checkbox"/><label class="form-check-label" for="insc_lista_espera">Activar</label></div></div>
 <div class="col-md-4"><label class="form-label">Modalidad</label><select class="form-select" id="insc_modalidad"><option value="">Selecciona</option></select></div>
-<div class="col-12 position-relative">
-<label class="form-label">Requisitos</label>
-<div class="input-group">
-<textarea class="form-control" id="insc_requisitos_es" placeholder="Requisitos (ES)" rows="2"></textarea>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
-<div class="mb-2"><small class="text-muted">Català<\/small><textarea class="form-control" id="insc_requisitos_ca" placeholder="Requisits (CA)" rows="2"></textarea><\/div>
-<div><small class="text-muted">English<\/small><textarea class="form-control" id="insc_requisitos_en" placeholder="Requirements (EN)" rows="2"></textarea><\/div>
-<\/div>
-<\/div>
+<div class="col-12"><label class="form-label">Requisitos</label><textarea class="form-control" id="insc_requisitos_es" rows="2"></textarea></div>
 <div class="col-md-3"><label class="form-label">Fecha Límite de Pago</label><input class="form-control" id="fechaLimitePago" type="date"/></div>
 <div class="col-md-3"><label class="form-label d-block">TPV</label><div class="form-check form-switch"><input class="form-check-input" id="tpv" type="checkbox"/><label class="form-check-label" for="tpv">Activar</label></div></div>
 <div class="col-md-3"><label class="form-label">Remesa</label><select class="form-select" id="remesa"><option value="">Selecciona</option></select></div>
@@ -171,39 +140,9 @@
 <section class="mb-5" id="seccion-programa">
 <h2 class="h5 mb-3 border-bottom pb-2">Programa</h2>
 <div class="row g-3">
-<div class="col-12 position-relative">
-<label class="form-label">Descripción</label>
-<div class="input-group">
-<textarea class="form-control" id="programa_descripcion_es" placeholder="Descripción (ES)" rows="3"></textarea>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
-<div class="mb-2"><small class="text-muted">Català<\/small><textarea class="form-control" id="programa_descripcion_ca" placeholder="Descripció (CA)" rows="2"></textarea><\/div>
-<div><small class="text-muted">English<\/small><textarea class="form-control" id="programa_descripcion_en" placeholder="Description (EN)" rows="2"></textarea><\/div>
-<\/div>
-<\/div>
-<div class="col-12 position-relative">
-<label class="form-label">Contenidos</label>
-<div class="input-group">
-<textarea class="form-control" id="programa_contenidos_es" placeholder="Contenidos (ES)" rows="3"></textarea>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
-<div class="mb-2"><small class="text-muted">Català<\/small><textarea class="form-control" id="programa_contenidos_ca" placeholder="Continguts (CA)" rows="2"></textarea><\/div>
-<div><small class="text-muted">English<\/small><textarea class="form-control" id="programa_contenidos_en" placeholder="Contents (EN)" rows="2"></textarea><\/div>
-<\/div>
-<\/div>
-<div class="col-12 position-relative">
-<label class="form-label">Objetivos</label>
-<div class="input-group">
-<textarea class="form-control" id="programa_objetivos_es" placeholder="Objetivos (ES)" rows="3"></textarea>
-<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
-<\/div>
-<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
-<div class="mb-2"><small class="text-muted">Català<\/small><textarea class="form-control" id="programa_objetivos_ca" placeholder="Objectius (CA)" rows="2"></textarea><\/div>
-<div><small class="text-muted">English<\/small><textarea class="form-control" id="programa_objetivos_en" placeholder="Objectives (EN)" rows="2"></textarea><\/div>
-<\/div>
-<\/div>
+<div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" id="programa_descripcion_es" rows="3"></textarea></div>
+<div class="col-12"><label class="form-label">Contenidos</label><textarea class="form-control" id="programa_contenidos_es" rows="3"></textarea></div>
+<div class="col-12"><label class="form-label">Objetivos</label><textarea class="form-control" id="programa_objetivos_es" rows="3"></textarea></div>
 <div class="col-md-4"><label class="form-label">Fecha de inicio</label><input class="form-control" id="programa_inicio" type="date"/></div>
 <div class="col-md-4"><label class="form-label">Fecha de fin</label><input class="form-control" id="programa_fin" type="date"/></div>
 <div class="col-md-4" data-ug="SAE"><label class="form-label">Tipus d'estudi (SAE)</label><select class="form-select" id="tipusEstudiSAE"><option value="">Selecciona</option></select></div>
@@ -384,12 +323,7 @@
   })();
 </script>
 
-<script>
-function mostrarTraduccion(elemento) {
-  const div = elemento.closest('.position-relative').querySelector('.traduccion');
-  if (div) div.classList.toggle('d-none');
-}
-</script>
+<!-- Helper de traducción eliminado (volveremos a añadirlo campo a campo cuando lo indiques) -->
 
 <!-- Autenticación mínima (para cabecera) -->
 <script src="auth.js?v=2.0"></script>
