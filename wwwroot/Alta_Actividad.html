@@ -67,9 +67,18 @@
 <span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
 </div>
 <div class="traduccion bg-light p-3 rounded border mt-2 d-none">
-<label class="form-label mt-1">Catalán</label><input class="form-control mb-1" id="actividadTituloCA" type="text"/>
-<label class="form-label">Castellano</label><input class="form-control mb-1" id="actividadTituloES" type="text"/>
-<label class="form-label">Inglés</label><input class="form-control" id="actividadTituloEN" type="text"/>
+<div class="i18n-row mb-2" data-lang="ca">
+  <label class="form-label mt-1">Catalán</label>
+  <input class="form-control" id="actividadTituloCA" type="text"/>
+</div>
+<div class="i18n-row mb-2" data-lang="es">
+  <label class="form-label">Castellano</label>
+  <input class="form-control" id="actividadTituloES" type="text"/>
+</div>
+<div class="i18n-row" data-lang="en">
+  <label class="form-label">Inglés</label>
+  <input class="form-control" id="actividadTituloEN" type="text"/>
+</div>
 </div>
 </div>
 <div class="col-md-4"><label class="form-label">Tipo de actividad</label><select class="form-select" id="tipoActividad"><option value="">Selecciona</option></select></div>
@@ -339,7 +348,28 @@ function mostrarTraduccion(elemento) {
   const root = elemento.closest('.position-relative');
   if (!root) return;
   const panel = root.querySelector('.traduccion');
-  if (panel) panel.classList.toggle('d-none');
+  if (!panel) return;
+  // Detectar idioma actual (Weglot o lang del documento)
+  let current = 'es';
+  try {
+    if (window.Weglot && typeof Weglot.getCurrentLang === 'function') {
+      current = Weglot.getCurrentLang();
+    } else {
+      const htmlLang = (document.documentElement.getAttribute('lang') || '').toLowerCase();
+      if (htmlLang) current = htmlLang.substring(0,2);
+    }
+  } catch {}
+  // Mostrar solo los otros idiomas
+  const rows = panel.querySelectorAll('.i18n-row');
+  rows.forEach(r => {
+    const lang = r.getAttribute('data-lang');
+    if (lang === current) {
+      r.classList.add('d-none');
+    } else {
+      r.classList.remove('d-none');
+    }
+  });
+  panel.classList.toggle('d-none');
 }
 </script>
 
