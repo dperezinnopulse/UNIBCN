@@ -180,9 +180,69 @@
 <section class="mb-5" id="seccion-programa">
 <h2 class="h5 mb-3 border-bottom pb-2">Programa</h2>
 <div class="row g-3">
-<div class="col-12"><label class="form-label">Descripción</label><textarea class="form-control" id="programa_descripcion_es" rows="3"></textarea></div>
-<div class="col-12"><label class="form-label">Contenidos</label><textarea class="form-control" id="programa_contenidos_es" rows="3"></textarea></div>
-<div class="col-12"><label class="form-label">Objetivos</label><textarea class="form-control" id="programa_objetivos_es" rows="3"></textarea></div>
+<div class="col-12 position-relative">
+<label class="form-label">Descripción</label>
+<div class="input-group">
+<textarea class="form-control" id="programa_descripcion_es" placeholder="Descripción (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+  <div class="i18n-row mb-2" data-lang="ca">
+    <small class="text-muted">Català</small>
+    <textarea class="form-control" id="programa_descripcion_ca" placeholder="Descripció (CA)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row mb-2" data-lang="es">
+    <small class="text-muted">Castellano</small>
+    <textarea class="form-control" id="programa_descripcion_es_dup" placeholder="Descripción (ES)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row" data-lang="en">
+    <small class="text-muted">English</small>
+    <textarea class="form-control" id="programa_descripcion_en" placeholder="Description (EN)" rows="2"></textarea>
+  </div>
+</div>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Contenidos</label>
+<div class="input-group">
+<textarea class="form-control" id="programa_contenidos_es" placeholder="Contenidos (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+  <div class="i18n-row mb-2" data-lang="ca">
+    <small class="text-muted">Català</small>
+    <textarea class="form-control" id="programa_contenidos_ca" placeholder="Continguts (CA)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row mb-2" data-lang="es">
+    <small class="text-muted">Castellano</small>
+    <textarea class="form-control" id="programa_contenidos_es_dup" placeholder="Contenidos (ES)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row" data-lang="en">
+    <small class="text-muted">English</small>
+    <textarea class="form-control" id="programa_contenidos_en" placeholder="Contents (EN)" rows="2"></textarea>
+  </div>
+</div>
+</div>
+<div class="col-12 position-relative">
+<label class="form-label">Objetivos</label>
+<div class="input-group">
+<textarea class="form-control" id="programa_objetivos_es" placeholder="Objetivos (ES)" rows="3"></textarea>
+<span class="input-group-text" onclick="mostrarTraduccion(this)" style="cursor:pointer;">🌐</span>
+</div>
+<div class="traduccion d-none position-absolute bg-white border rounded p-3 shadow" style="z-index:10; right:0; width: min(520px, 92vw);">
+  <div class="i18n-row mb-2" data-lang="ca">
+    <small class="text-muted">Català</small>
+    <textarea class="form-control" id="programa_objetivos_ca" placeholder="Objectius (CA)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row mb-2" data-lang="es">
+    <small class="text-muted">Castellano</small>
+    <textarea class="form-control" id="programa_objetivos_es_dup" placeholder="Objetivos (ES)" rows="2"></textarea>
+  </div>
+  <div class="i18n-row" data-lang="en">
+    <small class="text-muted">English</small>
+    <textarea class="form-control" id="programa_objetivos_en" placeholder="Objectives (EN)" rows="2"></textarea>
+  </div>
+</div>
+</div>
 <div class="col-md-4"><label class="form-label">Fecha de inicio</label><input class="form-control" id="programa_inicio" type="date"/></div>
 <div class="col-md-4"><label class="form-label">Fecha de fin</label><input class="form-control" id="programa_fin" type="date"/></div>
 <div class="col-md-4" data-ug="SAE"><label class="form-label">Tipus d'estudi (SAE)</label><select class="form-select" id="tipusEstudiSAE"><option value="">Selecciona</option></select></div>
