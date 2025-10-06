@@ -1,8 +1,8 @@
 // UB Actividad 1 - Scripts de Integración Frontend-Backend
 // Versión: scripts.js?v=1.0.21
 // Configuración de la API
-// Usar same-origin para app integrada (y compatible con proxy del WebServer)
-const API_BASE_URL = '';
+// URL del backend API (puerto 5001)
+const API_BASE_URL = 'http://localhost:5001';
 
 // Utilidades de rendimiento (medición sencilla)
 (function(){
@@ -95,17 +95,47 @@ const API_BASE_URL = '';
             }
         } catch {}
     };
+    // Evitar múltiples inicializaciones
+    if (window.__pollingInitialized) {
+        console.log('🔄 DEBUG: Polling ya inicializado, omitiendo');
+        return;
+    }
+    window.__pollingInitialized = true;
+
     const poll = () => {
+        console.log('🔄 DEBUG: Ejecutando poll() - intento de carga de funciones');
+        const hasInitEditar = typeof window.initEditarActividad === 'function';
+        const hasInitializeUG = typeof window.initializeUGSpecificFields === 'function';
+        const hasPreselectUG = typeof window.preselectUserUG === 'function';
+
+        console.log('🔄 DEBUG: Estado de funciones:', {
+            initEditarActividad: hasInitEditar,
+            initializeUGSpecificFields: hasInitializeUG,
+            preselectUserUG: hasPreselectUG
+        });
+
         tryWrap('initEditarActividad');
         tryWrap('initializeUGSpecificFields');
         tryWrap('preselectUserUG');
     };
     try {
+        console.log('🔄 DEBUG: Iniciando polling para carga de funciones');
         poll();
+        let pollCount = 0;
+        const maxPolls = 50; // Máximo 50 intentos (10 segundos)
         const id = setInterval(() => {
+            pollCount++;
+            console.log(`🔄 DEBUG: Poll intento #${pollCount}`);
             poll();
-            if (window.initEditarActividad && window.initializeUGSpecificFields) {
+            const hasInitEditar = typeof window.initEditarActividad === 'function';
+            const hasInitializeUG = typeof window.initializeUGSpecificFields === 'function';
+            if ((hasInitEditar && hasInitializeUG) || pollCount >= maxPolls) {
+                console.log(`🔄 DEBUG: Deteniendo polling después de ${pollCount} intentos. Funciones cargadas:`, {
+                    initEditarActividad: hasInitEditar,
+                    initializeUGSpecificFields: hasInitializeUG
+                });
                 clearInterval(id);
+                window.__pollingInitialized = false; // Reset para futuras ejecuciones
             }
         }, 200);
     } catch {}
@@ -472,8 +502,13 @@ async function loadValoresDominio(selectElement, nombreDominio) {
                 valores.forEach(valor => {
                     const option = document.createElement('option');
                     
-                    // Usar siempre ID para todos los campos de dominio
-                    option.value = valor.id || valor.Id;
+                    // Usar ID para campos específicos que lo requieren, valor para otros
+                    const camposQueUsanId = ['remesa', 'unidadGestoraDetalle'];
+                    if (camposQueUsanId.includes(selectElement.id)) {
+                        option.value = valor.id || valor.Id;
+                    } else {
+                        option.value = valor.valor || valor.Valor || valor.id || valor.Id;
+                    }
                     option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
                     
                     selectElement.appendChild(option);
@@ -636,8 +671,13 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
             valores.forEach(valor => {
                 const option = document.createElement('option');
                 
-                // Usar siempre ID para todos los campos de dominio
-                option.value = valor.id || valor.Id;
+                // Usar ID para campos específicos que lo requieren, valor para otros
+                const camposQueUsanId = ['remesa', 'unidadGestoraDetalle'];
+                if (camposQueUsanId.includes(selectElement.id)) {
+                    option.value = valor.id || valor.Id;
+                } else {
+                    option.value = valor.valor || valor.Valor || valor.id || valor.Id;
+                }
                 option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
                 
                 selectElement.appendChild(option);
@@ -959,6 +999,12 @@ async function guardarActividad() {
             return valor;
         };
         
+        // Función auxiliar para campos que deben usar ID (no valor)
+        const limpiarValorId = (valor) => {
+            if (valor === null || valor === undefined || valor === '') return undefined;
+            return valor;
+        };
+        
         const formData = {
             // Básicos - solo campos con valores
             Titulo: limpiarCaracteresEspeciales(document.getElementById('actividadTitulo')?.value) || '',
@@ -975,9 +1021,12 @@ async function guardarActividad() {
             ActividadReservada: (() => {
                 const valor = document.getElementById('actividadReservada')?.value;
                 console.log('🔍 DEBUG: ActividadReservada - valor raw:', valor);
-                const resultado = valor ? parseInt(valor) : undefined;
+                if (!valor || valor === '') {
+                    return undefined;
+                }
+                const resultado = parseInt(valor);
                 console.log('🔍 DEBUG: ActividadReservada - valor final:', resultado);
-                return resultado;
+                return isNaN(resultado) ? undefined : resultado;
             })(),
             ActividadPago: (function(){
                 const checked = document.getElementById('actividadPago')?.checked || false;
@@ -988,7 +1037,7 @@ async function guardarActividad() {
             PersonaSolicitante: limpiarValor(document.getElementById('personaSolicitante')?.value),
             Coordinador: limpiarValor(document.getElementById('coordinador')?.value),
             JefeUnidadGestora: limpiarValor(document.getElementById('jefeUnidadGestora')?.value),
-            UnidadGestoraDetalle: limpiarValor(document.getElementById('unidadGestoraDetalle')?.value),
+            UnidadGestoraDetalle: limpiarValorId(document.getElementById('unidadGestoraDetalle')?.value),
             GestorActividad: limpiarValor(document.getElementById('gestorActividad')?.value),
             FacultadDestinataria: limpiarValor(document.getElementById('facultadDestinataria')?.value),
             DepartamentoDestinatario: limpiarValor(document.getElementById('departamentoDestinatario')?.value),
@@ -1039,7 +1088,7 @@ async function guardarActividad() {
                 const checked = document.getElementById('insc_lista_espera')?.checked || false;
                 return isUpdate ? (checked ? "S" : "N") : checked;
             })(),
-            InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('inscripcionModalidad')?.value) || '',
+            InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('insc_modalidad')?.value) || '',
             InscripcionRequisitosES: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_es')?.value) || '',
             InscripcionRequisitosCA: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_ca')?.value) || '',
             InscripcionRequisitosEN: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_en')?.value) || '',
@@ -1092,7 +1141,7 @@ async function guardarActividad() {
             // NUEVOS CAMPOS - INSCRIPCIÓN
             FechaLimitePago: document.getElementById('fechaLimitePago')?.value ? new Date(document.getElementById('fechaLimitePago').value).toISOString() : null,
             TPV: document.getElementById('tpv')?.checked || false,
-            Remesa: limpiarCaracteresEspeciales(document.getElementById('remesa')?.value) || '',
+            Remesa: limpiarValorId(document.getElementById('remesa')?.value),
             TiposInscripcionId: document.getElementById('tiposInscripcionId')?.value ? parseInt(document.getElementById('tiposInscripcionId').value) : null,
             FechaAdjudicacionPreinscripcion: document.getElementById('fechaAdjudicacionPreinscripcion')?.value ? new Date(document.getElementById('fechaAdjudicacionPreinscripcion').value).toISOString() : null
         };
@@ -2152,8 +2201,13 @@ async function loadValoresDominio(elementId, nombreDominio) {
         valores.forEach(valor => {
             const option = document.createElement('option');
             
-            // Usar siempre ID para todos los campos de dominio
-            option.value = valor.id || valor.Id || valor.valor || valor.Valor || valor.value || valor.Value;
+            // Usar ID para campos específicos que lo requieren, valor para otros
+            const camposQueUsanId = ['remesa', 'unidadGestoraDetalle', 'asignaturaId', 'disciplinaRelacionadaId', 'idiomaImparticionId', 'tiposCertificacionId', 'materiaDisciplinaId', 'ambitoFormacionId', 'tiposFinanciacionId', 'tiposInscripcionId', 'denominacionDescuentoIds'];
+            if (camposQueUsanId.includes(element.id)) {
+                option.value = valor.id || valor.Id;
+            } else {
+                option.value = valor.valor || valor.Valor || valor.id || valor.Id || valor.value || valor.Value;
+            }
             option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
             
             element.appendChild(option);
@@ -2557,7 +2611,7 @@ function llenarFormularioConActividad(actividad) {
     setValueByIds(['insc_fin','inscripcionFin'], actividad.inscripcionFin || actividad.InscripcionFin, { date: true });
     setValueByIds(['insc_plazas','inscripcionPlazas'], actividad.inscripcionPlazas || actividad.InscripcionPlazas);
     setValueByIds(['insc_lista_espera','inscripcionListaEspera'], actividad.inscripcionListaEspera || actividad.InscripcionListaEspera, { type: 'checkbox' });
-    setValueByIds(['inscripcionModalidad'], actividad.inscripcionModalidad || actividad.InscripcionModalidad, { lock: true });
+    setValueByIds(['insc_modalidad'], actividad.inscripcionModalidad || actividad.InscripcionModalidad, { lock: true });
     // Nuevos: Remesa y Tipos de Inscripción
     setValueByIds(['remesa'], actividad.remesa || actividad.Remesa, { lock: true });
     setValueByIds(['tiposInscripcionId'], (actividad.tiposInscripcionId ?? actividad.TiposInscripcionId), { lock: true });
@@ -2771,6 +2825,12 @@ function llenarFormularioConActividad(actividad) {
 
 // Función para establecer valores en dropdowns después de que se carguen los dominios
 function establecerValoresDropdowns(actividad) {
+    // Verificar que tenemos una actividad válida (no ejecutar en página de crear)
+    if (!actividad || !actividad.id && !actividad.Id) {
+        console.log('🔧 DEBUG: establecerValoresDropdowns - No hay actividad válida, omitiendo preselección');
+        return;
+    }
+    
     console.log('🔧 DEBUG: establecerValoresDropdowns - Estableciendo valores en dropdowns...');
     // Helper para observar y preservar valores bloqueados
     const attachLockedObserver = (select) => {
@@ -3214,7 +3274,7 @@ const DOM_TO_ACT_KEYS = {
     'insc_fin': ['InscFin','insc_fin'],
     'insc_plazas': ['InscPlazas','insc_plazas'],
     'insc_lista_espera': ['InscListaEspera','insc_lista_espera'],
-    'inscripcionModalidad': ['InscripcionModalidad','inscripcionModalidad'],
+    'insc_modalidad': ['InscripcionModalidad','inscripcionModalidad'],
     'insc_requisitos_es': ['InscRequisitosES','insc_requisitos_es'],
     'insc_requisitos_ca': ['InscRequisitosCA','insc_requisitos_ca'],
     'insc_requisitos_en': ['InscRequisitosEN','insc_requisitos_en'],
@@ -4403,6 +4463,12 @@ async function autoSeleccionarUnidadGestion() {
         const isAdmin = userRole === 'Admin';
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Rol del usuario:', userRole, 'Es Admin:', isAdmin);
         
+        // Si es Admin, no preseleccionar (debe poder elegir cualquier UG)
+        if (isAdmin) {
+            console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Usuario Admin, no se preselecciona UG');
+            return;
+        }
+        
         // Buscar UnidadGestionId en camelCase o PascalCase
         const unidadGestionId = userInfo.unidadGestionId || userInfo.UnidadGestionId;
         
@@ -4413,9 +4479,9 @@ async function autoSeleccionarUnidadGestion() {
         
         // Mapear ID del usuario a código y al valor del select
         const ugMap = { 
-            1: { codigo: 'IDP', selectValue: '35' }, 
-            2: { codigo: 'CRAI', selectValue: '36' }, 
-            3: { codigo: 'SAE', selectValue: '37' } 
+            1: { codigo: 'IDP', selectValue: '1' }, 
+            2: { codigo: 'CRAI', selectValue: '2' },
+            3: { codigo: 'SAE', selectValue: '3' } 
         };
         const ugInfo = ugMap[unidadGestionId];
         
@@ -4431,59 +4497,68 @@ async function autoSeleccionarUnidadGestion() {
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - ID del usuario:', unidadGestionId);
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Valor del select:', selectValue);
         
-        // Esperar a que se cargue el select
+        // Función para intentar preseleccionar
+        const tryPreselect = () => {
+            const select = document.getElementById('actividadUnidadGestion');
+            if (!select || select.options.length <= 1) {
+                return false;
+            }
+            
+            console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Select encontrado, opciones:', select.options.length);
+            console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Buscando opción con selectValue:', selectValue, 'ugCodigo:', ugCodigo);
+                
+            // Mostrar todas las opciones disponibles para debug
+            for (let i = 0; i < select.options.length; i++) {
+                const option = select.options[i];
+                console.log(`🎯 DEBUG: autoSeleccionarUnidadGestion - Opción ${i}: value="${option.value}", text="${option.text}"`);
+            }
+            
+            // Buscar y seleccionar la opción por valor del select o por código
+            for (let option of select.options) {
+                if (option.value === selectValue || 
+                    option.value === unidadGestionId.toString() || 
+                    option.value === ugCodigo || 
+                    option.text === ugCodigo ||
+                    option.text.includes(ugCodigo)) {
+                    
+                    // Seleccionar la opción
+                    select.value = option.value;
+                    
+                    // Solo deshabilitar si NO es Admin
+                    if (!isAdmin) {
+                        select.disabled = true;
+                        select.style.backgroundColor = '#f8f9fa';
+                        select.style.cursor = 'not-allowed';
+                        
+                        // Añadir texto explicativo
+                        const label = document.querySelector('label[for="actividadUnidadGestion"]');
+                        if (label && !label.querySelector('.text-muted')) {
+                            const explicacion = document.createElement('small');
+                            explicacion.className = 'text-muted ms-2';
+                            explicacion.textContent = '(Auto-asignado según tu unidad)';
+                            label.appendChild(explicacion);
+                        }
+                        
+                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada para usuario no-Admin:', ugCodigo);
+                    } else {
+                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora preseleccionada para Admin (editable):', ugCodigo);
+                    }
+                    
+                    console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Valor seleccionado:', select.value);
+                    return true;
+                }
+            }
+            
+            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Opción no encontrada en el select');
+            return false;
+        };
+        
+        // Esperar a que se cargue el select y intentar preseleccionar
         let intentos = 0;
         const maxIntentos = 20;
         
         while (intentos < maxIntentos) {
-            const select = document.getElementById('actividadUnidadGestion');
-            if (select && select.options.length > 1) {
-                console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Select encontrado, opciones:', select.options.length);
-                console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Buscando opción con selectValue:', selectValue, 'ugCodigo:', ugCodigo);
-                
-                // Mostrar todas las opciones disponibles para debug
-                for (let i = 0; i < select.options.length; i++) {
-                    const option = select.options[i];
-                    console.log(`🎯 DEBUG: autoSeleccionarUnidadGestion - Opción ${i}: value="${option.value}", text="${option.text}"`);
-                }
-                
-                // Buscar y seleccionar la opción por valor del select o por código
-                for (let option of select.options) {
-                    if (option.value === selectValue || 
-                        option.value === unidadGestionId.toString() || 
-                        option.value === ugCodigo || 
-                        option.text === ugCodigo ||
-                        option.text.includes(ugCodigo)) {
-                        
-                        // Seleccionar la opción
-                        select.value = option.value;
-                        
-                        // Solo deshabilitar si NO es Admin
-                        if (!isAdmin) {
-                            select.disabled = true;
-                            select.style.backgroundColor = '#f8f9fa';
-                            select.style.cursor = 'not-allowed';
-                            
-                            // Añadir texto explicativo
-                            const label = document.querySelector('label[for="actividadUnidadGestion"]');
-                            if (label && !label.querySelector('.text-muted')) {
-                                const explicacion = document.createElement('small');
-                                explicacion.className = 'text-muted ms-2';
-                                explicacion.textContent = '(Auto-asignado según tu unidad)';
-                                label.appendChild(explicacion);
-                            }
-                            
-                            console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada para usuario no-Admin:', ugCodigo);
-                        } else {
-                            console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora preseleccionada para Admin (editable):', ugCodigo);
-                        }
-                        
-                        console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Valor seleccionado:', select.value);
-                        return;
-                    }
-                }
-                
-                console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Opción no encontrada en el select');
+            if (tryPreselect()) {
                 break;
             }
             
@@ -4492,7 +4567,9 @@ async function autoSeleccionarUnidadGestion() {
             intentos++;
         }
         
-        console.log('❌ DEBUG: autoSeleccionarUnidadGestion - No se pudo encontrar o cargar el select');
+        if (intentos >= maxIntentos) {
+            console.log('❌ DEBUG: autoSeleccionarUnidadGestion - No se pudo encontrar o cargar el select');
+        }
         
     } catch (error) {
         console.error('❌ DEBUG: autoSeleccionarUnidadGestion - Error:', error);
