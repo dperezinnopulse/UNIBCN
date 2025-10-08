@@ -12,6 +12,10 @@
     <a href="./cambios-estado.html"><i class="bi bi-arrow-repeat"></i><span>Cambios de estado</span></a>
     <a href="./admin-usuarios.html"><i class="bi bi-people"></i><span>Admin usuarios</span></a>
     <a href="./perfil.html"><i class="bi bi-person"></i><span>Perfil</span></a>
+    <hr style="border:0;border-top:1px solid #e5e7eb;margin:8px 0"/>
+    <a href="../workflow_ub.html" target="_blank"><i class="bi bi-diagram-3"></i><span>Workflow Completo</span></a>
+    <a href="../permisos-edicion-completos.html" target="_blank"><i class="bi bi-shield-check"></i><span>Permisos de Edición</span></a>
+    <a href="./soporte-tecnico.html"><i class="bi bi-question-circle"></i><span>Soporte Técnico</span></a>
   </nav>
 </aside>`;
 
