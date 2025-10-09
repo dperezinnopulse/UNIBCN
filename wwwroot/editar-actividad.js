@@ -466,6 +466,7 @@ async function cargarDominios() {
         await cargarIdiomasSubactividades();
         
         // Cargar roles de participantes
+        Utils.log('🔍 DEBUG: Llamando a cargarRolesParticipantes...');
         await cargarRolesParticipantes();
         
         // Cargar modalidades de subactividades
@@ -476,20 +477,62 @@ async function cargarDominios() {
     }
 }
 
+// Función para refrescar la caché de dominios (movida a scripts-clean.js para ser compartida)
+
 // Función para cargar roles de participantes desde el dominio TIPOS_PARTICIPANTE_ROL
 async function cargarRolesParticipantes() {
     try {
+        console.log('🔍 DEBUG: [editar-actividad.js] cargarRolesParticipantes - INICIANDO');
         Utils.log('Cargando roles de participantes...');
         
-        // Obtener valores del dominio TIPOS_PARTICIPANTE_ROL
-        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
-        if (!response.ok) {
-            Utils.error(`Error obteniendo roles de participantes: ${response.status}`);
-            return;
+        // 1º Intentar usar la caché de dominios primero
+        let roles = [];
+        console.log('🔍 DEBUG: [editar-actividad.js] Estado de window.__dominiosCache:', window.__dominiosCache);
+        Utils.log('🔍 DEBUG: Estado de window.__dominiosCache:', window.__dominiosCache);
+        if (window.__dominiosCache) {
+            const rolDominio = window.__dominiosCache.find(d => d.nombre === 'TIPOS_PARTICIPANTE_ROL');
+            console.log('🔍 DEBUG: [editar-actividad.js] rolDominio encontrado:', rolDominio);
+            Utils.log('🔍 DEBUG: rolDominio encontrado:', rolDominio);
+            if (rolDominio && rolDominio.valores) {
+                roles = rolDominio.valores;
+                console.log('🔍 DEBUG: [editar-actividad.js] roles desde caché:', roles.length, roles);
+                Utils.log('🔍 DEBUG: roles desde caché:', roles.length);
+            }
         }
         
-        const roles = await response.json();
+        // 2º Si no hay datos en caché, llamar a la API
+        if (roles.length === 0) {
+            console.log('🔍 DEBUG: [editar-actividad.js] No hay roles en caché, llamando a API...');
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
+                console.log('🔍 DEBUG: [editar-actividad.js] Response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 DEBUG: [editar-actividad.js] Data recibida:', data);
+                    if (Array.isArray(data) && data.length > 0) {
+                        roles = data;
+                    }
+                }
+            } catch (e) {
+                console.log('❌ DEBUG: [editar-actividad.js] Error en API:', e);
+                Utils.log('No se pudieron obtener roles de la API');
+            }
+        }
+        console.log('🔍 DEBUG: [editar-actividad.js] Roles finales obtenidos:', roles.length, roles);
         Utils.log('Roles obtenidos:', roles);
+        
+        // Si no hay roles, intentar refrescar la caché
+        if (roles.length === 0) {
+            Utils.log('No hay roles disponibles, refrescando caché...');
+            await refrescarCacheDominios();
+            // Intentar nuevamente con la caché refrescada
+            if (window.__dominiosCache) {
+                const rolDominio = window.__dominiosCache.find(d => d.nombre === 'TIPOS_PARTICIPANTE_ROL');
+                if (rolDominio && rolDominio.valores) {
+                    roles = rolDominio.valores;
+                }
+            }
+        }
         
         // Función para poblar un select con roles
         function poblarSelectRoles(selectElement) {
@@ -518,8 +561,18 @@ async function cargarRolesParticipantes() {
         Utils.log(`Encontrados ${selectsRol.length} selects de rol`);
         
         selectsRol.forEach(select => {
+            Utils.log(`Poblando select: ${select.id}`);
             poblarSelectRoles(select);
         });
+        
+        // Verificar específicamente el participante_66_rol
+        const participante66 = document.getElementById('participante_66_rol');
+        if (participante66) {
+            Utils.log('🔍 DEBUG: participante_66_rol encontrado, poblando...');
+            poblarSelectRoles(participante66);
+        } else {
+            Utils.log('⚠️ DEBUG: participante_66_rol NO encontrado');
+        }
         
         Utils.log('Roles de participantes cargados correctamente');
         
@@ -528,20 +581,113 @@ async function cargarRolesParticipantes() {
     }
 }
 
-// Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
-async function cargarModalidadesSubactividades() {
+// Función para poblar manualmente un select de rol específico
+async function poblarSelectRolEspecifico(selectId) {
     try {
-        Utils.log('Cargando modalidades de subactividades...');
-        
-        // Obtener valores del dominio MODALIDAD_IMPARTICION
-        const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/MODALIDAD_IMPARTICION/valores`);
-        if (!response.ok) {
-            Utils.error(`Error obteniendo modalidades de impartición: ${response.status}`);
+        Utils.log(`Poblando select específico: ${selectId}`);
+        const select = document.getElementById(selectId);
+        if (!select) {
+            Utils.log(`Select ${selectId} no encontrado`);
             return;
         }
         
-        const modalidades = await response.json();
+        // Obtener roles de la caché o API
+        let roles = [];
+        if (window.__dominiosCache) {
+            const rolDominio = window.__dominiosCache.find(d => d.nombre === 'TIPOS_PARTICIPANTE_ROL');
+            if (rolDominio && rolDominio.valores) {
+                roles = rolDominio.valores;
+            }
+        }
+        
+        if (roles.length === 0) {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/TIPOS_PARTICIPANTE_ROL/valores`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        roles = data;
+                    }
+                }
+            } catch (e) {
+                Utils.log('No se pudieron obtener roles de la API');
+            }
+        }
+        
+        Utils.log(`Roles obtenidos para ${selectId}:`, roles.length);
+        
+        // Limpiar y poblar el select
+        select.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccionar...';
+        select.appendChild(defaultOption);
+        
+        roles.forEach(rol => {
+            const option = document.createElement('option');
+            option.value = rol.id || rol.Id;
+            option.textContent = rol.descripcion || rol.Descripcion;
+            select.appendChild(option);
+        });
+        
+        Utils.log(`Select ${selectId} poblado con ${roles.length} opciones`);
+        
+    } catch (error) {
+        Utils.error(`Error poblando select ${selectId}:`, error);
+    }
+}
+
+// Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
+async function cargarModalidadesSubactividades() {
+    try {
+        console.log('🔍 DEBUG: [editar-actividad.js] cargarModalidadesSubactividades - INICIANDO');
+        Utils.log('Cargando modalidades de subactividades...');
+        
+        // 1º Intentar usar la caché de dominios primero
+        let modalidades = [];
+        console.log('🔍 DEBUG: [editar-actividad.js] Estado de window.__dominiosCache:', window.__dominiosCache);
+        if (window.__dominiosCache) {
+            const modalidadDominio = window.__dominiosCache.find(d => d.nombre === 'MODALIDAD_IMPARTICION');
+            console.log('🔍 DEBUG: [editar-actividad.js] modalidadDominio encontrado:', modalidadDominio);
+            if (modalidadDominio && modalidadDominio.valores) {
+                modalidades = modalidadDominio.valores;
+                console.log('🔍 DEBUG: [editar-actividad.js] modalidades desde caché:', modalidades.length, modalidades);
+            }
+        }
+        
+        // 2º Si no hay datos en caché, llamar a la API
+        if (modalidades.length === 0) {
+            console.log('🔍 DEBUG: [editar-actividad.js] No hay modalidades en caché, llamando a API...');
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/dominios/MODALIDAD_IMPARTICION/valores`);
+                console.log('🔍 DEBUG: [editar-actividad.js] Response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 DEBUG: [editar-actividad.js] Data recibida:', data);
+                    if (Array.isArray(data) && data.length > 0) {
+                        modalidades = data;
+                    }
+                }
+            } catch (e) {
+                console.log('❌ DEBUG: [editar-actividad.js] Error en API:', e);
+                Utils.log('No se pudieron obtener modalidades de la API');
+            }
+        }
+        console.log('🔍 DEBUG: [editar-actividad.js] Modalidades finales obtenidas:', modalidades.length, modalidades);
         Utils.log('Modalidades obtenidas:', modalidades);
+        
+        // Si no hay modalidades, intentar refrescar la caché
+        if (modalidades.length === 0) {
+            Utils.log('No hay modalidades disponibles, refrescando caché...');
+            await refrescarCacheDominios();
+            // Intentar nuevamente con la caché refrescada
+            if (window.__dominiosCache) {
+                const modalidadDominio = window.__dominiosCache.find(d => d.nombre === 'MODALIDAD_IMPARTICION');
+                if (modalidadDominio && modalidadDominio.valores) {
+                    modalidades = modalidadDominio.valores;
+                }
+            }
+        }
         
         // Función para poblar un select con modalidades
         function poblarSelectModalidades(selectElement) {
@@ -646,7 +792,7 @@ async function cargarEstadosActividad() {
                 headers['Authorization'] = `Bearer ${Auth.getToken()}`;
             }
         } catch {}
-        const response = await fetch(`${CONFIG.API_BASE_URL}/estados`, { headers });
+        const response = await fetch(`${CONFIG.API_BASE_URL}/estados/autenticado`, { headers });
         if (response.ok) {
             const estados = await response.json();
             if (Array.isArray(estados) && estados.length) {
@@ -654,29 +800,63 @@ async function cargarEstadosActividad() {
             }
         }
         // Actualizar siempre el badge aunque el select no exista
-        actualizarBadgeEstadoDesdeBD();
+        console.log('🔍 DEBUG: Llamando a actualizarBadgeEstadoDesdeBD desde cargarEstadosYCrearBadge...');
+        await actualizarBadgeEstadoDesdeBD();
     } catch (e) {
         Utils.error('Error cargando estados', e);
     }
 }
 
-function actualizarBadgeEstadoDesdeBD() {
+async function actualizarBadgeEstadoDesdeBD() {
+    console.log('🔍 DEBUG: actualizarBadgeEstadoDesdeBD - INICIANDO ejecución...');
     const badge = document.getElementById('estadoBadge');
-    if (!badge) return;
+    if (!badge) {
+        console.log('⚠️ DEBUG: Badge estado no encontrado');
+        return;
+    }
     const hiddenEstado = document.getElementById('actividadEstadoId')?.value;
+    Utils.log('🔍 DEBUG: actualizarBadgeEstadoDesdeBD - hiddenEstado:', hiddenEstado);
+    Utils.log('🔍 DEBUG: actualizarBadgeEstadoDesdeBD - window.__estadosCache:', window.__estadosCache);
     let nombre = '—';
     let color = '#6c757d';
     if (hiddenEstado) {
         const idNum = parseInt(hiddenEstado, 10);
-        const estados = Array.isArray(window.__estadosCache) ? window.__estadosCache : [];
+        let estados = Array.isArray(window.__estadosCache) ? window.__estadosCache : [];
+        
+        // Si no hay caché, cargar estados desde la API
+        if (estados.length === 0) {
+            console.log('🔍 DEBUG: actualizarBadgeEstadoDesdeBD - No hay caché, cargando estados desde API...');
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/estados/autenticado`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    estados = await response.json();
+                    window.__estadosCache = estados;
+                    console.log('🔍 DEBUG: actualizarBadgeEstadoDesdeBD - Estados cargados desde API:', estados.length);
+                }
+            } catch (e) {
+                console.error('❌ DEBUG: actualizarBadgeEstadoDesdeBD - Error cargando estados:', e);
+            }
+        }
+        
         const est = estados.find(e => Number(e.id) === idNum);
         if (est) {
-            nombre = est.nombre ?? `Estado ${hiddenEstado}`;
-            color = est.color || color;
+            nombre = est.nombre || est.Nombre || est.descripcion || est.Descripcion || `Estado ${hiddenEstado}`;
+            color = est.color || est.Color || color;
+            Utils.log('🔍 DEBUG: Estado encontrado:', est, 'nombre:', nombre, 'color:', color);
         } else {
+            // Mostrar estado genérico si no se encuentra en caché
             nombre = `Estado ${hiddenEstado}`;
+            Utils.log('⚠️ DEBUG: Estado NO encontrado para ID:', hiddenEstado, 'estados disponibles:', estados);
         }
+    } else {
+        Utils.log('⚠️ DEBUG: No hay hiddenEstado disponible');
     }
+    Utils.log('🔍 DEBUG: Actualizando badge con nombre:', nombre, 'color:', color);
     badge.style.background = color;
     badge.innerHTML = `<i class="bi bi-check-circle me-2"></i>${nombre}`;
 }
@@ -973,14 +1153,31 @@ async function initEditarActividad() {
         }
         
         // PRIMERO: Cargar dominios para los selects
+        console.log('🔍 DEBUG: ANTES de cargarDominios()');
         Utils.showLoading('Cargando dominios y opciones...');
-        await cargarDominios();
+        try {
+            await cargarDominios();
+            console.log('🔍 DEBUG: cargarDominios() completado, continuando con cargarDatosReales...');
+        } catch (error) {
+            console.error('❌ DEBUG: Error en cargarDominios():', error);
+            throw error;
+        }
         
         // SEGUNDO: Intentar cargar datos reales desde el backend
         Utils.showLoading('Conectando con el backend para recuperar datos...');
         
         try {
+            console.log('🔍 DEBUG: Llamando a cargarDatosReales con actividadId:', actividadId);
             await cargarDatosReales(actividadId);
+            
+            // TERCERO: Cargar estado directamente desde la BD
+            console.log('🔍 DEBUG: Llamando a cargarEstadoDesdeBD...');
+            await cargarEstadoDesdeBD();
+            
+            // CUARTO: Verificar permisos de edición y deshabilitar campos si es necesario
+            console.log('🔍 DEBUG: Verificando permisos de edición...');
+            await verificarPermisosEdicion(actividadId);
+            
             Utils.hideLoading();
             Utils.showAlert('success', `Actividad ${actividadId} cargada correctamente desde el backend`);
         } catch (error) {
@@ -1011,6 +1208,7 @@ async function initEditarActividad() {
 
 // NUEVA FUNCIÓN: Cargar datos reales desde el backend
 async function cargarDatosReales(actividadId) {
+    console.log('🔍 DEBUG: cargarDatosReales - INICIANDO con actividadId:', actividadId);
     Utils.log(`Intentando cargar datos reales de actividad ${actividadId} desde el backend...`);
     
     try {
@@ -1096,6 +1294,7 @@ async function cargarDatosReales(actividadId) {
 
 // NUEVA FUNCIÓN: Aplicar datos reales al formulario
 async function aplicarDatosReales(actividad) {
+    console.log('🔍 DEBUG: aplicarDatosReales - INICIANDO con actividad:', actividad);
     Utils.log('Aplicando datos reales al formulario...');
     
     // Mapeo de campos del backend a IDs del formulario
@@ -1236,6 +1435,11 @@ async function aplicarDatosReales(actividad) {
         const campoFormulario = mapeoCampos[campoBackend];
         const valor = actividad[campoBackend];
         
+        // Log específico para estadoId
+        if (campoBackend === 'estadoId') {
+            Utils.log('🔍 DEBUG: aplicandoDatosReales - estadoId:', valor, 'campoFormulario:', campoFormulario);
+        }
+        
         if (valor !== undefined && valor !== null) {
             const elemento = document.getElementById(campoFormulario);
             if (elemento) {
@@ -1287,6 +1491,7 @@ async function aplicarDatosReales(actividad) {
                             // Caso especial: estadoId -> IDs 6..9
                             if (campoFormulario === 'actividadEstadoId') {
                                 valorComparar = String(parseInt(valor, 10));
+                                Utils.log('🔍 DEBUG: estadoId - valor original:', valor, 'valorComparar:', valorComparar);
                             } else {
                                 valorComparar = valor.toString();
                             }
@@ -1307,6 +1512,16 @@ async function aplicarDatosReales(actividad) {
                                         Utils.log(`  Opción encontrada por booleano: "${opcion.textContent}" para valor ${valor}`);
                                         return true;
                                     }
+                                }
+                            }
+                            
+                            // CAMPOS DE DOMINIO: Buscar por ID (valores guardados como ID en BD)
+                            const camposDominio = ['tipoActividad', 'lineaEstrategica', 'objetivoEstrategico', 'jefeUnidadGestora', 'gestorActividad', 'facultadDestinataria', 'departamentoDestinatario', 'centroUnidadUBDestinataria', 'modalidadGestion', 'estadoActividad', 'centroTrabajoRequerido', 'tipusEstudiSAE', 'categoriaSAE', 'unidadGestoraDetalle', 'remesa', 'inscripcionModalidad'];
+                            if (camposDominio.includes(campoFormulario)) {
+                                // Para campos de dominio, buscar por ID exacto
+                                if (opcion.value === String(valorComparar)) {
+                                    Utils.log(`  Opción encontrada por ID (campo dominio): "${opcion.value}" para valor "${valorComparar}"`);
+                                    return true;
                                 }
                             }
                             
@@ -1386,6 +1601,10 @@ async function aplicarDatosReales(actividad) {
                     }
                 } else {
                     elemento.value = valor.toString();
+                    // Log específico para actividadEstadoId
+                    if (campoFormulario === 'actividadEstadoId') {
+                        Utils.log('🔍 DEBUG: actividadEstadoId asignado:', elemento.value);
+                    }
                 }
                 Utils.log(`Campo ${campoFormulario} configurado con valor real: ${valor}`);
             } else {
@@ -1394,35 +1613,20 @@ async function aplicarDatosReales(actividad) {
         }
     });
 
-    // Mostrar información del usuario autor
+    // Mostrar información del usuario autor - SIEMPRE mostrar el usuario autenticado actual
     const responsableSpan = document.getElementById('responsablePropuesta');
     if (responsableSpan) {
         let usernameAutor = null;
-        // 1) Preferir username anidado en la navegación del autor
         try {
-            const autorObj = actividad.usuarioAutor || actividad.UsuarioAutor;
-            if (autorObj) {
-                usernameAutor = autorObj.username || autorObj.Username || autorObj.nombre || autorObj.Nombre || null;
+            const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+            if (user) {
+                usernameAutor = user.username || user.nombre || user.name || null;
+                console.log('🔍 DEBUG: responsablePropuesta - Usuario autenticado:', user);
             }
-        } catch {}
-        // 2) Username/Nombre plano si el backend lo envía
-        if (!usernameAutor) {
-            if (actividad.usuarioAutorUsername && String(actividad.usuarioAutorUsername).trim().length > 0) {
-                usernameAutor = actividad.usuarioAutorUsername;
-            } else if (actividad.usuarioAutorNombre && String(actividad.usuarioAutorNombre).trim().length > 0) {
-                usernameAutor = actividad.usuarioAutorNombre;
-            }
+        } catch (e) {
+            console.error('❌ DEBUG: Error obteniendo usuario autenticado:', e);
         }
-        // 3) Fallback: usuario autenticado si coincide con autorId
-        if (!usernameAutor) {
-            try {
-                const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
-                const autorIdPlano = actividad.usuarioAutorId || actividad.UsuarioAutorId;
-                if (user && autorIdPlano && Number(user.id) === Number(autorIdPlano)) {
-                    usernameAutor = user.username || user.nombre || user.name || null;
-                }
-            } catch {}
-        }
+        console.log('🔍 DEBUG: responsablePropuesta - Username final:', usernameAutor);
         responsableSpan.textContent = usernameAutor || 'Usuario';
     }
     
@@ -1512,8 +1716,11 @@ async function aplicarDatosReales(actividad) {
 
     // Pintar el badge usando el caché de estados (si no está cargado aún, se cargará en paralelo)
     try {
-        actualizarBadgeEstadoDesdeBD();
-    } catch {}
+        console.log('🔍 DEBUG: Llamando a actualizarBadgeEstadoDesdeBD desde aplicarDatosReales...');
+        await actualizarBadgeEstadoDesdeBD();
+    } catch (e) {
+        console.error('❌ DEBUG: Error en actualizarBadgeEstadoDesdeBD:', e);
+    }
 }
 
 // Normalización de roles a los del workflow
@@ -1703,6 +1910,7 @@ async function aplicarPermisosEdicion(normalizedRole, estadoCodigo) {
 
 // NUEVA FUNCIÓN: Cargar entidades relacionadas reales
 async function cargarEntidadesRelacionadasReales(actividadId) {
+    console.log('🔍 DEBUG: cargarEntidadesRelacionadasReales - INICIANDO con actividadId:', actividadId);
     Utils.log('Cargando entidades relacionadas reales...');
     
     try {
@@ -1837,11 +2045,13 @@ async function aplicarSubactividadesReales(subactividades) {
             if (subactividad.modalidad) {
                 const selectModalidad = document.getElementById(`${subactividadId}_modalidad`);
                 if (selectModalidad) {
-                    // Buscar la opción que coincida con el valor de modalidad
+                    // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
+                    const valorModalidad = String(subactividad.modalidad);
                     const opciones = selectModalidad.querySelectorAll('option');
                     for (let opcion of opciones) {
-                        if (opcion.value === subactividad.modalidad || opcion.textContent === subactividad.modalidad) {
+                        if (opcion.value === valorModalidad) {
                             opcion.selected = true;
+                            console.log(`✅ DEBUG: Modalidad seleccionada por ID: ${valorModalidad} -> ${opcion.textContent}`);
                             break;
                         }
                     }
@@ -1876,13 +2086,16 @@ async function aplicarSubactividadesReales(subactividades) {
         const subactividadId = `subactividad_${subKey}`;
         const modalidadSelect = document.getElementById(`${subactividadId}_modalidad`);
         if (modalidadSelect && subactividad.modalidad) {
-            // Seleccionar si existe
+            // CORREGIDO: Seleccionar solo por value (ID) ya que ahora guardamos IDs
             const valor = String(subactividad.modalidad);
             const opciones = modalidadSelect.querySelectorAll('option');
             for (let opcion of opciones) {
-                if (opcion.value === valor || opcion.textContent === valor) { opcion.selected = true; break; }
+                if (opcion.value === valor) { 
+                    opcion.selected = true; 
+                    console.log(`✅ DEBUG: Modalidad establecida por ID: ${valor} -> ${opcion.textContent}`);
+                    break; 
+                }
             }
-            // No duplicar opción, solo fijar lockedValue
         }
     });
     
@@ -1891,6 +2104,7 @@ async function aplicarSubactividadesReales(subactividades) {
 }
 
 async function aplicarParticipantesReales(participantes) {
+    console.log('🔍 DEBUG: aplicarParticipantesReales - INICIANDO con participantes:', participantes);
     const container = document.getElementById('participantesContainer');
     if (!container) return;
     
@@ -1937,21 +2151,33 @@ async function aplicarParticipantesReales(participantes) {
     });
     
     // Cargar roles de participantes después de crear los elementos DOM
+    console.log('🔍 DEBUG: Llamando a cargarRolesParticipantes()...');
     await cargarRolesParticipantes();
     
     // Establecer valores seleccionados después de cargar las opciones
     participantes.forEach((participante, index) => {
-        const participanteId = `participante_${participante.id || Date.now()}`;
+        const partKey = (participante.id !== undefined && participante.id !== null && participante.id !== '') ? participante.id : `i${index}`;
+        const participanteId = `participante_${partKey}`;
         const rolSelect = document.getElementById(`${participanteId}_rol`);
+        console.log(`🔍 DEBUG: Intentando establecer rol para ${participanteId}_rol, valor: ${participante.rol}`);
+        
         if (rolSelect && participante.rol) {
+            // CORREGIDO: Seleccionar solo por value (ID) ya que ahora guardamos IDs
             const valor = String(participante.rol);
-            // Seleccionar si existe por value o texto
+            console.log(`🔍 DEBUG: Buscando opción con valor: ${valor}`);
+            console.log(`🔍 DEBUG: Opciones disponibles:`, Array.from(rolSelect.options).map(opt => `${opt.value}: ${opt.textContent}`));
+            
             for (let i = 0; i < rolSelect.options.length; i++) {
                 const opt = rolSelect.options[i];
-                if (opt.value === valor || opt.text === valor) { rolSelect.value = opt.value; break; }
+                if (opt.value === valor) { 
+                    rolSelect.value = opt.value; 
+                    console.log(`✅ DEBUG: Rol establecido por ID: ${valor} -> ${opt.textContent}`);
+                    break; 
+                }
             }
-            // No duplicar opción, solo fijar lockedValue
             rolSelect.dataset.lockedValue = rolSelect.value || valor;
+        } else {
+            console.log(`⚠️ DEBUG: No se pudo establecer rol - select: ${!!rolSelect}, rol: ${participante.rol}`);
         }
     });
     
@@ -2583,14 +2809,17 @@ function actualizarCamposUG() {
         return;
     }
     
-    const unidadGestionId = document.getElementById('actividadUnidadGestion');
-    if (!unidadGestionId) {
-        console.log('❌ DEBUG: actualizarCamposUG - No se encontró actividadUnidadGestion');
+    // CORREGIDO: Usar la unidad de gestión del usuario logueado, no del select
+    const userUnidadGestionId = userData.unidadGestionId || userData.UnidadGestionId;
+    console.log('🔧 DEBUG: actualizarCamposUG - Unidad de gestión del usuario:', userUnidadGestionId);
+    
+    if (!userUnidadGestionId) {
+        console.log('❌ DEBUG: actualizarCamposUG - No se encontró unidad de gestión del usuario');
         return;
     }
     
-    const value = unidadGestionId.value;
-    console.log('🔧 DEBUG: actualizarCamposUG - Valor seleccionado:', value);
+    const value = String(userUnidadGestionId);
+    console.log('🔧 DEBUG: actualizarCamposUG - Valor a usar para filtrado:', value);
     
     // Si es Admin, mostrar todos los campos con sus colores
     if (isAdmin) {
@@ -2601,6 +2830,13 @@ function actualizarCamposUG() {
             input.style.borderColor = '#6b7280';
             input.style.borderWidth = '2px';
         });
+        
+        // FORZAR VISIBILIDAD del campo estado informativo
+        const estadoActualBD = document.getElementById('estadoActualBD');
+        if (estadoActualBD) {
+            estadoActualBD.closest('.col-md-3').style.display = 'block !important';
+            console.log('🔧 DEBUG: actualizarCamposUG - Campo estado informativo forzado a visible');
+        }
         
         // Mostrar y colorear todos los campos específicos
         // CRAI - Azul
@@ -2685,25 +2921,46 @@ function actualizarCamposUG() {
     
     // Mostrar campos según la unidad de gestión seleccionada
     if (value === '1') { // IDP
-        document.querySelectorAll('[data-ug="IDP"]').forEach(element => {
+        document.querySelectorAll('[data-ug="IDP"], [data-ug*="IDP"]').forEach(element => {
             element.style.display = 'block';
         });
+        
+        // FORZAR VISIBILIDAD del campo estado informativo
+        const estadoActualBD = document.getElementById('estadoActualBD');
+        if (estadoActualBD) {
+            estadoActualBD.closest('.col-md-3').style.display = 'block !important';
+            console.log('🔧 DEBUG: actualizarCamposUG - Campo estado informativo forzado a visible (IDP)');
+        }
     }
     
     if (value === '2') { // CRAI
         console.log('🔧 DEBUG: actualizarCamposUG - Mostrando campos CRAI...');
-        const craiElements = document.querySelectorAll('[data-ug="CRAI"]');
+        const craiElements = document.querySelectorAll('[data-ug="CRAI"], [data-ug*="CRAI"]');
         console.log('🔧 DEBUG: actualizarCamposUG - Elementos CRAI encontrados:', craiElements.length);
         
         craiElements.forEach(element => {
             element.style.display = 'block';
         });
+        
+        // FORZAR VISIBILIDAD del campo estado informativo
+        const estadoActualBD = document.getElementById('estadoActualBD');
+        if (estadoActualBD) {
+            estadoActualBD.closest('.col-md-3').style.display = 'block !important';
+            console.log('🔧 DEBUG: actualizarCamposUG - Campo estado informativo forzado a visible (CRAI)');
+        }
     }
     
     if (value === '3') { // SAE
-        document.querySelectorAll('[data-ug="SAE"]').forEach(element => {
+        document.querySelectorAll('[data-ug="SAE"], [data-ug*="SAE"]').forEach(element => {
             element.style.display = 'block';
         });
+        
+        // FORZAR VISIBILIDAD del campo estado informativo
+        const estadoActualBD = document.getElementById('estadoActualBD');
+        if (estadoActualBD) {
+            estadoActualBD.closest('.col-md-3').style.display = 'block !important';
+            console.log('🔧 DEBUG: actualizarCamposUG - Campo estado informativo forzado a visible (SAE)');
+        }
     }
 }
 
@@ -2792,6 +3049,176 @@ async function eliminarMensaje(mensajeId) {
     }
 }
 
+// ===== FUNCIÓN PARA CARGAR ESTADO DESDE BD =====
+async function cargarEstadoDesdeBD() {
+    try {
+        console.log('🔍 DEBUG: cargarEstadoDesdeBD - INICIANDO');
+        
+        const actividadId = Utils.getUrlParameter('id') || '60';
+        const apiUrl = `${CONFIG.API_BASE_URL}/actividades/${actividadId}`;
+        
+        console.log('🔍 DEBUG: cargarEstadoDesdeBD - URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const actividad = await response.json();
+        console.log('🔍 DEBUG: cargarEstadoDesdeBD - Actividad recibida:', actividad);
+        
+        const estadoId = actividad.estadoId || actividad.EstadoId || actividad.estado?.id || actividad.Estado?.Id;
+        console.log('🔍 DEBUG: cargarEstadoDesdeBD - EstadoId:', estadoId);
+        
+        if (estadoId) {
+            // Buscar el estado en la caché
+            let estados = Array.isArray(window.__estadosCache) ? window.__estadosCache : [];
+            
+            // Si no hay caché, cargar estados desde la API
+            if (estados.length === 0) {
+                console.log('🔍 DEBUG: cargarEstadoDesdeBD - No hay caché, cargando estados desde API...');
+                try {
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/estados/autenticado`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        estados = await response.json();
+                        window.__estadosCache = estados;
+                        console.log('🔍 DEBUG: cargarEstadoDesdeBD - Estados cargados desde API:', estados.length);
+                    }
+                } catch (e) {
+                    console.error('❌ DEBUG: cargarEstadoDesdeBD - Error cargando estados:', e);
+                }
+            }
+            
+            const estado = estados.find(e => Number(e.id) === Number(estadoId));
+            
+            if (estado) {
+                const nombre = estado.nombre || estado.Nombre || estado.descripcion || estado.Descripcion || `Estado ${estadoId}`;
+                const codigo = estado.codigo || estado.Codigo || '';
+                const color = estado.color || estado.Color || '#6c757d';
+                
+                console.log('🔍 DEBUG: cargarEstadoDesdeBD - Estado encontrado:', { nombre, codigo, color });
+                
+                // Actualizar el badge
+                const badge = document.getElementById('estadoBadgeBD');
+                if (badge) {
+                    badge.style.background = color;
+                    badge.textContent = nombre;
+                    badge.className = `badge bg-${getBootstrapColorClass(color)}`;
+                    console.log('🔍 DEBUG: cargarEstadoDesdeBD - Badge actualizado:', nombre);
+                }
+                
+                // Actualizar el campo informativo
+                const estadoActualBD = document.getElementById('estadoActualBD');
+                if (estadoActualBD) {
+                    estadoActualBD.innerHTML = `<span class="badge bg-${getBootstrapColorClass(color)}">${nombre}</span>`;
+                    console.log('🔍 DEBUG: cargarEstadoDesdeBD - Campo informativo actualizado:', nombre);
+                }
+            } else {
+                console.log('⚠️ DEBUG: cargarEstadoDesdeBD - Estado no encontrado en caché para ID:', estadoId);
+                // Mostrar estado genérico si no se encuentra en caché
+                const badge = document.getElementById('estadoBadgeBD');
+                const estadoActualBD = document.getElementById('estadoActualBD');
+                if (badge) {
+                    badge.textContent = `Estado ${estadoId}`;
+                    badge.className = 'badge bg-secondary';
+                }
+                if (estadoActualBD) {
+                    estadoActualBD.innerHTML = `<span class="badge bg-secondary">Estado ${estadoId}</span>`;
+                }
+            }
+        } else {
+            console.log('⚠️ DEBUG: cargarEstadoDesdeBD - No hay estadoId en la actividad');
+        }
+        
+    } catch (error) {
+        console.error('❌ DEBUG: cargarEstadoDesdeBD - Error:', error);
+    }
+}
+
+// Función auxiliar para convertir colores a clases de Bootstrap
+function getBootstrapColorClass(color) {
+    if (!color) return 'secondary';
+    
+    const colorMap = {
+        '#28a745': 'success',
+        '#dc3545': 'danger', 
+        '#ffc107': 'warning',
+        '#17a2b8': 'info',
+        '#007bff': 'primary',
+        '#6c757d': 'secondary',
+        '#343a40': 'dark'
+    };
+    
+    return colorMap[color] || 'secondary';
+}
+
+// Función para verificar permisos de edición y deshabilitar campos si es necesario
+async function verificarPermisosEdicion(actividadId) {
+    try {
+        console.log('🔍 DEBUG: verificarPermisosEdicion - Consultando API...');
+        
+        const response = await fetch(`${CONFIG.API_BASE_URL}/actividades/${actividadId}/puede-editar`);
+        
+        if (!response.ok) {
+            console.error('❌ Error verificando permisos:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        console.log('🔍 DEBUG: Permisos recibidos:', data);
+        
+        if (!data.puedeEditar) {
+            console.log('⚠️ Usuario NO tiene permiso de edición - Deshabilitando campos...');
+            
+            // Deshabilitar TODOS los campos del formulario
+            const form = document.querySelector('form');
+            if (form) {
+                const inputs = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.style.backgroundColor = '#e9ecef';
+                    input.style.cursor = 'not-allowed';
+                });
+                
+                console.log(`✅ ${inputs.length} campos deshabilitados`);
+            }
+            
+            // Deshabilitar botones de guardar/eliminar
+            const btnGuardar = document.querySelector('button[onclick*="guardar"]');
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.style.display = 'none';
+            }
+            
+            const btnEliminar = document.querySelector('button[onclick*="eliminar"]');
+            if (btnEliminar) {
+                btnEliminar.disabled = true;
+                btnEliminar.style.display = 'none';
+            }
+            
+            // Mostrar mensaje informativo
+            Utils.showAlert('warning', `Esta actividad está en estado "${data.estadoNombre}" y tu rol (${data.rol}) no tiene permiso de edición. Solo puedes visualizar.`);
+        } else {
+            console.log('✅ Usuario tiene permiso de edición');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error verificando permisos de edición:', error);
+    }
+}
+
 // ===== EXPORTAR FUNCIONES GLOBALES =====
 window.guardarActividad = guardarActividad;
 window.guardarBorrador = guardarBorrador;
@@ -2799,6 +3226,9 @@ window.rellenarConDatosPrueba = rellenarConDatosPrueba;
 window.addSubactividad = addSubactividad;
 window.addParticipante = addParticipante;
 window.addColaboradora = addColaboradora;
+window.poblarSelectRolEspecifico = poblarSelectRolEspecifico;
+window.cargarEstadoDesdeBD = cargarEstadoDesdeBD;
+window.cargarRolesParticipantes = cargarRolesParticipantes;
 window.toggleTraduccion = toggleTraduccion;
 window.eliminarSubactividad = eliminarSubactividad;
 window.eliminarParticipante = eliminarParticipante;

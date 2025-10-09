@@ -1604,7 +1604,7 @@ app.MapGet("/api/dominios/{nombreDominio}/valores", async (string nombreDominio,
         var valores = await context.ValoresDominio
             .Where(v => v.DominioId == dominio.Id && v.Activo)
             .OrderBy(v => v.Orden)
-            .Select(v => new { v.Id, v.Valor, v.Descripcion })
+            .Select(v => new { v.Id, v.Descripcion })
             .ToListAsync();
 
         return Results.Ok(valores);

@@ -106,6 +106,11 @@
         // Ocultar todos los campos específicos primero
         const allUGFields = document.querySelectorAll('[data-ug]');
         allUGFields.forEach(field => {
+            // NO ocultar el campo estado informativo
+            if (field.querySelector('#estadoActualBD')) {
+                console.log('🔧 DEBUG: showUGSpecificFields - Preservando campo estado informativo');
+                return; // Skip este campo
+            }
             field.style.display = 'none';
         });
 

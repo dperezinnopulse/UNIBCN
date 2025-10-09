@@ -30,6 +30,7 @@ public class UbFormacionContext : DbContext
     public DbSet<TransicionEstado> TransicionesEstado { get; set; }
     public DbSet<RolNormalizado> RolesNormalizados { get; set; }
     public DbSet<MapeoRol> MapeoRoles { get; set; }
+    public DbSet<PermisosEdicion> PermisosEdicion { get; set; }
     public DbSet<Localidad> Localidades { get; set; }
     public DbSet<ActividadDenominacionDescuento> ActividadDenominacionDescuentos { get; set; }
 
@@ -147,13 +148,15 @@ public class UbFormacionContext : DbContext
         modelBuilder.Entity<ValorDominio>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Valor).IsRequired().HasMaxLength(200).IsUnicode();
+            // Campo Valor eliminado del modelo
+            // entity.Property(e => e.Valor).IsRequired().HasMaxLength(200).IsUnicode();
             entity.Property(e => e.Descripcion).HasMaxLength(500).IsUnicode();
             entity.HasOne(e => e.Dominio)
                   .WithMany(d => d.Valores)
                   .HasForeignKey(e => e.DominioId)
                   .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(e => new { e.DominioId, e.Valor }).IsUnique();
+            // Índice único eliminado porque depende del campo Valor
+            // entity.HasIndex(e => new { e.DominioId, e.Valor }).IsUnique();
         });
 
         modelBuilder.Entity<Dominio>(entity =>
@@ -276,6 +279,14 @@ public class UbFormacionContext : DbContext
                   .HasForeignKey(e => e.RolNormalizadoId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.RolOriginal, e.RolNormalizadoId }).IsUnique();
+        });
+
+        modelBuilder.Entity<PermisosEdicion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EstadoCodigo).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.RolOriginal).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => new { e.EstadoCodigo, e.RolOriginal }).IsUnique().HasDatabaseName("UQ_Permiso_Estado_Rol");
         });
 
         modelBuilder.Entity<Localidad>(entity =>

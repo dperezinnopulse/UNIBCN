@@ -147,13 +147,15 @@ public class UbFormacionContext : DbContext
         modelBuilder.Entity<ValorDominio>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Valor).IsRequired().HasMaxLength(200).IsUnicode();
+            // Campo Valor eliminado del modelo
+            // entity.Property(e => e.Valor).IsRequired().HasMaxLength(200).IsUnicode();
             entity.Property(e => e.Descripcion).HasMaxLength(500).IsUnicode();
             entity.HasOne(e => e.Dominio)
                   .WithMany(d => d.Valores)
                   .HasForeignKey(e => e.DominioId)
                   .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(e => new { e.DominioId, e.Valor }).IsUnique();
+            // Índice único eliminado porque depende del campo Valor
+            // entity.HasIndex(e => new { e.DominioId, e.Valor }).IsUnique();
         });
 
         modelBuilder.Entity<Dominio>(entity =>

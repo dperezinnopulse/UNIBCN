@@ -8,9 +8,10 @@ public class ValorDominio
     
     public int DominioId { get; set; }
     
-    [Required]
-    [MaxLength(200)]
-    public string Valor { get; set; } = string.Empty;
+    // CAMPO ELIMINADO: Ya no se usa el campo Valor, solo se usa Id
+    // [Required]
+    // [MaxLength(200)]
+    // public string Valor { get; set; } = string.Empty;
     
     [MaxLength(500)]
     public string? Descripcion { get; set; }

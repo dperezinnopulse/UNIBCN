@@ -502,14 +502,10 @@ async function loadValoresDominio(selectElement, nombreDominio) {
                 valores.forEach(valor => {
                     const option = document.createElement('option');
                     
-                    // Usar ID para campos específicos que lo requieren, valor para otros
-                    const camposQueUsanId = ['remesa', 'unidadGestoraDetalle'];
-                    if (camposQueUsanId.includes(selectElement.id)) {
-                        option.value = valor.id || valor.Id;
-                    } else {
-                        option.value = valor.valor || valor.Valor || valor.id || valor.Id;
-                    }
-                    option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+                    // TODOS los dropdowns usan ID (eliminando referencia al campo valor)
+                    option.value = valor.id || valor.Id;
+                    console.log(`🔍 DEBUG: loadValoresDominio - Poblando ${selectElement.id} con ID: ${option.value} -> ${valor.descripcion || valor.Descripcion}`);
+                    option.textContent = valor.descripcion || valor.Descripcion;
                     
                     selectElement.appendChild(option);
                     opcionesAgregadas++;
@@ -526,6 +522,56 @@ async function loadValoresDominio(selectElement, nombreDominio) {
     } catch (error) {
         console.error(`❌ DEBUG: loadValoresDominio - Error cargando dominio ${nombreDominio}:`, error);
         // No mostrar error al usuario, solo log
+    }
+}
+
+// ===== FUNCIÓN PARA REFRESCAR CACHÉ DE DOMINIOS =====
+async function refrescarCacheDominios() {
+    try {
+        Utils.log('Refrescando caché de dominios...');
+        
+        // Limpiar caché existente
+        window.__dominiosCache = null;
+        
+        // Recargar dominios usando la API de actividades
+        const dominiosACargar = [
+            'MODALIDAD_IMPARTICION',
+            'TIPOS_PARTICIPANTE_ROL',
+            'TIPOS_ACTIVIDAD',
+            'LINEAS_ESTRATEGICAS',
+            'OBJETIVOS_ESTRATEGICOS',
+            'ACTIVIDADES_RESERVADAS',
+            'MODALIDADES_GESTION',
+            'CENTROS_UB',
+            'FACULTADES',
+            'DEPARTAMENTOS',
+            'JEFES_UNIDAD_GESTORA',
+            'GESTORES_ACTIVIDAD'
+        ];
+        
+        window.__dominiosCache = [];
+        
+        for (const dominio of dominiosACargar) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/actividades/dominios/${dominio.toLowerCase().replace(/_/g, '-')}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        window.__dominiosCache.push({
+                            nombre: dominio,
+                            valores: data
+                        });
+                        Utils.log(`Dominio ${dominio} cargado:`, data.length, 'valores');
+                    }
+                }
+            } catch (e) {
+                Utils.log(`Error cargando dominio ${dominio}:`, e);
+            }
+        }
+        
+        Utils.log('Caché de dominios refrescada:', window.__dominiosCache.length, 'dominios');
+    } catch (e) {
+        Utils.error('Error refrescando caché de dominios:', e);
     }
 }
 
@@ -671,14 +717,10 @@ async function loadValoresDominioRobust(selectElement, nombreDominio, maxRetries
             valores.forEach(valor => {
                 const option = document.createElement('option');
                 
-                // Usar ID para campos específicos que lo requieren, valor para otros
-                const camposQueUsanId = ['remesa', 'unidadGestoraDetalle'];
-                if (camposQueUsanId.includes(selectElement.id)) {
-                    option.value = valor.id || valor.Id;
-                } else {
-                    option.value = valor.valor || valor.Valor || valor.id || valor.Id;
-                }
-                option.textContent = valor.descripcion || valor.Descripcion || valor.valor || valor.Valor || valor.value || valor.Value;
+                // TODOS los dropdowns usan ID (eliminando referencia al campo valor)
+                option.value = valor.id || valor.Id;
+                console.log(`🔍 DEBUG: Poblando ${selectElement.id} con ID: ${option.value} -> ${valor.descripcion || valor.Descripcion}`);
+                option.textContent = valor.descripcion || valor.Descripcion;
                 
                 selectElement.appendChild(option);
                 opcionesAgregadas++;
@@ -810,10 +852,20 @@ async function cargarDominios() {
         }
 
         // Ejecutar cargas auxiliares inmediatamente (con guardas internas de "once")
-        try { cargarUnidadesGestion(); } catch {}
-        try { autoSeleccionarUnidadGestion(); } catch {}
+        try { 
+            await cargarUnidadesGestion(); 
+            // Esperar a que se cargue completamente antes de auto-seleccionar
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await autoSeleccionarUnidadGestion(); 
+        } catch {}
         try { autoRellenarPersonaSolicitante(); } catch {}
-        try { cargarRolesParticipantes(); } catch {}
+        try { 
+            console.log('🔍 DEBUG: cargarDominios - Llamando a cargarRolesParticipantes...');
+            await cargarRolesParticipantes(); 
+            console.log('✅ DEBUG: cargarDominios - cargarRolesParticipantes completado');
+        } catch (error) {
+            console.error('❌ DEBUG: cargarDominios - Error en cargarRolesParticipantes:', error);
+        }
         try { cargarModalidadesSubactividades(); } catch {}
 
     } catch (error) {
@@ -826,14 +878,18 @@ async function cargarDominios() {
 // Función para cargar roles de participantes desde el dominio TIPOS_PARTICIPANTE_ROL
 async function cargarRolesParticipantes() {
     try {
-        if (window.__rolesLoaded) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya cargado (skip)'); return; }
-        if (window.__rolesStarted) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya iniciado (skip)'); return; }
+        // DESHABILITADO temporalmente para debug - permitir múltiples cargas
+        // if (window.__rolesLoaded) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya cargado (skip)'); return; }
+        // if (window.__rolesStarted) { console.log('⏭️ DEBUG: cargarRolesParticipantes - ya iniciado (skip)'); return; }
+        console.log('🔍 DEBUG: [scripts-clean.js] cargarRolesParticipantes - Iniciando ejecución...');
         window.__rolesStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarRolesParticipantes tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarRolesParticipantes - Iniciando carga de roles...');
         
         // Obtener valores cacheados del dominio TIPOS_PARTICIPANTE_ROL
+        console.log('🔍 DEBUG: cargarRolesParticipantes - Llamando a getValoresDominio("TIPOS_PARTICIPANTE_ROL")...');
         const resp = await getValoresDominio('TIPOS_PARTICIPANTE_ROL');
+        console.log('🔍 DEBUG: cargarRolesParticipantes - Respuesta de getValoresDominio:', resp);
         const roles = resp?.valores || resp || [];
         console.log('📊 DEBUG: cargarRolesParticipantes - Roles obtenidos:', roles);
         
@@ -863,7 +919,19 @@ async function cargarRolesParticipantes() {
         const selectsRol = document.querySelectorAll('select[id*="_rol"]');
         console.log(`🔍 DEBUG: cargarRolesParticipantes - Encontrados ${selectsRol.length} selects de rol`);
         
-        selectsRol.forEach(select => { poblarSelectRoles(select); });
+        selectsRol.forEach(select => { 
+            console.log(`🔍 DEBUG: Poblando select: ${select.id}`);
+            poblarSelectRoles(select); 
+        });
+        
+        // Verificar específicamente el participante_66_rol
+        const participante66 = document.getElementById('participante_66_rol');
+        if (participante66) {
+            console.log('🔍 DEBUG: participante_66_rol encontrado, poblando...');
+            poblarSelectRoles(participante66);
+        } else {
+            console.log('⚠️ DEBUG: participante_66_rol NO encontrado');
+        }
         
         console.log('✅ DEBUG: cargarRolesParticipantes - Completado');
         window.__rolesLoaded = true;
@@ -877,8 +945,10 @@ async function cargarRolesParticipantes() {
 // Función para cargar modalidades de subactividades desde el dominio MODALIDAD_IMPARTICION
 async function cargarModalidadesSubactividades() {
     try {
-        if (window.__modalidadesLoaded) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya cargado (skip)'); return; }
-        if (window.__modalidadesStarted) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya iniciado (skip)'); return; }
+        // DESHABILITADO temporalmente para debug - permitir múltiples cargas
+        // if (window.__modalidadesLoaded) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya cargado (skip)'); return; }
+        // if (window.__modalidadesStarted) { console.log('⏭️ DEBUG: cargarModalidadesSubactividades - ya iniciado (skip)'); return; }
+        console.log('🔍 DEBUG: [scripts-clean.js] cargarModalidadesSubactividades - Iniciando ejecución...');
         window.__modalidadesStarted = true;
         try { const now=performance.now(); if (window.__dominiosDoneTs && (now-window.__dominiosDoneTs)>1000){ console.warn('🧵 TRACE cargarModalidadesSubactividades tardío'); console.trace(); } } catch {}
         console.log('🚀 DEBUG: cargarModalidadesSubactividades - Iniciando carga de modalidades...');
@@ -1013,10 +1083,23 @@ async function guardarActividad() {
             AnioAcademico: limpiarValor(document.getElementById('actividadAnioAcademico')?.value),
             UnidadGestionId: unidadGestionId,
 
-            // Información general
-            TipoActividad: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('tipoActividad')?.value)),
-            LineaEstrategica: limpiarValor(document.getElementById('lineaEstrategica')?.value),
-            ObjetivoEstrategico: limpiarValor(document.getElementById('objetivoEstrategico')?.value),
+            // Información general - CORREGIDO: usar ID en lugar de texto
+            TipoActividad: (() => {
+                const valor = document.getElementById('tipoActividad')?.value;
+                console.log('🔍 DEBUG: TipoActividad - valor enviado:', valor);
+                return valor ? String(valor) : undefined;
+            })(),
+            // CORREGIDO: Usar string para campos que el backend espera como string
+            LineaEstrategica: (() => {
+                const valor = document.getElementById('lineaEstrategica')?.value;
+                console.log('🔍 DEBUG: LineaEstrategica - valor enviado:', valor);
+                return valor || undefined;
+            })(),
+            ObjetivoEstrategico: (() => {
+                const valor = document.getElementById('objetivoEstrategico')?.value;
+                console.log('🔍 DEBUG: ObjetivoEstrategico - valor enviado:', valor);
+                return valor || undefined;
+            })(),
             CodigoRelacionado: limpiarValor(document.getElementById('codigoRelacionado')?.value),
             ActividadReservada: (() => {
                 const valor = document.getElementById('actividadReservada')?.value;
@@ -1036,12 +1119,37 @@ async function guardarActividad() {
             MotivoCierre: limpiarValor(document.getElementById('motivoCierre')?.value),
             PersonaSolicitante: limpiarValor(document.getElementById('personaSolicitante')?.value),
             Coordinador: limpiarValor(document.getElementById('coordinador')?.value),
-            JefeUnidadGestora: limpiarValor(document.getElementById('jefeUnidadGestora')?.value),
-            UnidadGestoraDetalle: limpiarValorId(document.getElementById('unidadGestoraDetalle')?.value),
-            GestorActividad: limpiarValor(document.getElementById('gestorActividad')?.value),
-            FacultadDestinataria: limpiarValor(document.getElementById('facultadDestinataria')?.value),
-            DepartamentoDestinatario: limpiarValor(document.getElementById('departamentoDestinatario')?.value),
-            CentroUnidadUBDestinataria: limpiarValor(document.getElementById('centroUnidadUBDestinataria')?.value),
+            // CORREGIDO: Usar IDs en lugar de texto para campos de dominio
+            JefeUnidadGestora: (() => {
+                const valor = document.getElementById('jefeUnidadGestora')?.value;
+                console.log('🔍 DEBUG: JefeUnidadGestora - valor enviado:', valor);
+                return valor || undefined;
+            })(),
+            UnidadGestoraDetalle: (() => {
+                const valor = document.getElementById('unidadGestoraDetalle')?.value;
+                console.log('🔍 DEBUG: UnidadGestoraDetalle - valor enviado:', valor);
+                return valor ? String(valor) : undefined;
+            })(),
+            GestorActividad: (() => {
+                const valor = document.getElementById('gestorActividad')?.value;
+                console.log('🔍 DEBUG: GestorActividad - valor enviado:', valor);
+                return valor || undefined;
+            })(),
+            FacultadDestinataria: (() => {
+                const valor = document.getElementById('facultadDestinataria')?.value;
+                console.log('🔍 DEBUG: FacultadDestinataria - valor enviado:', valor);
+                return valor || undefined;
+            })(),
+            DepartamentoDestinatario: (() => {
+                const valor = document.getElementById('departamentoDestinatario')?.value;
+                console.log('🔍 DEBUG: DepartamentoDestinatario - valor enviado:', valor);
+                return valor || undefined;
+            })(),
+            CentroUnidadUBDestinataria: (() => {
+                const valor = document.getElementById('centroUnidadUBDestinataria')?.value;
+                console.log('🔍 DEBUG: CentroUnidadUBDestinataria - valor enviado:', valor);
+                return valor || undefined;
+            })(),
             OtrosCentrosInstituciones: limpiarValor(document.getElementById('otrosCentrosInstituciones')?.value),
             PlazasTotales: (() => {
                 const valor = document.getElementById('plazasTotales')?.value;
@@ -1051,8 +1159,17 @@ async function guardarActividad() {
                 const valor = document.getElementById('horasTotales')?.value;
                 return valor ? parseFloat(valor) : undefined;
             })(),
-            CentroTrabajoRequerido: limpiarValor(document.getElementById('centroTrabajoRequerido')?.value),
-            ModalidadGestion: limpiarValor(document.getElementById('modalidadGestion')?.value),
+            // CORREGIDO: Usar ID en lugar de texto para centroTrabajoRequerido
+            CentroTrabajoRequerido: (() => {
+                const valor = document.getElementById('centroTrabajoRequerido')?.value;
+                return valor || undefined;
+            })(),
+            // CORREGIDO: Usar string para ModalidadGestion
+            ModalidadGestion: (() => {
+                const valor = document.getElementById('modalidadGestion')?.value;
+                console.log('🔍 DEBUG: ModalidadGestion - valor enviado:', valor);
+                return valor || undefined;
+            })(),
             FechaInicioImparticion: document.getElementById('fechaInicioImparticion')?.value ? new Date(document.getElementById('fechaInicioImparticion').value).toISOString() : undefined,
             FechaFinImparticion: document.getElementById('fechaFinImparticion')?.value ? new Date(document.getElementById('fechaFinImparticion').value).toISOString() : undefined,
             CondicionesEconomicas: limpiarValor(document.getElementById('condicionesEconomicas')?.value),
@@ -1076,8 +1193,15 @@ async function guardarActividad() {
                 const valor = document.getElementById('creditosMaximosSAE')?.value;
                 return valor ? parseFloat(valor) : undefined;
             })(),
-            TipusEstudiSAE: limpiarValor(document.getElementById('tipusEstudiSAE')?.value),
-            CategoriaSAE: limpiarValor(document.getElementById('categoriaSAE')?.value),
+            // CORREGIDO: Usar ID en lugar de texto para campos SAE
+            TipusEstudiSAE: (() => {
+                const valor = document.getElementById('tipusEstudiSAE')?.value;
+                return valor || undefined;
+            })(),
+            CategoriaSAE: (() => {
+                const valor = document.getElementById('categoriaSAE')?.value;
+                return valor || undefined;
+            })(),
             CompetenciesSAE: limpiarValor(limpiarCaracteresEspeciales(document.getElementById('competenciesSAE')?.value)),
 
             // Inscripción
@@ -1088,7 +1212,11 @@ async function guardarActividad() {
                 const checked = document.getElementById('insc_lista_espera')?.checked || false;
                 return isUpdate ? (checked ? "S" : "N") : checked;
             })(),
-            InscripcionModalidad: limpiarCaracteresEspeciales(document.getElementById('insc_modalidad')?.value) || '',
+            InscripcionModalidad: (() => {
+                const valor = document.getElementById('insc_modalidad')?.value;
+                console.log('🔍 DEBUG: InscripcionModalidad - valor enviado:', valor);
+                return valor || undefined;
+            })(),
             InscripcionRequisitosES: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_es')?.value) || '',
             InscripcionRequisitosCA: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_ca')?.value) || '',
             InscripcionRequisitosEN: limpiarCaracteresEspeciales(document.getElementById('insc_requisitos_en')?.value) || '',
@@ -1109,7 +1237,12 @@ async function guardarActividad() {
 
             // NUEVOS CAMPOS - INFORMACIÓN GENERAL
             Preinscripcion: document.getElementById('preinscripcion')?.checked || false,
-            EstadoActividad: limpiarCaracteresEspeciales(document.getElementById('estadoActividad')?.value) || '',
+            // CORREGIDO: Usar string para EstadoActividad
+            EstadoActividad: (() => {
+                const valor = document.getElementById('estadoActividad')?.value;
+                console.log('🔍 DEBUG: EstadoActividad - valor enviado:', valor);
+                return valor || undefined;
+            })(),
             AsignaturaId: document.getElementById('asignaturaId')?.value ? parseInt(document.getElementById('asignaturaId').value) : null,
             GrupoAsignatura: limpiarCaracteresEspeciales(document.getElementById('grupoAsignatura')?.value) || '',
             DisciplinaRelacionadaId: document.getElementById('disciplinaRelacionadaId')?.value ? parseInt(document.getElementById('disciplinaRelacionadaId').value) : null,
@@ -1120,6 +1253,12 @@ async function guardarActividad() {
             HorarioYCalendario: limpiarCaracteresEspeciales(document.getElementById('horarioYCalendario')?.value) || '',
             IdiomaImparticionId: document.getElementById('idiomaImparticionId')?.value ? parseInt(document.getElementById('idiomaImparticionId').value) : null,
             TiposCertificacionId: document.getElementById('tiposCertificacionId')?.value ? parseInt(document.getElementById('tiposCertificacionId').value) : null,
+            // AGREGADO: Campo faltante TiposFinanciacionId
+            // CORREGIDO: Usar int para TiposFinanciacionId (este campo SÍ es int en el DTO)
+            TiposFinanciacionId: (() => {
+                const valor = document.getElementById('tiposFinanciacionId')?.value;
+                return valor && !isNaN(parseInt(valor)) ? parseInt(valor) : undefined;
+            })(),
             Observaciones: limpiarCaracteresEspeciales(document.getElementById('observaciones')?.value) || '',
             MateriaDisciplinaId: document.getElementById('materiaDisciplinaId')?.value ? parseInt(document.getElementById('materiaDisciplinaId').value) : null,
             EspacioImparticion: limpiarCaracteresEspeciales(document.getElementById('espacioImparticion')?.value) || '',
@@ -1141,7 +1280,11 @@ async function guardarActividad() {
             // NUEVOS CAMPOS - INSCRIPCIÓN
             FechaLimitePago: document.getElementById('fechaLimitePago')?.value ? new Date(document.getElementById('fechaLimitePago').value).toISOString() : null,
             TPV: document.getElementById('tpv')?.checked || false,
-            Remesa: limpiarValorId(document.getElementById('remesa')?.value),
+            // CORREGIDO: Usar ID en lugar de texto para Remesa
+            Remesa: (() => {
+                const valor = document.getElementById('remesa')?.value;
+                return valor || undefined;
+            })(),
             TiposInscripcionId: document.getElementById('tiposInscripcionId')?.value ? parseInt(document.getElementById('tiposInscripcionId').value) : null,
             FechaAdjudicacionPreinscripcion: document.getElementById('fechaAdjudicacionPreinscripcion')?.value ? new Date(document.getElementById('fechaAdjudicacionPreinscripcion').value).toISOString() : null
         };
@@ -1537,6 +1680,7 @@ window.loadUnidadesGestion = loadUnidadesGestion;
 window.loadValoresDominio = loadValoresDominio;
 window.cargarDominios = cargarDominios;
 window.getValoresDominio = getValoresDominio;
+window.refrescarCacheDominios = refrescarCacheDominios;
 window.toggleImporte = toggleImporte;
 window.guardarActividad = guardarActividad;
 window.cargarActividad = cargarActividad;
@@ -2964,10 +3108,11 @@ function establecerValoresDropdowns(actividad) {
         if (valor != null && valor !== '') {
             select.dataset.lockedValue = String(valor);
             attachLockedObserver(select);
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
             for (let option of select.options) {
-                if (option.value === String(valor) || option.text === String(valor)) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - lineaEstrategica establecido:', option.text);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - lineaEstrategica establecido por ID:', option.text);
                     break;
                 }
             }
@@ -2981,10 +3126,11 @@ function establecerValoresDropdowns(actividad) {
         if (valor != null && valor !== '') {
             select.dataset.lockedValue = String(valor);
             attachLockedObserver(select);
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
             for (let option of select.options) {
-                if (option.value === String(valor) || option.text === String(valor)) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - objetivoEstrategico establecido:', option.text);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - objetivoEstrategico establecido por ID:', option.text);
                     break;
                 }
             }
@@ -3031,23 +3177,13 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.CentroTrabajoRequerido || actividad.centroTrabajoRequerido;
         console.log('🔧 DEBUG: establecerValoresDropdowns - centroTrabajoRequerido, valor:', valor);
         if (valor) {
-            // Mapeo específico para centroTrabajoRequerido
-            const mapeo = {
-                'Si': 'Sí',
-                'si': 'Sí',
-                'No': 'No',
-                'no': 'No'
-            };
-            const valorMapeado = mapeo[valor] || valor;
-            
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
             for (let option of select.options) {
-                if (option.value === valorMapeado || option.text === valorMapeado || 
-                    option.value.toLowerCase() === valorMapeado.toLowerCase() || 
-                    option.text.toLowerCase() === valorMapeado.toLowerCase()) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - centroTrabajoRequerido establecido:', option.text);
-                    select.dataset.lockedValue = option.value;
-                    attachLockedObserver(select);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - centroTrabajoRequerido establecido por ID:', option.text);
                     break;
                 }
             }
@@ -3059,10 +3195,11 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.TipoActividad || actividad.tipoActividad;
         console.log('🔧 DEBUG: establecerValoresDropdowns - tipoActividad, valor:', valor);
         if (valor) {
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
             for (let option of select.options) {
-                if (option.value === valor || option.text === valor) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - tipoActividad establecido:', option.text);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - tipoActividad establecido por ID:', option.text);
                     select.dataset.lockedValue = option.value;
                     attachLockedObserver(select);
                     break;
@@ -3076,12 +3213,67 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.ModalidadGestion || actividad.modalidadGestion;
         console.log('🔧 DEBUG: establecerValoresDropdowns - modalidadGestion, valor:', valor);
         if (valor) {
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
             for (let option of select.options) {
-                if (option.value === valor || option.text === valor) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - modalidadGestion establecido:', option.text);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - modalidadGestion establecido por ID:', option.text);
                     select.dataset.lockedValue = option.value;
                     attachLockedObserver(select);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // AGREGADO: Tipos de financiación
+    if (document.getElementById('tiposFinanciacionId')) {
+        const select = document.getElementById('tiposFinanciacionId');
+        const valor = actividad.TiposFinanciacionId || actividad.tiposFinanciacionId;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - tiposFinanciacionId, valor:', valor);
+        if (valor) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - tiposFinanciacionId establecido por ID:', option.text);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // AGREGADO: Modalidad de inscripción
+    if (document.getElementById('inscripcionModalidad')) {
+        const select = document.getElementById('inscripcionModalidad');
+        const valor = actividad.InscripcionModalidad || actividad.inscripcionModalidad;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - inscripcionModalidad, valor:', valor);
+        if (valor) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - inscripcionModalidad establecido por ID:', option.text);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // AGREGADO: Estado de actividad
+    if (document.getElementById('estadoActividad')) {
+        const select = document.getElementById('estadoActividad');
+        const valor = actividad.EstadoActividad || actividad.estadoActividad;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - estadoActividad, valor:', valor);
+        if (valor) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - estadoActividad establecido por ID:', option.text);
                     break;
                 }
             }
@@ -3093,25 +3285,13 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.TipusEstudiSAE || actividad.tipusEstudiSAE;
         console.log('🔧 DEBUG: establecerValoresDropdowns - tipusEstudiSAE, valor:', valor);
         if (valor) {
-            // Mapeo específico para tipusEstudiSAE
-            const mapeo = {
-                'Master': 'Màster',
-                'master': 'Màster',
-                'Grau': 'Grau',
-                'grau': 'Grau',
-                'Doctorat': 'Doctorat',
-                'doctorat': 'Doctorat'
-            };
-            const valorMapeado = mapeo[valor] || valor;
-            
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
             for (let option of select.options) {
-                if (option.value === valorMapeado || option.text === valorMapeado || 
-                    option.value.toLowerCase() === valorMapeado.toLowerCase() || 
-                    option.text.toLowerCase() === valorMapeado.toLowerCase()) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - tipusEstudiSAE establecido:', option.text);
-                    select.dataset.lockedValue = option.value;
-                    attachLockedObserver(select);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - tipusEstudiSAE establecido por ID:', option.text);
                     break;
                 }
             }
@@ -3123,25 +3303,31 @@ function establecerValoresDropdowns(actividad) {
         const valor = actividad.CategoriaSAE || actividad.categoriaSAE;
         console.log('🔧 DEBUG: establecerValoresDropdowns - categoriaSAE, valor:', valor);
         if (valor) {
-            // Mapeo específico para categoriaSAE
-            const mapeo = {
-                'Avancat': 'Avançat',
-                'avancat': 'Avançat',
-                'Basic': 'Bàsic',
-                'basic': 'Bàsic',
-                'Especialitzacio': 'Especialització',
-                'especialitzacio': 'Especialització'
-            };
-            const valorMapeado = mapeo[valor] || valor;
-            
+            // CORREGIDO: Buscar solo por value (ID) ya que ahora guardamos IDs
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
             for (let option of select.options) {
-                if (option.value === valorMapeado || option.text === valorMapeado || 
-                    option.value.toLowerCase() === valorMapeado.toLowerCase() || 
-                    option.text.toLowerCase() === valorMapeado.toLowerCase()) {
+                if (option.value === String(valor)) {
                     option.selected = true;
-                    console.log('✅ DEBUG: establecerValoresDropdowns - categoriaSAE establecido:', option.text);
-                    select.dataset.lockedValue = option.value;
-                    attachLockedObserver(select);
+                    console.log('✅ DEBUG: establecerValoresDropdowns - categoriaSAE establecido por ID:', option.text);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // AGREGADO: Remesa
+    if (document.getElementById('remesa')) {
+        const select = document.getElementById('remesa');
+        const valor = actividad.Remesa || actividad.remesa;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - remesa, valor:', valor);
+        if (valor) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - remesa establecido por ID:', option.text);
                     break;
                 }
             }
@@ -3583,6 +3769,17 @@ function llenarImportesDescuentos(importes) {
 function llenarParticipantes(participantes) {
     console.log('📝 DEBUG: llenarParticipantes - Iniciando llenado de participantes:', participantes);
     
+    // Función helper para obtener descripción desde ID de dominio
+    function getDescripcionDominio(dominioNombre, id) {
+        if (!id || !window.__dominiosCache) return id || 'N/A';
+        const dominio = window.__dominiosCache.find(d => d.nombre === dominioNombre);
+        if (dominio && dominio.valores) {
+            const valor = dominio.valores.find(v => String(v.id) === String(id) || String(v.Id) === String(id));
+            return valor ? (valor.descripcion || valor.Descripcion) : id;
+        }
+        return id || 'N/A';
+    }
+    
     // Guardar participantes en variable global para acceso en modales
     window.participantesCargados = participantes;
     
@@ -3613,6 +3810,9 @@ function llenarParticipantes(participantes) {
             
             // Llenar con los participantes
             participantes.forEach((participante, index) => {
+                // Convertir ID de rol a descripción
+                const rolDescripcion = getDescripcionDominio('TIPOS_PARTICIPANTE_ROL', participante.rol);
+                
                 const participanteHTML = `
                     <div class="card mb-3" id="participante-${participante.id}">
                         <div class="card-body">
@@ -3624,7 +3824,7 @@ function llenarParticipantes(participantes) {
                                     <strong>Email:</strong> ${participante.email || 'N/A'}
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Rol:</strong> ${participante.rol || 'N/A'}
+                                    <strong>Rol:</strong> ${rolDescripcion}
                                 </div>
                                 <div class="col-md-3 text-end">
                                     <button class="btn btn-sm btn-outline-primary me-2" onclick="editarParticipante(${participante.id})">
@@ -3653,6 +3853,17 @@ function llenarParticipantes(participantes) {
 // Función para llenar subactividades
 function llenarSubactividades(subactividades) {
     console.log('📝 DEBUG: llenarSubactividades - Iniciando llenado de subactividades:', subactividades);
+    
+    // Función helper para obtener descripción desde ID de dominio
+    function getDescripcionDominio(dominioNombre, id) {
+        if (!id || !window.__dominiosCache) return id || 'N/A';
+        const dominio = window.__dominiosCache.find(d => d.nombre === dominioNombre);
+        if (dominio && dominio.valores) {
+            const valor = dominio.valores.find(v => String(v.id) === String(id) || String(v.Id) === String(id));
+            return valor ? (valor.descripcion || valor.Descripcion) : id;
+        }
+        return id || 'N/A';
+    }
     
     // Guardar subactividades en variable global para acceso en modales
     window.subactividadesCargadas = subactividades;
@@ -3684,6 +3895,9 @@ function llenarSubactividades(subactividades) {
             
             // Llenar con las subactividades
             subactividades.forEach((subactividad, index) => {
+                // Convertir ID de modalidad a descripción
+                const modalidadDescripcion = getDescripcionDominio('MODALIDAD_IMPARTICION', subactividad.modalidad);
+                
                 const subactividadHTML = `
                     <div class="card mb-3" id="subactividad-${subactividad.id}">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -3703,7 +3917,7 @@ function llenarSubactividades(subactividades) {
                                     <strong>Descripción:</strong> ${subactividad.descripcion || 'N/A'}
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Modalidad:</strong> ${subactividad.modalidad || 'N/A'}
+                                    <strong>Modalidad:</strong> ${modalidadDescripcion}
                                 </div>
                                 <div class="col-md-3">
                                     <strong>Docente:</strong> ${subactividad.docente || 'N/A'}
@@ -4477,21 +4691,35 @@ async function autoSeleccionarUnidadGestion() {
             return;
         }
         
-        // Mapear ID del usuario a código y al valor del select
-        const ugMap = { 
-            1: { codigo: 'IDP', selectValue: '1' }, 
-            2: { codigo: 'CRAI', selectValue: '2' },
-            3: { codigo: 'SAE', selectValue: '3' } 
-        };
-        const ugInfo = ugMap[unidadGestionId];
+        // Obtener las unidades de gestión desde la API para usar los datos reales
+        let unidadesGestion = [];
+        try {
+            const response = await fetch('/api/unidades-gestion', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('ub_token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                unidadesGestion = await response.json();
+                console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Unidades obtenidas de API:', unidadesGestion);
+            }
+        } catch (error) {
+            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Error obteniendo unidades de API:', error);
+        }
         
-        if (!ugInfo) {
-            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Código UG no encontrado para ID:', unidadGestionId);
+        // Buscar la unidad de gestión del usuario en los datos de la API
+        const ugUsuario = unidadesGestion.find(ug => ug.id === unidadGestionId);
+        
+        if (!ugUsuario) {
+            console.log('⚠️ DEBUG: autoSeleccionarUnidadGestion - Unidad de gestión no encontrada para ID:', unidadGestionId);
             return;
         }
         
-        const ugCodigo = ugInfo.codigo;
-        const selectValue = ugInfo.selectValue;
+        const ugCodigo = ugUsuario.codigo || ugUsuario.nombre;
+        const selectValue = String(ugUsuario.id);
         
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - Código UG:', ugCodigo);
         console.log('🎯 DEBUG: autoSeleccionarUnidadGestion - ID del usuario:', unidadGestionId);
@@ -4538,6 +4766,14 @@ async function autoSeleccionarUnidadGestion() {
                             explicacion.textContent = '(Auto-asignado según tu unidad)';
                             label.appendChild(explicacion);
                         }
+                        
+                        // Agregar event listener para prevenir cambios
+                        select.addEventListener('change', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.value = selectValue; // Restaurar valor original
+                            console.log('🚫 DEBUG: autoSeleccionarUnidadGestion - Cambio bloqueado para usuario no-Admin');
+                        });
                         
                         console.log('✅ DEBUG: autoSeleccionarUnidadGestion - Unidad gestora seleccionada y bloqueada para usuario no-Admin:', ugCodigo);
                     } else {

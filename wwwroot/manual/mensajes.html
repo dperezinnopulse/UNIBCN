@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Mensajes</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+    /* Highlight overlay */
+    .hl-wrap { position: relative; display: inline-block; }
+    .hl-circle { position: absolute; width: 80px; height: 80px; border: 3px solid #dc3545; border-radius: 50%; box-shadow: 0 0 8px rgba(220,53,69,.7); pointer-events: none; }
+    .hl-label { position: absolute; right: 8px; bottom: 96px; background: #dc3545; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: .8rem; }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
+  <header>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Módulo de Mensajes</h1>
+    <div class="small" style="color:#666">Listado de hilos, filtro de no leídos y lectura en modal.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Cómo llegar</h2>
+      <p>Abra el menú lateral y pulse en <strong>Ver mensajes</strong>.</p>
+      <figure data-route="/mensajes.html" data-selector="a.nav-link[href='mensajes.html']">
+        <a href="/manual/assets/context/como-llegar-mensajes-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-mensajes-context.png" alt="Navegación a Mensajes"/>
+        </a>
+        <figcaption>Acceso al módulo desde el menú lateral.</figcaption>
+      </figure>
+    </section>
+    <section id="escribir-desde-editar">
+      <h2>Escribir mensajes desde Editar Actividad</h2>
+      <ol>
+        <li>Abra una actividad (Editar actividad).</li>
+        <li>Pulse el botón de <strong>Mensajes</strong> en la cabecera (icono de chat).</li>
+        <li>En el modal, escriba el <em>asunto</em> y el <em>contenido</em>, luego envíe.</li>
+      </ol>
+      <figure data-route="/editar-actividad.html" data-selector="#mensajesBtn">
+        <a href="/manual/assets-root/mensajes-icon-editar-full.png" data-lightbox>
+          <img src="/manual/assets-root/mensajes-icon-editar-full.png" alt="Icono de mensajes resaltado en edición"/>
+        </a>
+        <figcaption>Icono de mensajes resaltado en la cabecera (sin pulsar).</figcaption>
+      </figure>
+      <figure data-route="/editar-actividad.html" data-selector="#mensajesModal">
+        <div class="hl-wrap">
+          <a href="/manual/assets-root/mensajes-modal-editar.png" data-lightbox>
+            <img src="/manual/assets-root/mensajes-modal-editar.png" alt="Modal de mensajes en edición"/>
+          </a>
+          <span class="hl-circle" style="right: 20px; bottom: 14px;"></span>
+          <span class="hl-label">Enviar</span>
+        </div>
+        <figcaption>Pulse el icono/botón de envío en la parte inferior derecha del modal.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Objetivo y listado</h2>
+      <p>Consultar los hilos de mensajes de sus actividades, priorizando los <strong>no leídos</strong>.</p>
+      <figure data-route="/mensajes.html" data-selector="#messageList">
+        <a href="/manual/assets-root/mensajes-lista.png" data-lightbox>
+          <img src="/manual/assets-root/mensajes-lista.png" alt="Listado de mensajes"/>
+        </a>
+        <figcaption>Listado de hilos; active el conmutador de <em>no leídos</em> para filtrar.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/mensajes.html</code> · Selector: <code>#messageList</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Lectura en modal</h2>
+      <ol>
+        <li>Haga clic en un hilo.</li>
+        <li>Se abre un modal con la conversación.</li>
+        <li>Los mensajes quedan marcados como <strong>leídos</strong> automáticamente.</li>
+      </ol>
+      <figure data-route="/mensajes.html" data-selector="#mensajesModal">
+        <a href="/manual/assets-root/mensajes-modal.png" data-lightbox>
+          <img src="/manual/assets-root/mensajes-modal.png" alt="Mensajes en modal"/>
+        </a>
+        <figcaption>Al abrir el hilo, los mensajes se marcan como leídos.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/mensajes.html</code> · Selector: <code>#mensajesModal</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Mensajes no leídos: cómo funciona</h2>
+      <ul>
+        <li><strong>Marcado como no leído</strong>: cuando un usuario escribe un mensaje, se marca como no leído para todos los participantes del hilo <em>excepto</em> el emisor.</li>
+        <li><strong>Listado</strong>: los hilos con no leídos aparecen en <strong>negrita</strong> y con etiqueta; el filtro <em>Solo no leídos</em> muestra únicamente estos hilos.</li>
+        <li><strong>Al leer</strong>: al abrir un hilo en el modal, el sistema llama al endpoint de <em>marcar como leídos</em> y actualiza inmediatamente el DOM.</li>
+        <li><strong>Icono en actividad</strong>: en <code>editar-actividad.html</code>, el icono de mensajes cambia a <strong>azul</strong> si hay no leídos para esa actividad.</li>
+        <li><strong>Sincronización</strong>: la siguiente recarga/visita refleja el estado actualizado de leídos/no leídos.</li>
+      </ul>
+      <p>Recomendación: mantener activo el filtro de no leídos para priorizar conversaciones pendientes.</p>
+    </section>
+  </main>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <!-- Meta-información para agentes (no visible) -->
+  <script type="application/json" id="manual-meta" style="display:none">{
+    "section": "mensajes",
+    "ui_routes": ["/mensajes.html", "/editar-actividad.html"],
+    "api_endpoints": [
+      "/api/mensajes/hilos",
+      "/api/mensajes/hilos/{hiloId}",
+      "/api/mensajes/hilos/{hiloId}/marcar-leidos",
+      "/api/mensajes/unread-count",
+      "/api/actividades/{id}/mensajes"
+    ],
+    "frontend_scripts": [
+      "Frontend/editar-actividad.js",
+      "Frontend/auth.js"
+    ],
+    "backend_files": ["UB.Actividad1.API/Program.cs"],
+    "unread_logic": {
+      "mark_unread_for_participants_except_sender": true,
+      "mark_read_on_open_thread": true,
+      "activity_icon_blue_when_unread": true,
+      "filter_default": "solo_no_leidos"
+    },
+    "considerations": [
+      "JWT requerido en peticiones protegidas",
+      "Respuesta de creación devuelve id en camelCase",
+      "Los no leídos se actualizan en DOM antes de la recarga"
+    ]
+  }</script>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

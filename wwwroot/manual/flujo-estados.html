@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Flujo Estados</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+    table { width:100%; border-collapse:collapse; margin:20px 0; }
+    th, td { border:1px solid #dee2e6; padding:12px; text-align:left; }
+    th { background:#f8f9fa; font-weight:600; }
+    .estado-badge { padding:6px 12px; border-radius:20px; color:white; font-size:0.9rem; font-weight:600; display:inline-block; }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js?v=2"></script>
+  <div class="manual-content">
+  <header>
+    <div class="brand">
+      <img src="/img/logo_ub.png" alt="UB"/>
+      <div>
+        <nav>
+          <a href="./index.html">Manual de Usuario</a>
+          <span>·</span>
+          <span style="color:#333">Flujo Estados</span>
+        </nav>
+        <div class="nav-more">
+          <a href="./crear-actividad.html">Crear Actividad</a>
+          <a href="./mensajes.html">Mensajes</a>
+          <a href="./adjuntos.html">Adjuntos</a>
+          <a href="./cambios-estado.html">Cambios de estado</a>
+          <a href="./flujo-estados.html">Flujo Estados</a>
+          <a href="./control-edicion.html">Control Edición</a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">🚦 Flujo de Estados del Sistema UB Formación</h1>
+    <div class="small" style="color:#666">Actualizado: 8 de octubre de 2025 - Versión 2.0</div>
+
+    <section>
+      <h2>📋 Estados del Sistema (9 estados activos)</h2>
+      <p>El sistema UB Formación maneja los siguientes estados para las actividades:</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Color</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>BORRADOR</strong></td>
+            <td>Borrador</td>
+            <td><span class="estado-badge" style="background:#6c757d">●</span> #6c757d</td>
+            <td>Inicial</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>ENVIADA</strong></td>
+            <td>Enviada</td>
+            <td><span class="estado-badge" style="background:#0dcaf0">●</span> #0dcaf0</td>
+            <td>Intermedio</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>EN_REVISION</strong></td>
+            <td>En revisión</td>
+            <td><span class="estado-badge" style="background:#6f42c1">●</span> #6f42c1</td>
+            <td>Intermedio</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>VALIDACION_UNIDAD</strong></td>
+            <td>Validación de unidad</td>
+            <td><span class="estado-badge" style="background:#20c997">●</span> #20c997</td>
+            <td>Intermedio</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>DEFINICION</strong></td>
+            <td>Definición</td>
+            <td><span class="estado-badge" style="background:#17a2b8">●</span> #17a2b8</td>
+            <td>Intermedio</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>REVISION_ADMIN</strong></td>
+            <td>Revisión administrativa</td>
+            <td><span class="estado-badge" style="background:#fd7e14">●</span> #fd7e14</td>
+            <td>Intermedio</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>PUBLICADA</strong></td>
+            <td>Publicada</td>
+            <td><span class="estado-badge" style="background:#28a745">●</span> #28a745</td>
+            <td>Final</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>CANCELADA</strong></td>
+            <td>Cancelada</td>
+            <td><span class="estado-badge" style="background:#343a40">●</span> #343a40</td>
+            <td>Final</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>RECHAZADA</strong></td>
+            <td>Rechazada</td>
+            <td><span class="estado-badge" style="background:#dc3545">●</span> #dc3545</td>
+            <td>Final</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>🔄 Flujo Principal de Trabajo</h2>
+      
+      <div style="background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:30px; margin:20px 0; text-align:center;">
+        <div style="font-family:monospace; font-size:1.1rem; line-height:2;">
+          <span class="estado-badge" style="background:#6c757d">BORRADOR</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#0dcaf0">ENVIADA</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#6f42c1">EN_REVISION</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#20c997">VALIDACION_UNIDAD</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#17a2b8">DEFINICION</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#fd7e14">REVISION_ADMIN</span>
+          <br>↓<br>
+          <span class="estado-badge" style="background:#28a745">PUBLICADA</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>👥 Transiciones por Rol</h2>
+      
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #ffc107;">
+        <h3>👨‍🏫 Docente</h3>
+        <ul>
+          <li><strong>BORRADOR → ENVIADA</strong> - Enviar actividad para revisión</li>
+          <li><strong>CANCELADA → BORRADOR</strong> - Reabrir actividad cancelada</li>
+          <li><strong>RECHAZADA → BORRADOR</strong> - Reabrir actividad rechazada</li>
+        </ul>
+        <p><em>Total: 3 transiciones</em></p>
+      </div>
+
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #17a2b8;">
+        <h3>👨‍💼 Coordinador de Formación</h3>
+        <ul>
+          <li><strong>BORRADOR → ENVIADA</strong> - Enviar actividad</li>
+          <li><strong>ENVIADA → EN_REVISION</strong> - Pasar a revisión</li>
+          <li><strong>ENVIADA → RECHAZADA</strong> - Rechazar actividad</li>
+          <li><strong>EN_REVISION → RECHAZADA</strong> - Rechazar en revisión</li>
+          <li><strong>EN_REVISION → ENVIADA</strong> - Devolver a enviada</li>
+        </ul>
+        <p><em>Total: 5 transiciones</em></p>
+      </div>
+
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #28a745;">
+        <h3>🔧 Técnico de Formación</h3>
+        <ul>
+          <li><strong>BORRADOR → ENVIADA</strong> - Enviar actividad</li>
+          <li><strong>EN_REVISION → VALIDACION_UNIDAD</strong> - Pasar a validación</li>
+          <li><strong>EN_REVISION → RECHAZADA</strong> - Rechazar en revisión</li>
+          <li><strong>DEFINICION → RECHAZADA</strong> - Rechazar en definición</li>
+          <li><strong>DEFINICION → REVISION_ADMIN</strong> - Pasar a revisión administrativa</li>
+        </ul>
+        <p><em>Total: 5 transiciones</em></p>
+      </div>
+
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #6c757d;">
+        <h3>👔 Responsable de Unidad</h3>
+        <ul>
+          <li><strong>VALIDACION_UNIDAD → DEFINICION</strong> - Pasar a definición</li>
+          <li><strong>VALIDACION_UNIDAD → EN_REVISION</strong> - Devolver a revisión</li>
+          <li><strong>VALIDACION_UNIDAD → RECHAZADA</strong> - Rechazar</li>
+        </ul>
+        <p><em>Total: 3 transiciones</em></p>
+      </div>
+
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #0d6efd;">
+        <h3>🛠️ Soporte Administrativo</h3>
+        <ul>
+          <li><strong>REVISION_ADMIN → PUBLICADA</strong> - Publicar actividad</li>
+          <li><strong>REVISION_ADMIN → RECHAZADA</strong> - Rechazar</li>
+          <li><strong>REVISION_ADMIN → DEFINICION</strong> - Devolver a definición</li>
+          <li><strong>PUBLICADA → REVISION_ADMIN</strong> - Despublicar</li>
+          <li><strong>PUBLICADA → DEFINICION</strong> - Devolver a definición</li>
+        </ul>
+        <p><em>Total: 5 transiciones</em></p>
+      </div>
+
+      <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #dc3545;">
+        <h3>👑 Administrador</h3>
+        <ul>
+          <li><strong>TODAS LAS TRANSICIONES</strong> - Control total del sistema (72 transiciones)</li>
+          <li>Puede cambiar cualquier estado a cualquier otro estado</li>
+          <li>Permisos completos de gestión</li>
+        </ul>
+        <p><em>Total: 72 transiciones (8 estados × 9 destinos cada uno)</em></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>🎯 Estadísticas del Sistema</h2>
+      <div style="background:#d1ecf1; border:1px solid #bee5eb; border-radius:8px; padding:20px; margin:20px 0;">
+        <table style="border:none;">
+          <tr>
+            <td style="border:none;"><strong>Total Estados Activos:</strong></td>
+            <td style="border:none;">9</td>
+          </tr>
+          <tr>
+            <td style="border:none;"><strong>Total Roles:</strong></td>
+            <td style="border:none;">6</td>
+          </tr>
+          <tr>
+            <td style="border:none;"><strong>Total Transiciones:</strong></td>
+            <td style="border:none;">93</td>
+          </tr>
+          <tr>
+            <td style="border:none;"><strong>Estados Intermedios:</strong></td>
+            <td style="border:none;">6 (BORRADOR, ENVIADA, EN_REVISION, VALIDACION_UNIDAD, DEFINICION, REVISION_ADMIN)</td>
+          </tr>
+          <tr>
+            <td style="border:none;"><strong>Estados Finales:</strong></td>
+            <td style="border:none;">3 (PUBLICADA, CANCELADA, RECHAZADA)</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>⚠️ Estados Especiales</h2>
+      
+      <div style="background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>🔄 Estados de Revisión</h3>
+        <ul>
+          <li><strong>EN_REVISION</strong> - En proceso de revisión por coordinador o técnico</li>
+          <li><strong>VALIDACION_UNIDAD</strong> - Validación por responsable de unidad gestora</li>
+          <li><strong>REVISION_ADMIN</strong> - Revisión administrativa final antes de publicación</li>
+        </ul>
+      </div>
+
+      <div style="background:#d4edda; border:1px solid #c3e6cb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>✅ Estados de Retorno</h3>
+        <ul>
+          <li><strong>CANCELADA → BORRADOR</strong> - Solo Docente y Admin pueden reabrir</li>
+          <li><strong>RECHAZADA → BORRADOR</strong> - Solo Docente y Admin pueden reabrir</li>
+          <li><strong>PUBLICADA → REVISION_ADMIN/DEFINICION</strong> - Solo Soporte Admin y Admin pueden modificar</li>
+        </ul>
+      </div>
+
+      <div style="background:#f8d7da; border:1px solid #f5c6cb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>❌ Estados Finales (sin retorno automático)</h3>
+        <ul>
+          <li><strong>PUBLICADA</strong> - Actividad publicada y visible (solo Admin/Soporte puede modificar)</li>
+          <li><strong>CANCELADA</strong> - Actividad cancelada (solo Admin puede modificar)</li>
+          <li><strong>RECHAZADA</strong> - Actividad rechazada (solo Admin puede modificar)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>📝 Matriz Completa de Transiciones</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Estado Origen</th>
+              <th>Docente</th>
+              <th>Coordinador</th>
+              <th>Técnico</th>
+              <th>Responsable</th>
+              <th>Soporte Admin</th>
+              <th>Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>BORRADOR</strong></td>
+              <td>ENVIADA</td>
+              <td>ENVIADA</td>
+              <td>ENVIADA</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>ENVIADA</strong></td>
+              <td>-</td>
+              <td>EN_REVISION, RECHAZADA</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>EN_REVISION</strong></td>
+              <td>-</td>
+              <td>RECHAZADA, ENVIADA</td>
+              <td>VALIDACION_UNIDAD, RECHAZADA</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>VALIDACION_UNIDAD</strong></td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>DEFINICION, EN_REVISION, RECHAZADA</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>DEFINICION</strong></td>
+              <td>-</td>
+              <td>-</td>
+              <td>RECHAZADA, REVISION_ADMIN</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>REVISION_ADMIN</strong></td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>PUBLICADA, RECHAZADA, DEFINICION</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>PUBLICADA</strong></td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>REVISION_ADMIN, DEFINICION</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>CANCELADA</strong></td>
+              <td>BORRADOR</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+            <tr>
+              <td><strong>RECHAZADA</strong></td>
+              <td>BORRADOR</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>TODAS</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:#666; font-size:0.9rem;"><em>Nota: "TODAS" significa que el Admin puede cambiar a cualquier otro estado desde ese estado origen.</em></p>
+    </section>
+
+    <section>
+      <h2>📝 Notas Importantes</h2>
+      <div style="background:#d1ecf1; border:1px solid #bee5eb; border-radius:8px; padding:20px; margin:20px 0;">
+        <ul>
+          <li><strong>Estado por defecto:</strong> Todas las actividades nuevas empiezan en BORRADOR</li>
+          <li><strong>Transiciones controladas:</strong> Solo los roles autorizados pueden cambiar estados</li>
+          <li><strong>Historial:</strong> Todos los cambios de estado quedan registrados en CambiosEstadoActividad</li>
+          <li><strong>Notificaciones:</strong> Se envían emails automáticos en cambios de estado críticos</li>
+          <li><strong>Validación:</strong> El sistema valida permisos tanto en frontend como en backend</li>
+          <li><strong>Auditoría:</strong> Cada cambio registra usuario, fecha y motivo</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>🔗 Documentación Relacionada</h2>
+      <ul>
+        <li><a href="./control-edicion.html">Control de Edición</a> - Permisos de edición por rol y estado</li>
+        <li><a href="./cambios-estado.html">Cambios de Estado</a> - Cómo cambiar el estado de una actividad</li>
+        <li><a href="./crear-actividad.html">Crear Actividad</a> - Proceso de creación completo</li>
+      </ul>
+    </section>
+
+  </main>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

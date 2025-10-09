@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Cambios de estado</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+    /* Bootstrap accordion styles */
+    .accordion-button { background-color: #f8f9fa; border: 1px solid #dee2e6; }
+    .accordion-button:not(.collapsed) { background-color: #e9ecef; color: #495057; }
+    .accordion-button:focus { box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+    .table-responsive { border-radius: 0.375rem; }
+    .text-success { color: #198754 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-warning { color: #fd7e14 !important; }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="./manual-menu.js?v=2"></script>
+  <div class="manual-content">
+  <header>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Cambios de estado de la actividad</h1>
+    <div class="small" style="color:#666">Badge, modal de cambio y consulta de historial.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Cómo llegar</h2>
+      <p>Abra una actividad (pantalla de <strong>Editar actividad</strong>). El estado aparece en el encabezado.</p>
+      <figure data-route="/editar-actividad.html" data-selector="#estadoBadge">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Acceso a editar actividad"/>
+        </a>
+        <figcaption>Estado visible en la cabecera de la actividad.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Objetivo y estado actual</h2>
+      <p>Consultar el <strong>estado</strong> y su <strong>descripción</strong> (si existe).</p>
+      <figure data-route="/editar-actividad.html" data-selector="#estadoBadge">
+        <a href="/manual/assets/context/cambios-badge-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-badge-context.png" alt="Badge de estado"/>
+        </a>
+        <figcaption>Badge que muestra el estado actual y descripción resumida.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>#estadoBadge</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Cambiar estado</h2>
+      <ol>
+        <li>Pulse el botón <strong>Cambiar estado</strong> (icono de recarga).</li>
+        <li>Elija el nuevo estado del desplegable.</li>
+        <li>Opcionalmente, añada <em>Descripción/Motivos</em>.</li>
+        <li>Confirme con <strong>Cambiar Estado</strong>.</li>
+      </ol>
+      <figure data-route="/editar-actividad.html" data-selector="#modalCambioEstado">
+        <a href="/manual/assets/context/cambios-modal-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-modal-context.png" alt="Modal de cambio de estado"/>
+        </a>
+        <figcaption>Modal para seleccionar el nuevo estado y añadir motivos (opcional).</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>#modalCambioEstado</code></div>
+      </figure>
+    </section>
+    <section>
+      <h2>Estados y roles</h2>
+      <p>A continuación se describen los estados disponibles y quién puede asignarlos:</p>
+      
+      <!-- Estados básicos -->
+      <div class="accordion" id="estadosAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingEstados">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEstados" aria-expanded="false" aria-controls="collapseEstados">
+              📋 Estados del Sistema
+            </button>
+          </h2>
+          <div id="collapseEstados" class="accordion-collapse collapse" aria-labelledby="headingEstados" data-bs-parent="#estadosAccordion">
+            <div class="accordion-body">
+              <ul>
+                <li><strong>BORRADOR (BOR, id=6)</strong>: Estado inicial de una actividad. Permite completar información antes de enviarla.</li>
+                <li><strong>ENVIADA (ENV, id=7)</strong>: La actividad se remite para revisión/aprobación.</li>
+                <li><strong>EN_REVISION (ENR, id=8)</strong>: Revisión por Coordinador de Formación.</li>
+                <li><strong>VALIDACION_UNIDAD (VUN, id=9)</strong>: Revisión por Responsable de Unidad.</li>
+                <li><strong>DEFINICION (DEF, id=10)</strong>: Definición académico-docente y subactividades.</li>
+                <li><strong>REVISION_ADMINISTRATIVA (RAD, id=11)</strong>: Control final por Soporte Administrativo.</li>
+                <li><strong>PUBLICADA (PUB, id=12)</strong>: Visible en catálogo formativo.</li>
+                <li><strong>CANCELADA (CAN, id=13)</strong>: Cierre anticipado con motivo.</li>
+                <li><strong>RECHAZADA (REJ, id=14)</strong>: Denegada, con comentario.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flujo completo -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingFlujo">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFlujo" aria-expanded="false" aria-controls="collapseFlujo">
+              🔄 Flujo Completo de Estados
+            </button>
+          </h2>
+          <div id="collapseFlujo" class="accordion-collapse collapse" aria-labelledby="headingFlujo" data-bs-parent="#estadosAccordion">
+            <div class="accordion-body">
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Estado</th>
+                      <th>Descripción</th>
+                      <th>Responsable</th>
+                      <th>Transiciones Permitidas</th>
+                      <th>Siguiente Responsable</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>BORRADOR</strong></td>
+                      <td>Edición por proponente</td>
+                      <td>Docente/Técnico</td>
+                      <td><strong>BORRADOR → ENVIADA</strong> (Docente/Técnico)<br><strong>BORRADOR → CANCELADA</strong> (Admin)<br><strong>BORRADOR → RECHAZADA</strong> (Admin)</td>
+                      <td>Coordinador</td>
+                    </tr>
+                    <tr>
+                      <td><strong>ENVIADA</strong></td>
+                      <td>Registrada para revisión</td>
+                      <td>Coordinador</td>
+                      <td><strong>ENVIADA → EN_REVISION</strong> (Coordinador)<br><strong>ENVIADA → CANCELADA</strong> (Admin)<br><strong>ENVIADA → RECHAZADA</strong> (Admin)</td>
+                      <td>Coordinador</td>
+                    </tr>
+                    <tr>
+                      <td><strong>EN_REVISION</strong></td>
+                      <td>Revisión por Coordinador</td>
+                      <td>Coordinador</td>
+                      <td><strong>EN_REVISION → VALIDACION_UNIDAD</strong> (Coordinador)<br><strong>EN_REVISION → BORRADOR</strong> (Coordinador)<br><strong>EN_REVISION → CANCELADA</strong> (Admin)<br><strong>EN_REVISION → RECHAZADA</strong> (Admin)</td>
+                      <td>Responsable o creador original</td>
+                    </tr>
+                    <tr>
+                      <td><strong>VALIDACION_UNIDAD</strong></td>
+                      <td>Revisión por Responsable</td>
+                      <td>Responsable</td>
+                      <td><strong>VALIDACION_UNIDAD → DEFINICION</strong> (Responsable)<br><strong>VALIDACION_UNIDAD → EN_REVISION</strong> (Responsable)<br><strong>VALIDACION_UNIDAD → CANCELADA</strong> (Admin)<br><strong>VALIDACION_UNIDAD → RECHAZADA</strong> (Admin)</td>
+                      <td>Técnico o Coordinador</td>
+                    </tr>
+                    <tr>
+                      <td><strong>DEFINICION</strong></td>
+                      <td>Definición académico-docente</td>
+                      <td>Técnico</td>
+                      <td><strong>DEFINICION → REVISION_ADMINISTRATIVA</strong> (Técnico)<br><strong>DEFINICION → CANCELADA</strong> (Admin)<br><strong>DEFINICION → RECHAZADA</strong> (Admin)</td>
+                      <td>Soporte</td>
+                    </tr>
+                    <tr>
+                      <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                      <td>Control final administrativo</td>
+                      <td>Soporte</td>
+                      <td><strong>REVISION_ADMINISTRATIVA → PUBLICADA</strong> (Soporte)<br><strong>REVISION_ADMINISTRATIVA → DEFINICION</strong> (Soporte)<br><strong>REVISION_ADMINISTRATIVA → CANCELADA</strong> (Admin)<br><strong>REVISION_ADMINISTRATIVA → RECHAZADA</strong> (Admin)</td>
+                      <td>Final</td>
+                    </tr>
+                    <tr>
+                      <td><strong>PUBLICADA</strong></td>
+                      <td>Visible en catálogo</td>
+                      <td>Final</td>
+                      <td><strong>PUBLICADA → CANCELADA</strong> (Admin)</td>
+                      <td>Final</td>
+                    </tr>
+                    <tr>
+                      <td><strong>CANCELADA</strong></td>
+                      <td>Cierre anticipado</td>
+                      <td>Docente/Admin</td>
+                      <td><strong>CANCELADA → BORRADOR</strong> (Docente/Admin)</td>
+                      <td>Docente</td>
+                    </tr>
+                    <tr>
+                      <td><strong>RECHAZADA</strong></td>
+                      <td>Denegada con comentario</td>
+                      <td>Docente/Admin</td>
+                      <td><strong>RECHAZADA → BORRADOR</strong> (Docente/Admin)</td>
+                      <td>Docente</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permisos de edición -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingPermisos">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePermisos" aria-expanded="false" aria-controls="collapsePermisos">
+              🔐 Permisos de Edición por Rol
+            </button>
+          </h2>
+          <div id="collapsePermisos" class="accordion-collapse collapse" aria-labelledby="headingPermisos" data-bs-parent="#estadosAccordion">
+            <div class="accordion-body">
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Estado</th>
+                      <th>Docente</th>
+                      <th>Técnico</th>
+                      <th>Coordinador</th>
+                      <th>Responsable</th>
+                      <th>Soporte</th>
+                      <th>Admin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>BORRADOR</strong></td>
+                      <td class="text-success">✅ Crear, editar, enviar</td>
+                      <td class="text-success">✅ Crear, editar, enviar</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>ENVIADA</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>EN_REVISION</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>VALIDACION_UNIDAD</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>DEFINICION</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-success">✅ Completar detalles</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>REVISION_ADMINISTRATIVA</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>PUBLICADA</strong></td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>CANCELADA</strong></td>
+                      <td class="text-success">✅ Reabrir → Borrador</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                    <tr>
+                      <td><strong>RECHAZADA</strong></td>
+                      <td class="text-success">✅ Reabrir → Borrador</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-danger">❌ Solo lectura</td>
+                      <td class="text-warning">🔑 Control total</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-3">
+                <h6>Leyenda:</h6>
+                <div class="row">
+                  <div class="col-md-4">
+                    <span class="badge bg-success">✅ Puede editar</span>
+                    <p class="small mt-1">El rol puede modificar campos y cambiar estados según transiciones permitidas</p>
+                  </div>
+                  <div class="col-md-4">
+                    <span class="badge bg-danger">❌ Solo lectura</span>
+                    <p class="small mt-1">El rol solo puede ver la actividad, no modificarla ni cambiar estados</p>
+                  </div>
+                  <div class="col-md-4">
+                    <span class="badge bg-warning">🔑 Control total</span>
+                    <p class="small mt-1">Admin tiene permisos especiales para editar y cambiar estados en cualquier momento</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transiciones por rol -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingTransiciones">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransiciones" aria-expanded="false" aria-controls="collapseTransiciones">
+              🔀 Transiciones Permitidas por Rol
+            </button>
+          </h2>
+          <div id="collapseTransiciones" class="accordion-collapse collapse" aria-labelledby="headingTransiciones" data-bs-parent="#estadosAccordion">
+            <div class="accordion-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Transiciones de Estado Permitidas:</h6>
+                  <ul class="small">
+                    <li><strong>Docente:</strong> BORRADOR→ENVIADA, CANCELADA→BORRADOR, RECHAZADA→BORRADOR</li>
+                    <li><strong>Técnico:</strong> BORRADOR→ENVIADA, DEFINICION→REVISION_ADMINISTRATIVA</li>
+                    <li><strong>Coordinador:</strong> ENVIADA→EN_REVISION, EN_REVISION→VALIDACION_UNIDAD, EN_REVISION→BORRADOR</li>
+                    <li><strong>Responsable:</strong> VALIDACION_UNIDAD→DEFINICION, VALIDACION_UNIDAD→EN_REVISION</li>
+                    <li><strong>Soporte:</strong> REVISION_ADMINISTRATIVA→PUBLICADA, REVISION_ADMINISTRATIVA→DEFINICION</li>
+                    <li><strong>Admin:</strong> Cualquier transición desde cualquier estado</li>
+      </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6>Estados con Edición Habilitada:</h6>
+                  <ul class="small">
+                    <li><strong>BORRADOR:</strong> Docente y Técnico pueden crear, modificar y enviar</li>
+                    <li><strong>DEFINICION:</strong> Solo Técnico puede completar detalles técnicos</li>
+                    <li><strong>CANCELADA:</strong> Solo Docente puede editar y cambiar estado a BORRADOR</li>
+                    <li><strong>RECHAZADA:</strong> Solo Docente puede editar y cambiar estado a BORRADOR</li>
+      </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Consideraciones</h3>
+      <ul>
+        <li>El campo <em>Descripción/Motivos</em> es opcional, se muestra resumido junto al badge y en tooltip completo.</li>
+        <li>El autor de la descripción puede <strong>editarla o borrarla</strong> desde el historial.</li>
+        <li>Se envían correos a usuarios Gestor ante cambios de estado relevantes o nuevos mensajes (no escritos por ellos).</li>
+        <li>Los permisos de edición están basados en las transiciones de estado configuradas en la base de datos.</li>
+        <li>Admin tiene permisos especiales para editar y cambiar estados en cualquier momento.</li>
+        <li>Los estados CANCELADA y RECHAZADA permiten al Docente editar la actividad y cambiar el estado a BORRADOR.</li>
+        <li>En estado DEFINICION, solo el Técnico puede completar los detalles técnicos necesarios.</li>
+        <li>El sistema es extensible para añadir nuevos estados y reglas por rol.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Historial</h2>
+      <p>Consulte los cambios previos. Si usted creó la descripción, podrá <strong>editarla</strong> o <strong>borrarla</strong>.</p>
+      <figure data-route="/editar-actividad.html" data-selector=".modal.show .modal-content">
+        <a href="/manual/assets/context/cambios-historial-context.png" data-lightbox>
+          <img src="/manual/assets/context/cambios-historial-context.png" alt="Historial de cambios"/>
+        </a>
+        <figcaption>Listado de cambios previos con posibilidad de editar la descripción propia.</figcaption>
+        <div class="meta" style="display:none">Ruta: <code>/editar-actividad.html</code> · Selector: <code>.modal.show .modal-content</code></div>
+      </figure>
+    </section>
+  </main>
+  <!-- Meta-información para agentes (no visible) -->
+  <script type="application/json" id="manual-meta" style="display:none">{
+    "section": "cambios-estado",
+    "ui_routes": ["/editar-actividad.html"],
+    "api_endpoints": [
+      "/api/estados",
+      "/api/actividades/cambiar-estado",
+      "/api/actividades/{id}/cambios-estado",
+      "/api/actividades/{id}/historial-estados"
+    ],
+    "frontend_scripts": [
+      "Frontend/cambios-estado.js",
+      "Frontend/editar-actividad.js"
+    ],
+    "backend_models": [
+      "ActividadEstadoHistorial",
+      "Usuario",
+      "EstadoActividad"
+    ],
+    "states": [
+      {"id":6, "code":"BOR", "name":"Borrador"},
+      {"id":7, "code":"ENV", "name":"Enviada"},
+      {"id":8, "code":"SUB", "name":"Subsanar"},
+      {"id":9, "code":"ACE", "name":"Aceptada"}
+    ],
+    "role_rules": {
+      "Gestor": {"allowed": [6,7], "denied": [8,9]},
+      "Admin": {"allowed": [6,7,8,9], "denied": []}
+    },
+    "considerations": [
+      "Descripción/Motivos opcional, editable por su autor",
+      "Emails a Gestor al cambiar estado o recibir mensajes (no propios)",
+      "JWT requerido; cabecera Authorization en llamadas"
+    ]
+  }</script>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,10 +1,10 @@
-// Auth helper: gestiona token y protege fetch para aplicación integrada
+// Auth helper: gestiona token y protege fetch para aplicación integrada - V3.0
 (function(){
   // Configuración simple para aplicación integrada
   try {
     if (typeof window !== 'undefined') {
       window.CONFIG = window.CONFIG || {};
-      window.CONFIG.API_BASE_URL = '/api';
+      window.CONFIG.API_BASE_URL = 'http://localhost:5001/api';
     }
   } catch {}
   const TOKEN_KEY = 'ub_token';
@@ -20,8 +20,10 @@
 
   async function login(username, password){
     try {
-      // Usar URL relativa para aplicación integrada
-      const resp = await fetch('/api/auth/login', {
+      // Usar CONFIG.API_BASE_URL para aplicación integrada
+      const apiUrl = window.CONFIG?.API_BASE_URL || 'http://localhost:5001/api';
+      console.log('🔍 DEBUG: Login URL:', `${apiUrl}/auth/login`);
+      const resp = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
@@ -30,6 +32,14 @@
       if (!data?.token) throw new Error('Token no recibido');
       setToken(data.token);
       setUser(data.user || { username });
+      
+      // Refrescar caché de dominios después del login exitoso (solo si está disponible)
+      if (typeof refrescarCacheDominios === 'function') {
+        refrescarCacheDominios().catch(e => console.log('Error refrescando caché:', e));
+      } else {
+        console.log('ℹ️ refrescarCacheDominios no está disponible (normal en login)');
+      }
+      
       return data;
     } catch (e){
       if ((e?.message||'').includes('Failed to fetch')) throw new Error('No se pudo conectar con el servidor');
@@ -48,10 +58,10 @@
   const origFetch = window.fetch.bind(window);
   window.fetch = async (input, init={}) => {
     try {
-      const url = typeof input === 'string' ? input : (input?.url || '');
+      let url = typeof input === 'string' ? input : (input?.url || '');
       const isApiCall = (url.startsWith('/api/') || url.includes('/api/'));
       
-      console.log('🔍 Auth Debug V2.1 - URL:', url, 'isApiCall:', isApiCall);
+      console.log('🔍 Auth Debug V2.1 - URL original:', url, 'isApiCall:', isApiCall);
       
       if (isApiCall){
         const token = getToken();
@@ -63,9 +73,16 @@
         } else {
           console.log('❌ Auth Debug - No token available');
         }
+        
+        // CRITICAL FIX: Reescribir URLs relativas a absolutas del backend
+        if (url.startsWith('/api/')) {
+          const apiBaseUrl = window.CONFIG?.API_BASE_URL || 'http://localhost:5001/api';
+          url = apiBaseUrl + url.substring(4); // Quitar '/api' y agregar al base URL
+          console.log('🔧 Auth Debug - URL reescrita a:', url);
+        }
       }
       
-      const response = await origFetch(input, init);
+      const response = await origFetch(url, init);
       
       // Si es una petición API que devuelve 401, el token está expirado
       // Pero NO redirigir en páginas públicas (web-publica.html)

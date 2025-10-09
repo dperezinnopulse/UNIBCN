@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Control Edición</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+    table { width:100%; border-collapse:collapse; margin:20px 0; }
+    th, td { border:1px solid #dee2e6; padding:12px; }
+    th { background:#f8f9fa; font-weight:600; }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js?v=2"></script>
+  <div class="manual-content">
+  <header>
+    <div class="brand">
+      <img src="/img/logo_ub.png" alt="UB"/>
+      <div>
+        <nav>
+          <a href="./index.html">Manual de Usuario</a>
+          <span>·</span>
+          <span style="color:#333">Control Edición</span>
+        </nav>
+        <div class="nav-more">
+          <a href="./crear-actividad.html">Crear Actividad</a>
+          <a href="./mensajes.html">Mensajes</a>
+          <a href="./adjuntos.html">Adjuntos</a>
+          <a href="./cambios-estado.html">Cambios de estado</a>
+          <a href="./flujo-estados.html">Flujo Estados</a>
+          <a href="./control-edicion.html">Control Edición</a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">🔒 Control de Edición por Rol y Estado</h1>
+    <div class="small" style="color:#666">Actualizado: 8 de octubre de 2025 - Versión 2.0 - Matriz completa de permisos implementada</div>
+
+    <section>
+      <h2>📊 Matriz de Permisos de Edición</h2>
+      <p>Esta tabla muestra qué roles pueden <strong>editar</strong> actividades en cada estado:</p>
+      
+      <div style="overflow-x:auto; margin:20px 0;">
+        <table style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          <thead>
+            <tr style="background:#f8f9fa;">
+              <th style="text-align:left;">Estado</th>
+              <th style="text-align:center;">Docente</th>
+              <th style="text-align:center;">Coordinador</th>
+              <th style="text-align:center;">Técnico</th>
+              <th style="text-align:center;">Responsable</th>
+              <th style="text-align:center;">Soporte Admin</th>
+              <th style="text-align:center;">Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">BORRADOR</td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">ENVIADA</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">EN_REVISION</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">VALIDACION_UNIDAD</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">DEFINICION</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">REVISION_ADMIN</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">PUBLICADA</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">CANCELADA</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">RECHAZADA</td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#6c757d; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">❌ NO</span></td>
+              <td style="text-align:center;"><span style="background:#28a745; color:white; padding:4px 12px; border-radius:4px; font-size:0.85rem;">✅ SÍ</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>🔍 Detalle por Rol</h2>
+      
+      <div style="background:#fff3cd; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #ffc107;">
+        <h3>👨‍🏫 Docente</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>BORRADOR</strong> - Desarrollo inicial de la actividad</li>
+        </ul>
+        <p><strong>No puede editar en:</strong> ENVIADA, EN_REVISION, VALIDACION_UNIDAD, DEFINICION, REVISION_ADMIN, PUBLICADA, CANCELADA, RECHAZADA</p>
+        <p><em>Nota: El docente solo puede editar actividades que aún no han sido enviadas.</em></p>
+      </div>
+
+      <div style="background:#d1ecf1; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #17a2b8;">
+        <h3>👨‍💼 Coordinador de Formación</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>BORRADOR</strong> - Desarrollo inicial</li>
+          <li><strong>ENVIADA</strong> - Revisión antes de aprobación</li>
+          <li><strong>EN_REVISION</strong> - Durante el proceso de revisión</li>
+        </ul>
+        <p><strong>No puede editar en:</strong> VALIDACION_UNIDAD, DEFINICION, REVISION_ADMIN, PUBLICADA, CANCELADA, RECHAZADA</p>
+        <p><em>El coordinador tiene permisos de edición en las primeras fases del flujo.</em></p>
+      </div>
+
+      <div style="background:#d4edda; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid:#28a745;">
+        <h3>🔧 Técnico de Formación</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>BORRADOR</strong> - Desarrollo inicial</li>
+          <li><strong>ENVIADA</strong> - Preparación para revisión</li>
+          <li><strong>EN_REVISION</strong> - Durante revisión</li>
+          <li><strong>DEFINICION</strong> - Refinamiento de detalles técnicos</li>
+        </ul>
+        <p><strong>No puede editar en:</strong> VALIDACION_UNIDAD, REVISION_ADMIN, PUBLICADA, CANCELADA, RECHAZADA</p>
+        <p><em>El técnico tiene permisos extendidos hasta la fase de definición.</em></p>
+      </div>
+
+      <div style="background:#e2e3e5; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #6c757d;">
+        <h3>👔 Responsable de Unidad</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>VALIDACION_UNIDAD</strong> - Validación específica de la unidad gestora</li>
+        </ul>
+        <p><strong>No puede editar en:</strong> Todos los demás estados</p>
+        <p><em>El responsable solo interviene en la fase de validación de su unidad.</em></p>
+      </div>
+
+      <div style="background:#d1ecf1; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #0dcaf0;">
+        <h3>🛠️ Soporte Administrativo</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>REVISION_ADMIN</strong> - Revisión administrativa final</li>
+          <li><strong>PUBLICADA</strong> - Modificaciones post-publicación</li>
+        </ul>
+        <p><strong>No puede editar en:</strong> Estados previos a la revisión administrativa</p>
+        <p><em>El soporte administrativo gestiona las fases finales y publicación.</em></p>
+      </div>
+
+      <div style="background:#f8d7da; padding:20px; border-radius:8px; margin:20px 0; border-left:4px solid #dc3545;">
+        <h3>👑 Administrador</h3>
+        <p><strong>Puede editar en:</strong></p>
+        <ul>
+          <li><strong>TODOS LOS ESTADOS</strong> - Control total del sistema</li>
+          <li>9 estados sin restricciones</li>
+        </ul>
+        <p><em>El administrador tiene permisos completos para editar, modificar y gestionar actividades en cualquier estado.</em></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>⚙️ Implementación Técnica</h2>
+      <div style="background:#d1ecf1; border:1px solid #bee5eb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>📦 Base de Datos</h3>
+        <p>Tabla <code>PermisosEdicion</code>:</p>
+        <ul>
+          <li><strong>EstadoCodigo</strong> - Código del estado</li>
+          <li><strong>RolOriginal</strong> - Rol del usuario</li>
+          <li><strong>PuedeEditar</strong> - Permiso booleano</li>
+          <li><strong>Total registros:</strong> 54 (9 estados × 6 roles)</li>
+        </ul>
+        
+        <h3>🖥️ Backend (C#)</h3>
+        <p>Endpoint <code>PUT /api/actividades/{id}</code>:</p>
+        <ul>
+          <li>Verifica permiso antes de actualizar</li>
+          <li>Retorna <strong>403 Forbidden</strong> si no hay permiso</li>
+          <li>Registra intentos de edición no autorizados</li>
+        </ul>
+        
+        <p>Endpoint <code>GET /api/actividades/{id}/puede-editar</code>:</p>
+        <ul>
+          <li>Consulta si el usuario actual puede editar</li>
+          <li>Retorna: { puedeEditar, rol, estado, estadoNombre }</li>
+          <li>Usado por el frontend para UI responsiva</li>
+        </ul>
+
+        <h3>💻 Frontend (JavaScript)</h3>
+        <p>Función <code>verificarPermisosEdicion()</code> en <code>editar-actividad.js</code>:</p>
+        <ul>
+          <li>Consulta el endpoint de permisos</li>
+          <li>Deshabilita todos los campos si no hay permiso</li>
+          <li>Oculta botones de Guardar y Eliminar</li>
+          <li>Muestra mensaje informativo al usuario</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>📝 Casos de Uso Comunes</h2>
+      
+      <div style="background:#d4edda; border:1px solid #c3e6cb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>✅ Escenario 1: Docente desarrolla actividad</h3>
+        <p><strong>Estado:</strong> BORRADOR</p>
+        <p><strong>Acción:</strong> El docente puede editar libremente todos los campos</p>
+        <p><strong>Resultado:</strong> Puede guardar cambios y eventualmente enviar (cambio a ENVIADA)</p>
+      </div>
+
+      <div style="background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>⚠️ Escenario 2: Docente intenta editar actividad enviada</h3>
+        <p><strong>Estado:</strong> ENVIADA</p>
+        <p><strong>Acción:</strong> El docente abre la actividad para editarla</p>
+        <p><strong>Resultado:</strong> Todos los campos aparecen deshabilitados con mensaje: <em>"Esta actividad está en estado 'Enviada' y tu rol (Docente) no tiene permiso de edición. Solo puedes visualizar."</em></p>
+      </div>
+
+      <div style="background:#d1ecf1; border:1px solid #bee5eb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>✏️ Escenario 3: Técnico ajusta definición</h3>
+        <p><strong>Estado:</strong> DEFINICION</p>
+        <p><strong>Acción:</strong> El técnico puede editar y refinar detalles</p>
+        <p><strong>Resultado:</strong> Puede guardar cambios y pasar a REVISION_ADMIN</p>
+      </div>
+
+      <div style="background:#f8d7da; border:1px solid #f5c6cb; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>🚫 Escenario 4: Coordinador intenta editar publicada</h3>
+        <p><strong>Estado:</strong> PUBLICADA</p>
+        <p><strong>Acción:</strong> El coordinador abre una actividad publicada</p>
+        <p><strong>Resultado:</strong> Campos deshabilitados - Solo Admin/Soporte Admin pueden editar actividades publicadas</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>🎯 Estadísticas de Permisos</h2>
+      <div style="background:#e2e3e5; border:1px solid #d6d8db; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>Por Rol (Estados que puede editar):</h3>
+        <ul>
+          <li><strong>Admin:</strong> 9 estados (100%)</li>
+          <li><strong>Técnico:</strong> 4 estados (44%)</li>
+          <li><strong>Coordinador:</strong> 3 estados (33%)</li>
+          <li><strong>Soporte Admin:</strong> 2 estados (22%)</li>
+          <li><strong>Docente:</strong> 1 estado (11%)</li>
+          <li><strong>Responsable:</strong> 1 estado (11%)</li>
+        </ul>
+        
+        <h3>Por Estado (Cuántos roles pueden editarlo):</h3>
+        <ul>
+          <li><strong>BORRADOR:</strong> 4 roles (Docente, Coordinador, Técnico, Admin)</li>
+          <li><strong>ENVIADA:</strong> 3 roles (Coordinador, Técnico, Admin)</li>
+          <li><strong>EN_REVISION:</strong> 3 roles (Coordinador, Técnico, Admin)</li>
+          <li><strong>VALIDACION_UNIDAD:</strong> 2 roles (Responsable, Admin)</li>
+          <li><strong>DEFINICION:</strong> 2 roles (Técnico, Admin)</li>
+          <li><strong>REVISION_ADMIN:</strong> 2 roles (Soporte Admin, Admin)</li>
+          <li><strong>PUBLICADA:</strong> 2 roles (Soporte Admin, Admin)</li>
+          <li><strong>CANCELADA:</strong> 1 rol (Admin)</li>
+          <li><strong>RECHAZADA:</strong> 1 rol (Admin)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>🛡️ Seguridad y Validación</h2>
+      <div style="background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px; padding:20px; margin:20px 0;">
+        <h3>Doble Validación:</h3>
+        <ul>
+          <li><strong>Frontend:</strong> Deshabilita campos visualmente para mejor UX</li>
+          <li><strong>Backend:</strong> Valida permisos en el servidor (seguridad real)</li>
+          <li><strong>Respuesta:</strong> HTTP 403 si el usuario intenta editar sin permiso</li>
+        </ul>
+        
+        <h3>Auditoría:</h3>
+        <ul>
+          <li>Todos los intentos de edición quedan registrados en logs</li>
+          <li>Se registra usuario, timestamp y estado de la actividad</li>
+          <li>Los intentos fallidos se marcan como advertencias</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>🔗 Documentación Relacionada</h2>
+      <ul>
+        <li><a href="./flujo-estados.html">Flujo de Estados</a> - Transiciones completas del sistema</li>
+        <li><a href="./cambios-estado.html">Cambios de Estado</a> - Cómo cambiar el estado de una actividad</li>
+        <li><a href="./editar-actividad.html">Editar Actividad</a> - Proceso de edición completo</li>
+      </ul>
+    </section>
+
+  </main>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

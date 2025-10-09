@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Soporte Técnico · Proyecto UB Formación</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:1100px; margin:0 auto; padding:24px }
+    h1, h2, h3 { color:#0b5ed7 }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#f6f8fa; padding:2px 6px; border-radius:6px }
+    pre { padding:12px; overflow:auto; border:1px solid #e5e7eb }
+    .note { background:#fff8e6; border-left:4px solid #f0ad4e; padding:12px 16px; border-radius:6px; margin:12px 0 }
+    .ok { background:#f5f9ff; border-left:4px solid #0d6efd; padding:12px 16px; border-radius:6px; margin:12px 0 }
+    ul { margin-top:6px }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="/img/logo_ub.png" alt="UB"/>
+      <div>
+        <h1>Guía de Soporte Técnico</h1>
+        <div class="small" style="color:#666">Diagnóstico, base de datos, roles/UG y dominios</div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Resumen de arquitectura</h2>
+      <ul>
+        <li><strong>Frontend (WebServer)</strong>: Kestrel sirviendo estáticos de <code>Frontend/</code> en <code>http://localhost:8080</code> (también <code>http://0.0.0.0:8080</code> o IP privada).</li>
+        <li><strong>API (.NET 8 Minimal APIs)</strong>: <code>http://localhost:5001</code> (o IP privada), autenticación JWT.</li>
+        <li><strong>BD</strong>: SQL Server (BD: <code>UB_Formacion</code>). Entidades principales abajo.</li>
+      </ul>
+      <div class="ok">Servicios típicos: <code>dotnet run --urls="http://0.0.0.0:5001"</code> en <code>UB.Actividad1.API/</code> y <code>dotnet run --urls="http://0.0.0.0:8080"</code> en <code>WebServer/</code>.</div>
+    </section>
+
+    <section>
+      <h2>Conexión a Base de Datos</h2>
+      <p>Servidor SQL accesible desde la máquina local y por IP privada (para agentes remotos en la misma red).</p>
+      <ul>
+        <li><strong>Servidor</strong>: <code>localhost</code> o <code>192.168.8.157</code></li>
+        <li><strong>Base de datos</strong>: <code>UB_Formacion</code></li>
+        <li><strong>Cliente</strong>: SSMS / Azure Data Studio / sqlcmd</li>
+      </ul>
+<pre>-- sqlcmd (ejemplo)
+sqlcmd -S localhost -d UB_Formacion -Q "SELECT TOP 5 * FROM Usuarios ORDER BY FechaCreacion DESC"
+
+-- Consulta rápida
+SELECT TOP 20 * FROM Actividades ORDER BY FechaModificacion DESC;
+</pre>
+      <div class="note">Si necesita credenciales SQL específicas, consulte <code>appsettings.json</code> de la API o pida al administrador.</div>
+    </section>
+
+    <section>
+      <h2>Modelo de datos (principal)</h2>
+      <h3>Usuarios y UG</h3>
+      <ul>
+        <li><strong>Usuarios</strong> (<code>Usuarios</code>): <em>Id</em>, <em>Username</em>, <em>Email</em>, <em>PasswordHash</em> (BCrypt), <em>Rol</em> (<code>Admin</code>/<code>Gestor</code>), <em>UnidadGestionId</em>, <em>Activo</em>, <em>FechaCreacion</em>.</li>
+        <li><strong>UnidadesGestion</strong> (<code>UnidadesGestion</code>): <em>Id</em>, <em>Nombre</em> (IDP/CRAI/SAE...).</li>
+      </ul>
+<pre>-- Usuarios por rol y UG
+SELECT u.Id, u.Username, u.Email, u.Rol, ug.Nombre AS Unidad
+FROM Usuarios u LEFT JOIN UnidadesGestion ug ON ug.Id = u.UnidadGestionId
+ORDER BY u.FechaCreacion DESC;
+</pre>
+
+      <h3>Dominios y valores</h3>
+      <ul>
+        <li><strong>Dominios</strong> (<code>Dominios</code>): catálogo de claves lógicas (p.ej. <code>TIPUS_ESTUDI_SAE</code>).</li>
+        <li><strong>ValoresDominio</strong> (<code>ValoresDominio</code>): <em>DominioId</em>, <em>Valor</em>, <em>Descripcion</em>, <em>Orden</em>, <em>Activo</em>.</li>
+      </ul>
+<pre>-- Valores activos de un dominio
+SELECT v.Valor, v.Descripcion
+FROM ValoresDominio v
+JOIN Dominios d ON d.Id = v.DominioId
+WHERE d.Nombre = 'TIPUS_ESTUDI_SAE' AND v.Activo = 1
+ORDER BY v.Orden;
+</pre>
+
+      <h3>Actividades y estados</h3>
+      <ul>
+        <li><strong>Actividades</strong> (<code>Actividades</code>): info general, UG, autor, fechas, etc.</li>
+        <li><strong>EstadosActividad</strong> (<code>EstadosActividad</code>): catálogo (BOR=6, ENV=7, SUB=8, ACE=9).</li>
+        <li><strong>ActividadEstadoHistorial</strong>: <em>ActividadId</em>, <em>EstadoAnteriorId</em>, <em>EstadoNuevoId</em>, <em>DescripcionMotivos</em>, <em>UsuarioCambioId</em>, <em>FechaCambio</em>.</li>
+      </ul>
+<pre>-- Último estado por actividad
+SELECT TOP 1 *
+FROM ActividadEstadoHistorial
+WHERE ActividadId = @ActividadId
+ORDER BY FechaCambio DESC;
+</pre>
+
+      <h3>Mensajería (no leídos)</h3>
+      <ul>
+        <li><strong>Mensajes</strong> (<code>Mensajes</code>): <em>Id</em>, <em>ActividadId</em>, <em>UsuarioId</em>, <em>Texto</em>, <em>Fecha</em>, <em>Eliminado</em>, <em>FechaEliminacion</em>.</li>
+        <li><strong>MensajeUsuario</strong> (<code>MensajeUsuario</code>): relación mensaje-usuario y estado de lectura (<em>Leido</em>/<em>FechaLeido</em>).</li>
+        <li>Lógica: al crear un mensaje, se marca como <em>no leído</em> para todos los participantes del hilo excepto el emisor; al abrir el hilo se marcan <em>leídos</em>.</li>
+      </ul>
+<pre>-- Mensajes no leídos por usuario
+SELECT mu.MensajeId, m.ActividadId, m.Fecha
+FROM MensajeUsuario mu
+JOIN Mensajes m ON m.Id = mu.MensajeId
+WHERE mu.UsuarioId = @UsuarioId AND mu.Leido = 0
+ORDER BY m.Fecha DESC;
+</pre>
+
+      <h3>Adjuntos</h3>
+      <ul>
+        <li><strong>ActividadAdjunto</strong>: <em>Id</em>, <em>ActividadId</em>, <em>Ruta</em>, <em>NombreArchivo</em>, <em>Descripcion</em>, <em>FechaSubida</em>, <em>UsuarioId</em>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Autenticación y permisos</h2>
+      <ul>
+        <li>JWT en cabecera <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+        <li><strong>Roles</strong>: Gestor (no puede cambiar a <em>Subsanar</em>/<em>Aceptada</em>), Admin (sin restricciones).</li>
+        <li>Visibilidad por UG en frontend usando atributo <code>data-ug</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Diagnóstico rápido</h2>
+      <ul>
+        <li><strong>Servicios</strong>: <code>netstat -an | findstr ":5001\|:8080"</code>.</li>
+        <li><strong>401/403</strong>: expiración/ausencia de token; comprobar <code>Authorization</code>.</li>
+        <li><strong>500</strong>: revisar consola API; tablas requeridas: <code>Mensajes(Eliminado,FechaEliminacion)</code>, seeds de estados.</li>
+        <li><strong>Manual</strong>: imágenes en <code>/manual/assets</code> y <code>/manual/assets-root</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Endpoints clave</h2>
+      <ul>
+        <li><code>POST /api/auth/login</code>, <code>POST /api/auth/register</code>, <code>GET /api/auth/hash</code></li>
+        <li><code>GET /api/actividades</code>, <code>GET /api/actividades/{id}</code>, <code>POST /api/actividades</code></li>
+        <li><code>POST /api/actividades/cambiar-estado</code>, <code>GET /api/actividades/{id}/historial-estados</code></li>
+        <li><code>GET /api/estados</code>, <code>GET /api/unidades-gestion</code></li>
+        <li><code>GET /api/dominios/{nombreDominio}/valores</code></li>
+        <li><code>GET/POST /api/mensajes/hilos</code>, <code>POST /api/mensajes/hilos/{id}/marcar-leidos</code></li>
+        <li><code>GET/POST /api/usuarios</code> (admin), <code>GET /api/usuarios/yo</code>, <code>PUT /api/usuarios/yo</code></li>
+      </ul>
+    </section>
+  </main>
+
+  <script type="application/json" id="support-meta" style="display:none">{
+    "project": "UB.Formacion",
+    "frontend": {"port":8080, "root":"Frontend/"},
+    "api": {"port":5001, "auth":"JWT"},
+    "db": {"engine":"SqlServer", "database":"UB_Formacion", "hosts":["localhost","192.168.8.157"]},
+    "core_tables": [
+      "Usuarios","UnidadesGestion","Dominios","ValoresDominio",
+      "Actividades","EstadosActividad","ActividadEstadoHistorial",
+      "Mensajes","MensajeUsuario","ActividadAdjunto"
+    ],
+    "roles": {"Admin":{"canChangeStates":[6,7,8,9]}, "Gestor":{"canChangeStates":[6,7]}},
+    "unread_logic": {"onSendMarkOthersUnread":true, "onOpenMarkRead":true},
+    "static_manual": {"pages":"/manual/*.html", "assets":["/manual/assets","/manual/assets-root"]}
+  }</script>
+</body>
+</html>

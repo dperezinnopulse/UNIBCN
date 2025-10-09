@@ -189,7 +189,7 @@ async function cambiarEstadoActividad() {
                 await cargarCambiosEstado();
             }
             if (typeof cargarActividad === 'function') {
-                await cargarActividad(); // Recargar la actividad para actualizar el estado
+                await cargarActividad(actividadId); // Recargar la actividad para actualizar el estado
             } else {
                 // Fallback: recargar la página para reflejar el nuevo estado
                 location.reload();

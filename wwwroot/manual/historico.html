@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Manual de Usuario · Histórico</title>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js?v=1.0"></script>
+  <script>
+      Weglot.initialize({
+          api_key: 'wg_b2253dca073d4e70fd4476374ae59e149'
+      });
+  </script>
+  
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.5; color:#111; margin:0 }
+    header { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 22px }
+    .brand { display:flex; align-items:center; gap:12px }
+    .brand img { height:40px }
+    main { max-width:980px; margin:0 auto; padding:24px }
+    nav a { color:#0b5ed7; margin-right: 16px; text-decoration:none; font-weight:600 }
+    figure { margin:16px 0 }
+    figure img { max-width:100%; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); cursor: zoom-in }
+    figcaption { color:#555; font-size:.9rem; margin-top:8px }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:9999 }
+    .lightbox.open { display:flex }
+    .lightbox img { max-width:92vw; max-height:92vh; border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.5); cursor: zoom-out }
+    .lightbox .hint { position:fixed; bottom:24px; color:#ddd; font-size:.9rem }
+  </style>
+</head>
+<body class="manual-layout">
+  <div id="manualMenuContainer"></div>
+  <link rel="stylesheet" href="./manual-menu.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+  <script src="./manual-menu.js"></script>
+  <div class="manual-content">
+  <header>
+    <h1 style="margin:10px 0 0 0; color:#111; font-size:1.6rem;">Histórico de actividades</h1>
+    <div class="small" style="color:#666">Consulte y acceda a actividades existentes.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Cómo llegar</h2>
+      <p>Abra el menú lateral y pulse en <strong>Histórico</strong>.</p>
+      <figure data-route="/historico.html" data-selector="a.nav-link[href='historico.html']">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Navegación a Histórico"/>
+        </a>
+        <figcaption>Acceso al histórico desde el menú lateral.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Vista del listado</h2>
+      <p>El listado muestra <em>tipo de actividad</em> con icono, <em>descripción</em> (2 líneas), y badges de <em>Estado</em> y <em>Unidad</em>.</p>
+      <figure data-route="/historico.html" data-selector="#proposalList .proposal-item">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Listado de histórico"/>
+        </a>
+        <figcaption>Tarjetas con tipo, descripción, estado y unidad.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Filtros y ordenación</h2>
+      <ul>
+        <li>Buscador por título/código.</li>
+        <li>Filtros por estado, unidad, fechas, tipo y autor.</li>
+        <li>Ordenación por fecha de modificación, creación, título, estado o unidad.</li>
+      </ul>
+      <figure data-route="/historico.html" data-selector=".#filtrosAvanzados">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Filtros y ordenación"/>
+        </a>
+        <figcaption>Controles de filtros y ordenación.</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h2>Abrir una actividad</h2>
+      <p>Pulse sobre una tarjeta para abrir <strong>Editar actividad</strong>.</p>
+      <figure data-route="/historico.html" data-selector="#proposalList .proposal-item">
+        <a href="/manual/assets/context/como-llegar-crear-context.png" data-lightbox>
+          <img src="/manual/assets/context/como-llegar-crear-context.png" alt="Abrir edición desde histórico"/>
+        </a>
+        <figcaption>Click sobre la tarjeta para entrar en edición.</figcaption>
+      </figure>
+    </section>
+  </main>
+  </div>
+  <div class="lightbox" id="lb">
+    <img alt="Ampliación"/>
+    <div class="hint">Click o ESC para cerrar</div>
+  </div>
+  <script>
+    (function(){
+      var lb = document.getElementById('lb');
+      var lbImg = lb ? lb.querySelector('img') : null;
+      document.addEventListener('click', function(e){
+        var t = e.target; while(t && t.nodeType !== 1) t = t.parentNode; if(!t) return;
+        var a = t.closest ? t.closest('a[data-lightbox]') : null; if(!a) return;
+        e.preventDefault(); if(lb && lbImg){ lbImg.src = a.getAttribute('href') || ''; lb.classList.add('open'); }
+      });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&lb) lb.classList.remove('open'); });
+      if(lb) lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+    })();
+  </script>
+</body>
+</html>

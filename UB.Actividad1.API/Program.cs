@@ -15,7 +15,11 @@ builder.Logging.ClearProviders();
 try { builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging")); } catch {}
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
-try { builder.Logging.AddEventLog(); } catch {}
+// Detectar si estamos en Windows antes de agregar EventLog
+if (OperatingSystem.IsWindows())
+{
+    try { builder.Logging.AddEventLog(); } catch {}
+}
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 // Agregar servicios al contenedor
@@ -836,6 +840,7 @@ app.MapGet("/api/actividades/{id}", async (int id, UbFormacionContext context) =
             actividad.PersonaSolicitante,
             actividad.Coordinador,
             actividad.JefeUnidadGestora,
+            actividad.UnidadGestoraDetalle,
             actividad.GestorActividad,
             actividad.FacultadDestinataria,
             actividad.DepartamentoDestinatario,
@@ -962,6 +967,11 @@ app.MapPut("/api/actividades/{id}/borrador", async (int id, UpdateActividadDto d
 
 app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContext context, HttpContext httpContext) =>
 {
+    // DEBUG: Log del DTO recibido
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - UnidadGestoraDetalle del DTO: '{dto.UnidadGestoraDetalle}'");
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - JefeUnidadGestora del DTO: '{dto.JefeUnidadGestora}'");
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - GestorActividad del DTO: '{dto.GestorActividad}'");
+    
     // Validar campos obligatorios
     if (string.IsNullOrWhiteSpace(dto.Titulo))
     {
@@ -1007,6 +1017,7 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         PersonaSolicitante = dto.PersonaSolicitante,
         Coordinador = dto.Coordinador,
         JefeUnidadGestora = dto.JefeUnidadGestora,
+        UnidadGestoraDetalle = dto.UnidadGestoraDetalle,
         GestorActividad = dto.GestorActividad,
         FacultadDestinataria = dto.FacultadDestinataria,
         DepartamentoDestinatario = dto.DepartamentoDestinatario,
@@ -1098,6 +1109,11 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
         ActividadPago = dto.ActividadPago ?? false
     };
 
+    // DEBUG: Log del objeto Actividad antes de guardar
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - Objeto Actividad.UnidadGestoraDetalle: '{actividad.UnidadGestoraDetalle}'");
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - Objeto Actividad.JefeUnidadGestora: '{actividad.JefeUnidadGestora}'");
+    Console.WriteLine($"🔍 DEBUG POST /api/actividades - Objeto Actividad.GestorActividad: '{actividad.GestorActividad}'");
+
     context.Actividades.Add(actividad);
     await context.SaveChangesAsync();
 
@@ -1118,14 +1134,16 @@ app.MapPost("/api/actividades", async (CreateActividadDto dto, UbFormacionContex
     return Results.Created($"/api/actividades/{actividad.Id}", actividad);
 }).RequireAuthorization();
 
-app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFormacionContext context, ILogger<Program> logger) =>
+app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFormacionContext context, ILogger<Program> logger, HttpContext httpContext) =>
 {
     try
     {
         logger.LogInformation("=== INICIO ACTUALIZACIÓN ACTIVIDAD {Id} ===", id);
         logger.LogInformation("DTO recibido: {@Dto}", dto);
         
-        var actividad = await context.Actividades.FindAsync(id);
+        var actividad = await context.Actividades
+            .Include(a => a.Estado)
+            .FirstOrDefaultAsync(a => a.Id == id);
 
         if (actividad == null)
         {
@@ -1134,6 +1152,34 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
         }
         
         logger.LogInformation("Actividad encontrada: {@Actividad}", actividad);
+        
+        // VALIDACIÓN DE PERMISOS DE EDICIÓN
+        var userRolClaim = httpContext.User.FindFirst("rol");
+        if (userRolClaim == null)
+        {
+            logger.LogWarning("Usuario sin rol asignado");
+            return Results.Unauthorized();
+        }
+        
+        var userRol = userRolClaim.Value;
+        var estadoCodigo = actividad.Estado?.Codigo ?? "";
+        
+        logger.LogInformation("Verificando permisos - Rol: {Rol}, Estado: {Estado}", userRol, estadoCodigo);
+        
+        // Verificar si el usuario tiene permiso de edición para este estado
+        var permiso = await context.Set<PermisosEdicion>()
+            .FirstOrDefaultAsync(p => p.EstadoCodigo == estadoCodigo && p.RolOriginal == userRol && p.Activo);
+        
+        if (permiso == null || !permiso.PuedeEditar)
+        {
+            logger.LogWarning("Usuario {Rol} NO tiene permiso de edición en estado {Estado}", userRol, estadoCodigo);
+            return Results.Problem(
+                detail: $"No tienes permiso para editar actividades en estado '{actividad.Estado?.Nombre ?? estadoCodigo}'",
+                statusCode: 403
+            );
+        }
+        
+        logger.LogInformation("✅ Permiso de edición verificado - Usuario puede editar");
 
     // Actualizar campos principales
     if (dto.Titulo != null) actividad.Titulo = dto.Titulo;
@@ -1630,7 +1676,7 @@ app.MapGet("/api/dominios/{nombreDominio}/valores", async (string nombreDominio,
         var valores = await context.ValoresDominio
             .Where(v => v.DominioId == dominio.Id && v.Activo)
             .OrderBy(v => v.Orden)
-            .Select(v => new { v.Id, v.Valor, v.Descripcion })
+            .Select(v => new { v.Id, v.Descripcion })
             .ToListAsync();
 
         return Results.Ok(valores);
@@ -2978,6 +3024,51 @@ app.MapGet("/api/actividades/{id}/transiciones", async (int id, HttpContext http
     
     Console.WriteLine($"🔍 DEBUG: Total destinos devueltos: {destinos.Count}");
     return Results.Ok(destinos);
+}).RequireAuthorization();
+
+// Endpoint para verificar si el usuario actual puede editar la actividad
+app.MapGet("/api/actividades/{id}/puede-editar", async (int id, HttpContext httpContext, UbFormacionContext context) =>
+{
+    try
+    {
+        // Obtener rol del usuario autenticado
+        var userRolClaim = httpContext.User.FindFirst("rol");
+        if (userRolClaim == null)
+        {
+            return Results.Ok(new { puedeEditar = false, motivo = "Usuario sin rol asignado" });
+        }
+        
+        var userRol = userRolClaim.Value;
+        
+        // Obtener actividad con su estado
+        var actividad = await context.Actividades
+            .Include(a => a.Estado)
+            .FirstOrDefaultAsync(a => a.Id == id);
+            
+        if (actividad == null)
+        {
+            return Results.NotFound();
+        }
+        
+        var estadoCodigo = actividad.Estado?.Codigo ?? "";
+        
+        // Verificar permiso de edición
+        var permiso = await context.PermisosEdicion
+            .FirstOrDefaultAsync(p => p.EstadoCodigo == estadoCodigo && p.RolOriginal == userRol && p.Activo);
+        
+        var puedeEditar = permiso != null && permiso.PuedeEditar;
+        
+        return Results.Ok(new { 
+            puedeEditar = puedeEditar,
+            rol = userRol,
+            estado = estadoCodigo,
+            estadoNombre = actividad.Estado?.Nombre ?? ""
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error verificando permisos: {ex.Message}");
+    }
 }).RequireAuthorization();
 
 // Helpers de workflow (DB) - Sistema robusto con base de datos
