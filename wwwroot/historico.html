@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
+  <base href="/actividades/">
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
@@ -15,6 +16,51 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <!-- SheetJS para exportar a Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- WebLot para traducción automática -->
+  <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+  <script>
+    // Función para inicializar WebLot
+    function inicializarWebLot() {
+      if (typeof Weglot !== 'undefined') {
+        try {
+          Weglot.initialize({
+            api_key: 'wg_b2253dca073d4e70fd4476374ae59e149',
+            original_language: 'es',
+            destination_languages: ['en', 'fr', 'ca'],
+            switchers: [{
+              button_style: {
+                full_name: true,
+                with_name: true,
+                is_dropdown: true,
+                with_flags: true
+              },
+              location: {
+                target: 'body',
+                sibling: null
+              }
+            }]
+          });
+          console.log('✅ WebLot inicializado correctamente');
+          return true;
+        } catch (error) {
+          console.error('❌ Error inicializando WebLot:', error);
+          return false;
+        }
+      }
+      return false;
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(inicializarWebLot, 500);
+      });
+    } else {
+      setTimeout(inicializarWebLot, 500);
+    }
+  </script>
+  
   <!-- Estilos comunes del proyecto (menú/header unificados) -->
   <link href="css/styles.css" rel="stylesheet"/>
   <style>
@@ -335,6 +381,8 @@
   </div>
   <!-- Bootstrap JS bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script de configuración (debe cargarse primero) -->
+  <script src="config.js"></script>
   <!-- Cargamos el menú lateral reutilizable -->
   <script src="auth.js?v=3.1"></script>
   <script src="menu.js"></script>
@@ -468,28 +516,30 @@
       console.log("🚀 cargarActividadesHistorico - Iniciando...");
       try {
         renderLoading();
-        const apiUrl = window.CONFIG?.API_BASE_URL || 'http://localhost:5001/api';
-        const url = new URL(`${apiUrl}/actividades`);
+        
+        // Construir URL con parámetros (sin usar new URL para soportar rutas relativas)
+        const params = new URLSearchParams();
         
         // Aplicar filtros
-        if (filtros.search) url.searchParams.set('search', filtros.search);
-        if (filtros.estado) url.searchParams.set('estado', filtros.estado);
-        if (filtros.unidadGestion) url.searchParams.set('ug', filtros.unidadGestion);
-        if (filtros.tipoActividad) url.searchParams.set('tipoActividad', filtros.tipoActividad);
-        if (filtros.fechaDesde) url.searchParams.set('fechaDesde', filtros.fechaDesde);
-        if (filtros.fechaHasta) url.searchParams.set('fechaHasta', filtros.fechaHasta);
-        if (filtros.autor) url.searchParams.set('autor', filtros.autor);
+        if (filtros.search) params.set('search', filtros.search);
+        if (filtros.estado) params.set('estado', filtros.estado);
+        if (filtros.unidadGestion) params.set('ug', filtros.unidadGestion);
+        if (filtros.tipoActividad) params.set('tipoActividad', filtros.tipoActividad);
+        if (filtros.fechaDesde) params.set('fechaDesde', filtros.fechaDesde);
+        if (filtros.fechaHasta) params.set('fechaHasta', filtros.fechaHasta);
+        if (filtros.autor) params.set('autor', filtros.autor);
         
         // Aplicar ordenación
-        url.searchParams.set('ordenarPor', ordenacion.campo);
-        url.searchParams.set('orden', ordenacion.direccion);
+        params.set('ordenarPor', ordenacion.campo);
+        params.set('orden', ordenacion.direccion);
         
         // Paginación
-        url.searchParams.set('page', String(paginaActual));
-        url.searchParams.set('pageSize', String(pageSize));
+        params.set('page', String(paginaActual));
+        params.set('pageSize', String(pageSize));
         
-        console.log("🚀 cargarActividadesHistorico - URL:", url.toString());
-        const resp = await fetch(url.toString(), { 
+        const url = `/api/actividades?${params.toString()}`;
+        console.log("🚀 cargarActividadesHistorico - URL:", url);
+        const resp = await fetch(url, { 
           headers: { 
             'Accept': 'application/json',
             'Authorization': `Bearer ${Auth.getToken()}`

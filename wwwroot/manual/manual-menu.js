@@ -3,17 +3,17 @@
 <aside class="manual-sidebar">
   <div class="brand-mini"><img src="/img/logo_ub.png" alt="UB"/></div>
   <nav class="manual-nav">
-    <a href="./login.html"><i class="bi bi-box-arrow-in-right"></i><span>Login</span></a>
-    <a href="./crear-actividad.html"><i class="bi bi-plus-square"></i><span>Crear Actividad</span></a>
-    <a href="./editar-actividad.html"><i class="bi bi-pencil-square"></i><span>Editar Actividad</span></a>
-    <a href="./historico.html"><i class="bi bi-clock-history"></i><span>Histórico</span></a>
-    <a href="./mensajes.html"><i class="bi bi-envelope"></i><span>Mensajes</span></a>
-    <a href="./adjuntos.html"><i class="bi bi-paperclip"></i><span>Adjuntos</span></a>
-    <a href="./cambios-estado.html"><i class="bi bi-arrow-repeat"></i><span>Cambios de estado</span></a>
-    <a href="./flujo-estados.html"><i class="bi bi-diagram-3"></i><span>Flujo Estados</span></a>
-    <a href="./control-edicion.html"><i class="bi bi-shield-lock"></i><span>Control Edición</span></a>
-    <a href="./admin-usuarios.html"><i class="bi bi-people"></i><span>Admin usuarios</span></a>
-    <a href="./perfil.html"><i class="bi bi-person"></i><span>Perfil</span></a>
+    <a href="/actividades/manual/login.html"><i class="bi bi-box-arrow-in-right"></i><span>Login</span></a>
+    <a href="/actividades/manual/crear-actividad.html"><i class="bi bi-plus-square"></i><span>Crear Actividad</span></a>
+    <a href="/actividades/manual/editar-actividad.html"><i class="bi bi-pencil-square"></i><span>Editar Actividad</span></a>
+    <a href="/actividades/manual/historico.html"><i class="bi bi-clock-history"></i><span>Histórico</span></a>
+    <a href="/actividades/manual/mensajes.html"><i class="bi bi-envelope"></i><span>Mensajes</span></a>
+    <a href="/actividades/manual/adjuntos.html"><i class="bi bi-paperclip"></i><span>Adjuntos</span></a>
+    <a href="/actividades/manual/cambios-estado.html"><i class="bi bi-arrow-repeat"></i><span>Cambios de estado</span></a>
+    <a href="/actividades/manual/flujo-estados.html"><i class="bi bi-diagram-3"></i><span>Flujo Estados</span></a>
+    <a href="/actividades/manual/control-edicion.html"><i class="bi bi-shield-lock"></i><span>Control Edición</span></a>
+    <a href="/actividades/manual/admin-usuarios.html"><i class="bi bi-people"></i><span>Admin usuarios</span></a>
+    <a href="/actividades/manual/perfil.html"><i class="bi bi-person"></i><span>Perfil</span></a>
   </nav>
 </aside>`;
 

@@ -83,13 +83,13 @@
         const path = (location.pathname || '').toLowerCase();
         const help = $('#helpLink');
         if (help) {
-          let manual = '/manual/index.html';
-          if (path.endsWith('/index.html')) manual = '/manual/crear-actividad.html';
-          else if (path.endsWith('/historico.html')) manual = '/manual/historico.html';
-          else if (path.endsWith('/mensajes.html')) manual = '/manual/mensajes.html';
-          else if (path.endsWith('/admin-usuarios.html')) manual = '/manual/admin-usuarios.html';
-          else if (path.endsWith('/perfil.html')) manual = '/manual/perfil.html';
-          else if (path.endsWith('/editar-actividad.html')) manual = '/manual/crear-actividad.html';
+          let manual = '/actividades/manual/index.html';
+          if (path.endsWith('/index.html')) manual = '/actividades/manual/crear-actividad.html';
+          else if (path.endsWith('/historico.html')) manual = '/actividades/manual/historico.html';
+          else if (path.endsWith('/mensajes.html')) manual = '/actividades/manual/mensajes.html';
+          else if (path.endsWith('/admin-usuarios.html')) manual = '/actividades/manual/admin-usuarios.html';
+          else if (path.endsWith('/perfil.html')) manual = '/actividades/manual/perfil.html';
+          else if (path.endsWith('/editar-actividad.html')) manual = '/actividades/manual/crear-actividad.html';
           help.setAttribute('href', manual);
         }
       } catch {}

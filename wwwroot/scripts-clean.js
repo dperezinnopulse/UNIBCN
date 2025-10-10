@@ -3049,6 +3049,24 @@ function establecerValoresDropdowns(actividad) {
         }
     }
     
+    // Unidad gestora detalle
+    if (document.getElementById('unidadGestoraDetalle')) {
+        const select = document.getElementById('unidadGestoraDetalle');
+        const valor = actividad.UnidadGestoraDetalle || actividad.unidadGestoraDetalle;
+        console.log('🔧 DEBUG: establecerValoresDropdowns - unidadGestoraDetalle, valor:', valor);
+        if (valor != null) {
+            select.dataset.lockedValue = String(valor);
+            attachLockedObserver(select);
+            for (let option of select.options) {
+                if (option.value === String(valor)) {
+                    option.selected = true;
+                    console.log('✅ DEBUG: establecerValoresDropdowns - unidadGestoraDetalle establecido:', option.text || option.value);
+                    break;
+                }
+            }
+        }
+    }
+    
     // Gestor/a de la actividad
     if (document.getElementById('gestorActividad')) {
         const select = document.getElementById('gestorActividad');

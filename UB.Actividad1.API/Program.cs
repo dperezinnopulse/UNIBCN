@@ -1202,6 +1202,13 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
     if (dto.PersonaSolicitante != null) actividad.PersonaSolicitante = dto.PersonaSolicitante;
     if (dto.Coordinador != null) actividad.Coordinador = dto.Coordinador;
     if (dto.JefeUnidadGestora != null) actividad.JefeUnidadGestora = dto.JefeUnidadGestora;
+    if (dto.UnidadGestoraDetalle != null) {
+        logger.LogInformation("🔍 DEBUG: Actualizando UnidadGestoraDetalle - DTO: '{Dto}' -> Actividad: '{Actividad}'", dto.UnidadGestoraDetalle, actividad.UnidadGestoraDetalle);
+        actividad.UnidadGestoraDetalle = dto.UnidadGestoraDetalle;
+        logger.LogInformation("🔍 DEBUG: Después de asignar - Actividad.UnidadGestoraDetalle: '{Valor}'", actividad.UnidadGestoraDetalle);
+    } else {
+        logger.LogInformation("🔍 DEBUG: dto.UnidadGestoraDetalle es NULL, no se actualiza");
+    }
     if (dto.GestorActividad != null) actividad.GestorActividad = dto.GestorActividad;
     if (dto.FacultadDestinataria != null) actividad.FacultadDestinataria = dto.FacultadDestinataria;
     if (dto.DepartamentoDestinatario != null) actividad.DepartamentoDestinatario = dto.DepartamentoDestinatario;
@@ -1440,7 +1447,9 @@ app.MapPut("/api/actividades/{id}", async (int id, UpdateActividadDto dto, UbFor
         }
     }
     
+        logger.LogInformation("🔍 DEBUG: JUSTO ANTES DE SAVECHANGES - Actividad.UnidadGestoraDetalle: '{Valor}'", actividad.UnidadGestoraDetalle);
         await context.SaveChangesAsync();
+        logger.LogInformation("🔍 DEBUG: DESPUÉS DE SAVECHANGES - Actividad.UnidadGestoraDetalle: '{Valor}'", actividad.UnidadGestoraDetalle);
         
         logger.LogInformation("Actividad {Id} actualizada exitosamente", id);
         return Results.Ok(actividad);
