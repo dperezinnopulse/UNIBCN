@@ -7,9 +7,23 @@
 // ===== CONFIGURACIÓN GLOBAL =====
 const __proto = (typeof window !== 'undefined' && window.location) ? window.location.protocol : 'http:';
 const __host = (typeof window !== 'undefined' && window.location) ? window.location.hostname : 'localhost';
-const __apiBase = '/api';
+
+// Función helper para obtener API_BASE_URL dinámicamente (soporta subdirectorios)
+function getApiBaseUrl() {
+    // Prioridad 1: APP_CONFIG (soporta subdirectorios)
+    if (typeof window.APP_CONFIG !== 'undefined' && window.APP_CONFIG.API_BASE_URL) {
+        return window.APP_CONFIG.API_BASE_URL;
+    }
+    // Prioridad 2: window.CONFIG legacy
+    if (typeof window.CONFIG !== 'undefined' && window.CONFIG.API_BASE_URL) {
+        return window.CONFIG.API_BASE_URL;
+    }
+    // Fallback: ruta relativa
+    return '/api';
+}
+
 const CONFIG = {
-                API_BASE_URL: __apiBase,
+                get API_BASE_URL() { return getApiBaseUrl(); },  // Getter dinámico
                 DEBUG: true,
                 TIMEOUT: 30000
             };
@@ -982,9 +996,16 @@ async function cargarUnidadesGestion() {
 }
 
 async function guardarActividad() {
-    if (globalState.loading) return;
+    console.log('🔥🔥🔥 guardarActividad() EJECUTADA - INICIO');
+    alert('🔥 guardarActividad() se está ejecutando!');
+    
+    if (globalState.loading) {
+        console.log('⚠️ globalState.loading es true, saliendo...');
+        return;
+    }
     
     try {
+        console.log('✅ Mostrando loading...');
         Utils.showLoading('Guardando actividad...');
         
         // Recoger todos los datos del formulario
@@ -1030,7 +1051,8 @@ async function guardarActividad() {
         });
         
         // Log completo de la llamada API
-        const url = `${CONFIG.API_BASE_URL}/actividades/${actividadId}`;
+        // Usar ruta relativa en lugar de CONFIG.API_BASE_URL para soportar subdirectorios
+        const url = `/api/actividades/${actividadId}`;
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -1058,6 +1080,10 @@ async function guardarActividad() {
             const resultado = await response.json();
             Utils.hideLoading();
             Utils.showAlert('success', 'Actividad guardada correctamente');
+            
+            // Hacer scroll hacia arriba para ver la alerta
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
             Utils.log('Actividad guardada:', resultado);
             
             // Recargar datos para confirmar cambios
@@ -1177,6 +1203,10 @@ async function initEditarActividad() {
             // CUARTO: Verificar permisos de edición y deshabilitar campos si es necesario
             console.log('🔍 DEBUG: Verificando permisos de edición...');
             await verificarPermisosEdicion(actividadId);
+            
+            // QUINTO: Ocultar campos específicos según la UG del usuario
+            console.log('🔍 DEBUG: Aplicando visibilidad de campos según UG...');
+            ocultarCamposSegunUG();
             
             Utils.hideLoading();
             Utils.showAlert('success', `Actividad ${actividadId} cargada correctamente desde el backend`);
@@ -2571,8 +2601,10 @@ function recogerDatosFormulario() {
     
     // Recoger importes
     datos.importes = recogerImportes();
+    console.log('🔍 recogerDatosFormulario - Importes recogidos:', datos.importes);
     
     Utils.log('Datos recogidos del formulario:', datos);
+    console.log('🔍 recogerDatosFormulario - Datos completos antes de retornar:', JSON.stringify(datos, null, 2));
     return datos;
 }
 
@@ -2714,35 +2746,67 @@ function recogerColaboradoras() {
 function recogerImportes() {
     const importes = [];
     
+    // Verificar si la sección de importes está visible
+    const importeCamposSection = document.getElementById('importeCampos');
+    const isVisible = importeCamposSection && importeCamposSection.style.display !== 'none';
+    
+    console.log('🔍 recogerImportes - Sección visible?', isVisible);
+    console.log('🔍 recogerImportes - Display:', importeCamposSection?.style.display);
+    
+    // Leer valores de los campos HTML (incluso si están ocultos)
+    const impBaseElement = document.getElementById('imp_base');
+    const impDescElement = document.getElementById('imp_descuento_pct');
+    const impCondESElement = document.getElementById('imp_condiciones_es');
+    const impCondCAElement = document.getElementById('imp_condiciones_ca');
+    const impCondENElement = document.getElementById('imp_condiciones_en');
+    
+    const impBaseValue = impBaseElement?.value;
+    const impDescValue = impDescElement?.value;
+    const impCondESValue = impCondESElement?.value;
+    const impCondCAValue = impCondCAElement?.value;
+    const impCondENValue = impCondENElement?.value;
+    
+    console.log('🔍 recogerImportes - Elementos encontrados:', {
+        imp_base_exists: !!impBaseElement,
+        imp_descuento_pct_exists: !!impDescElement,
+        imp_condiciones_es_exists: !!impCondESElement
+    });
+    
+    console.log('🔍 recogerImportes - Valores leídos:', {
+        imp_base: impBaseValue,
+        imp_descuento_pct: impDescValue,
+        imp_condiciones_es: impCondESValue
+    });
+    
+    // Construir objeto de importe con PascalCase (esperado por backend)
     const importe = {
-        importeBase: document.getElementById('imp_base')?.value || null,
-        tipoImpuesto: document.getElementById('imp_tipo')?.value || null,
-        porcentajeDescuento: document.getElementById('imp_descuento_pct')?.value || null,
-        codigoPromocional: document.getElementById('imp_codigo')?.value || null,
-        condicionesES: document.getElementById('imp_condiciones_es')?.value || null,
-        condicionesCA: document.getElementById('imp_condiciones_ca')?.value || null,
-        condicionesEN: document.getElementById('imp_condiciones_en')?.value || null
+        ImporteBase: impBaseValue && impBaseValue !== '' ? parseFloat(impBaseValue) : null,
+        TipoImpuesto: null,  // Campo no existe en HTML actual
+        PorcentajeDescuento: impDescValue && impDescValue !== '' ? parseFloat(impDescValue) : null,
+        CodigoPromocional: null,  // Campo no existe en HTML actual
+        CondicionesES: impCondESValue || null,
+        CondicionesCA: impCondCAValue || null,
+        CondicionesEN: impCondENValue || null
     };
     
-    // Convertir numéricos si tienen valor
-    if (importe.importeBase !== null && importe.importeBase !== '') {
-        const f = parseFloat(importe.importeBase);
-        if (!isNaN(f)) {
-            importe.importeBase = f;
-        }
-    }
-    if (importe.porcentajeDescuento !== null && importe.porcentajeDescuento !== '') {
-        const f = parseFloat(importe.porcentajeDescuento);
-        if (!isNaN(f)) {
-            importe.porcentajeDescuento = f;
-        }
-    }
+    console.log('🔍 recogerImportes - Objeto construido:', importe);
     
     // Solo incluir si hay al menos un campo con valor
-    if (Object.values(importe).some(valor => valor && valor.toString().trim() !== '')) {
+    const tieneValor = Object.entries(importe).some(([key, valor]) => {
+        if (valor === null || valor === undefined || valor === '') return false;
+        if (typeof valor === 'string') return valor.trim() !== '';
+        if (typeof valor === 'number') return !isNaN(valor);
+        return true;
+    });
+    
+    if (tieneValor) {
         importes.push(importe);
+        console.log('✅ recogerImportes - Importe agregado al array');
+    } else {
+        console.log('⚠️ recogerImportes - No hay valores, array vacío');
     }
     
+    console.log('✅ recogerImportes - Retornando:', importes);
     return importes;
 }
 
@@ -3165,6 +3229,95 @@ function getBootstrapColorClass(color) {
 }
 
 // Función para verificar permisos de edición y deshabilitar campos si es necesario
+/**
+ * Oculta los campos específicos de UG según el rol del usuario
+ * - Admin: Muestra todos los campos (IDP, CRAI, SAE)
+ * - No Admin: Solo muestra los campos de su UG
+ */
+function ocultarCamposSegunUG() {
+    try {
+        console.log('🔍 ocultarCamposSegunUG - Iniciando...');
+        
+        // Obtener información del usuario
+        const userData = Auth.getUser();
+        const isAdmin = userData.rol === 'Admin';
+        const userUG = userData.unidadGestionId;
+        
+        console.log('🔍 ocultarCamposSegunUG - Usuario:', {
+            username: userData.username,
+            rol: userData.rol,
+            isAdmin: isAdmin,
+            unidadGestionId: userUG
+        });
+        
+        // Si es Admin, mostrar todos los campos y salir
+        if (isAdmin) {
+            console.log('✅ Usuario es Admin - Mostrando todos los campos');
+            document.querySelectorAll('[data-ug]').forEach(element => {
+                element.style.display = '';
+            });
+            return;
+        }
+        
+        // Mapeo de UG ID a nombre
+        const ugMap = {
+            1: 'IDP',
+            2: 'CRAI',
+            3: 'SAE'
+        };
+        
+        const userUGName = ugMap[userUG];
+        console.log(`🔍 Usuario pertenece a: ${userUGName} (ID: ${userUG})`);
+        
+        if (!userUGName) {
+            console.error('❌ No se pudo determinar la UG del usuario');
+            return;
+        }
+        
+        // Ocultar TODOS los campos con data-ug primero
+        const allUGFields = document.querySelectorAll('[data-ug]');
+        console.log(`🔍 Total de campos con data-ug encontrados: ${allUGFields.length}`);
+        
+        allUGFields.forEach(element => {
+            element.style.display = 'none';
+        });
+        
+        // Mostrar solo los campos de la UG del usuario
+        const userUGFields = document.querySelectorAll(`[data-ug="${userUGName}"]`);
+        console.log(`✅ Mostrando ${userUGFields.length} campos de ${userUGName}`);
+        
+        userUGFields.forEach(element => {
+            element.style.display = '';
+            
+            // Si es un div con clase .row, también asegurarse de que sea visible
+            if (element.classList.contains('row')) {
+                element.style.display = 'flex';
+            }
+            
+            // Si es un div.col-*, también asegurarse de que sea visible
+            if (element.classList.contains('col-md-3') || 
+                element.classList.contains('col-md-4') ||
+                element.classList.contains('col-md-6') ||
+                element.classList.contains('col-md-12')) {
+                element.style.display = 'block';
+            }
+            
+            // Si es un div con clase .mb-3 (las secciones completas), mostrar como block
+            if (element.classList.contains('mb-3') || 
+                element.classList.contains('ug-idp') ||
+                element.classList.contains('ug-crai') ||
+                element.classList.contains('ug-sae')) {
+                element.style.display = 'block';
+            }
+        });
+        
+        console.log('✅ Campos específicos de UG configurados correctamente');
+        
+    } catch (error) {
+        console.error('❌ Error en ocultarCamposSegunUG:', error);
+    }
+}
+
 async function verificarPermisosEdicion(actividadId) {
     try {
         console.log('🔍 DEBUG: verificarPermisosEdicion - Consultando API...');

@@ -1326,7 +1326,24 @@ async function guardarActividad() {
         let resultado;
         if (actividadId) {
             console.log('🚀 DEBUG: guardarActividad - Actualizando actividad con ID:', actividadId);
-            resultado = await api.updateActividad(actividadId, formDataLimpio);
+            
+            // Obtener colecciones relacionadas para incluir en la actualización
+            const subacts = obtenerSubactividadesFormulario();
+            const parts = obtenerParticipantesFormulario();
+            const cols = obtenerEntidadesFormulario();
+            const imps = obtenerImportesFormulario();
+            
+            // Agregar colecciones al payload
+            const payloadUpdate = {
+                ...formDataLimpio,
+                Subactividades: subacts,
+                Participantes: parts,
+                Colaboradoras: cols,
+                Importes: imps
+            };
+            
+            console.log('🔗 DEBUG: Actualizando con colecciones relacionadas:', payloadUpdate);
+            resultado = await api.updateActividad(actividadId, payloadUpdate);
             mostrarMensajeExito('¡Actividad actualizada correctamente!');
         } else {
             console.log('🚀 DEBUG: guardarActividad - Creando nueva actividad');
@@ -2406,6 +2423,9 @@ function mostrarMensajeExito(mensaje) {
     
     // Insertar al inicio del body
     document.body.insertBefore(mensajeDiv, document.body.firstChild);
+    
+    // Hacer scroll hacia arriba para ver el mensaje
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Auto-ocultar después de 3 segundos
     setTimeout(() => {
